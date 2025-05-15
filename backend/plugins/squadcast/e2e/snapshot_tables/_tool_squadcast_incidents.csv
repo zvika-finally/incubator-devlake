@@ -1,0 +1,3 @@
+connection_id,incident_id,title,status,severity,assignee,created_at,updated_at,resolved_at,url
+1,inc_123,Test Incident,open,high,alice,2024-06-01T12:00:00Z,2024-06-01T12:05:00Z,,https://squadcast.io/incidents/inc_123
+1,inc_456,Resolved Incident,resolved,medium,bob,2024-06-01T10:00:00Z,2024-06-01T11:00:00Z,2024-06-01T11:30:00Z,https://squadcast.io/incidents/inc_456 

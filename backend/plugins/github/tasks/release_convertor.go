@@ -53,7 +53,7 @@ func ConvertRelease(taskCtx plugin.SubTaskContext) errors.Error {
 	rawDataSubTaskArgs, data := CreateRawDataSubTaskArgs(taskCtx, RAW_RELEASE_TABLE)
 	cursor, err := db.Cursor(
 		dal.From(&models.GithubRelease{}),
-		dal.Where("connection_id = ? and github_id = ?", data.Options.ConnectionId, data.Options.GithubId),
+		dal.Where("connection_id = ? and github_id = ? AND is_draft = ?", data.Options.ConnectionId, data.Options.GithubId, false),
 	)
 	if err != nil {
 		return err
