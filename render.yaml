@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: devlake-backend
+    env: docker
+    plan: standard
+    dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: devlake-db
+          property: connectionString
+      - key: LOGGING_DIR
+        value: /app/logs
+      - key: TZ
+        value: UTC
+    healthCheckPath: /health
+    autoDeploy: true
+    buildCommand: ""
+    startCommand: "lake"
+
+  - type: web
+    name: devlake-config-ui
+    env: docker
+    plan: standard
+    dockerfilePath: config-ui/Dockerfile
+    envVars:
+      - key: DEVLAKE_ENDPOINT
+        value: https://devlake-backend.onrender.com
+      - key: GRAFANA_ENDPOINT
+        value: https://devlake-grafana.onrender.com
+      - key: TZ
+        value: UTC
+    healthCheckPath: /
+    autoDeploy: true
+    buildCommand: ""
+    startCommand: "/usr/bin/nginx.sh"
+
+databases:
+  - name: devlake-db
+    type: postgresql
+    plan: standard
+
+  - name: devlake-grafana
+    type: grafana
+    plan: standard 
