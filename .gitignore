@@ -165,3 +165,17 @@ venv
 /backend/plugins/gitextractor/parser/demo_repo/
 
 __debug_bin*
+
+# Added by Claude Task Master
+dev-debug.log
+# Environment variables
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+# Task files
+tasks.json
+tasks/ 
