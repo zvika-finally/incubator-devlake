@@ -1,36 +1,22 @@
 package api
 
 import (
-	"github.com/apache/incubator-devlake/helpers/pluginhelper/api"
+	"github.com/apache/incubator-devlake/core/context"
+	helper "github.com/apache/incubator-devlake/helpers/pluginhelper/api"
+	"github.com/apache/incubator-devlake/plugins/argocd/models"
 )
 
-// Placeholder types for plugins without scope/scope config
-// Implements plugin.ToolLayerScope
-// (All methods return zero values)
-type NoScope struct{}
+var dsHelper *helper.DsHelper[models.ArgoCDConnection, models.ArgoCDApplication, models.ArgoCDScopeConfig]
 
-func (NoScope) TableName() string          { return "" }
-func (NoScope) ScopeId() string            { return "" }
-func (NoScope) ScopeName() string          { return "" }
-func (NoScope) ScopeFullName() string      { return "" }
-func (NoScope) ScopeParams() interface{}   { return nil }
-func (NoScope) ScopeConnectionId() uint64  { return 0 }
-func (NoScope) ScopeScopeConfigId() uint64 { return 0 }
-
-// Implements plugin.ToolLayerScopeConfig
-type NoScopeConfig struct{}
-
-func (NoScopeConfig) TableName() string               { return "" }
-func (NoScopeConfig) ScopeConfigId() uint64           { return 0 }
-func (NoScopeConfig) ScopeConfigConnectionId() uint64 { return 0 }
-
-// dsHelper provides helpers for connection and scope APIs
-var dsHelper *api.DsHelper[ArgoCDConnection, NoScope, NoScopeConfig]
-
-func init() {
-	dsHelper = api.NewDataSourceHelper[
-		ArgoCDConnection,
-		NoScope,
-		NoScopeConfig,
-	](nil, "", nil, nil, nil, nil)
+func Init(br context.BasicRes, p any) {
+	dsHelper = helper.NewDataSourceHelper[
+		models.ArgoCDConnection, models.ArgoCDApplication, models.ArgoCDScopeConfig,
+	](
+		br,
+		"argocd",
+		[]string{"name"},
+		nil,
+		nil,
+		nil,
+	)
 }

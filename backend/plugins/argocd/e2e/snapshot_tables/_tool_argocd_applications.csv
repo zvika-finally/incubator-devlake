@@ -1,0 +1,2 @@
+connection_id,argo_c_d_id,name,project,namespace,cluster,repo_u_r_l,path,target_rev,health,sync_status,created_date
+1,abc123,my-app,default,default,https://kubernetes.default.svc,https://github.com/example/repo,.,HEAD,Healthy,Synced,2024-01-01T00:00:00Z

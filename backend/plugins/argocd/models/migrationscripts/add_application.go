@@ -10,16 +10,18 @@ import (
 type addArgoCDApplication struct{}
 
 func (*addArgoCDApplication) Version() uint64 {
-	return 20240601000001
+	return 20250529000001
 }
 
 func (*addArgoCDApplication) Name() string {
-	return "add argocd application table"
+	return "add argocd application and connection tables"
 }
 
 func (*addArgoCDApplication) Up(basicRes context.BasicRes) errors.Error {
 	return migrationhelper.AutoMigrateTables(
 		basicRes,
 		&models.ArgoCDApplication{},
+		&models.ArgoCDConnection{},
+		&models.RawArgoCDApplication{},
 	)
 }

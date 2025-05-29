@@ -8,11 +8,13 @@ import (
 
 type ArgoCDCluster struct {
 	common.NoPKModel
-	Id          string `gorm:"primaryKey;type:varchar(255)"`
-	Name        string `gorm:"type:varchar(255)"`
-	Server      string `gorm:"type:varchar(255)"`
-	CreatedDate *time.Time
-	// Add other fields as needed
+	ConnectionId  uint64     `json:"connectionId" gorm:"primaryKey"`
+	ArgoCDId      string     `gorm:"primaryKey;type:varchar(255)" json:"argoCdId"`
+	Name          string     `gorm:"type:varchar(255)" json:"name"`
+	Server        string     `gorm:"type:varchar(255)" json:"server"`
+	ServerVersion string     `gorm:"type:varchar(255)" json:"serverVersion"`
+	Status        string     `gorm:"type:varchar(100)" json:"status"`
+	CreatedDate   *time.Time `json:"createdAt"`
 }
 
 func (ArgoCDCluster) TableName() string {

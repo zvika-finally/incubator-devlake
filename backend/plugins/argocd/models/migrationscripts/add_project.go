@@ -21,5 +21,6 @@ func (*addArgoCDProject) Up(basicRes context.BasicRes) errors.Error {
 	return migrationhelper.AutoMigrateTables(
 		basicRes,
 		&models.ArgoCDProject{},
+		&models.RawArgoCDProject{},
 	)
 }

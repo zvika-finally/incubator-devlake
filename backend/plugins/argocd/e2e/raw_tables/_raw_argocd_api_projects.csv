@@ -1,0 +1,2 @@
+id,params,data,url,input,created_at
+1,"{""ConnectionId"":1}","{""metadata"":{""name"":""default"",""namespace"":""argocd"",""uid"":""proj123"",""creationTimestamp"":""2024-01-01T00:00:00Z""},""spec"":{""description"":""Default project"",""sourceRepos"":[""*""],""destinations"":[{""server"":""*"",""namespace"":""*""}]}}","https://argocd-server/api/v1/projects/default","{}","2024-01-01 00:00:00"

@@ -21,5 +21,7 @@ func (*addArgoCDCluster) Up(basicRes context.BasicRes) errors.Error {
 	return migrationhelper.AutoMigrateTables(
 		basicRes,
 		&models.ArgoCDCluster{},
+		&models.RawArgoCDCluster{},
+		&models.ArgoCDScopeConfig{},
 	)
 }
