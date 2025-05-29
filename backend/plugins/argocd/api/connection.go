@@ -43,6 +43,14 @@ func testConnection(ctx context.Context, connection models.ArgoCDConnection) (*p
 }
 
 // TestConnection tests ArgoCD connection
+// @Summary test ArgoCD connection
+// @Description Test ArgoCD Connection
+// @Tags plugins/argocd
+// @Param body body models.ArgoCDConnection true "json body"
+// @Success 200  {object} map[string]interface{} "Success"
+// @Failure 400  {string} errcode.Error "Bad Request"
+// @Failure 500  {string} errcode.Error "Internal Error"
+// @Router /plugins/argocd/test [POST]
 func TestConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
 	var connection models.ArgoCDConnection
 	if err := api.Decode(input.Body, &connection, vld); err != nil {
@@ -57,6 +65,13 @@ func TestConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, 
 }
 
 // TestExistingConnection tests existing ArgoCD connection
+// @Summary test ArgoCD connection
+// @Description Test ArgoCD Connection
+// @Tags plugins/argocd
+// @Success 200  {object} map[string]interface{} "Success"
+// @Failure 400  {string} errcode.Error "Bad Request"
+// @Failure 500  {string} errcode.Error "Internal Error"
+// @Router /plugins/argocd/connections/{connectionId}/test [POST]
 func TestExistingConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
 	connection, err := dsHelper.ConnApi.GetMergedConnection(input)
 	if err != nil {
@@ -70,7 +85,15 @@ func TestExistingConnection(input *plugin.ApiResourceInput) (*plugin.ApiResource
 	return result, nil
 }
 
-// Connection API handlers
+// PostConnections creates ArgoCD connection
+// @Summary create ArgoCD connection
+// @Description Create ArgoCD connection
+// @Tags plugins/argocd
+// @Param body body models.ArgoCDConnection true "json body"
+// @Success 200  {object} models.ArgoCDConnection "Success"
+// @Failure 400  {string} errcode.Error "Bad Request"
+// @Failure 500  {string} errcode.Error "Internal Error"
+// @Router /plugins/argocd/connections [POST]
 func PostConnections(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
 	return dsHelper.ConnApi.Post(input)
 }
@@ -91,49 +114,97 @@ func DeleteConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput
 	return dsHelper.ConnApi.Delete(input)
 }
 
-// Scope API handlers (simplified)
+// Scope API handlers
 func GetScope(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeApi.GetScopeDetail(input)
 }
 
 func PatchScope(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeApi.Patch(input)
 }
 
 func DeleteScope(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeApi.Delete(input)
 }
 
 func GetScopeList(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeApi.GetPage(input)
 }
 
 func PutScopes(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeApi.PutMultiple(input)
 }
 
-// Remote scope API handlers (simplified)
+// RemoteScopes fetches applications from ArgoCD server
+// @Summary Get remote scopes
+// @Description Fetch available applications from ArgoCD server
+// @Tags plugins/argocd
+// @Param connectionId path int true "connection ID"
+// @Success 200  {object} []map[string]interface{} "Success"
+// @Failure 400  {string} errcode.Error "Bad Request"
+// @Failure 500  {string} errcode.Error "Internal Error"
+// @Router /plugins/argocd/connections/{connectionId}/remote-scopes [GET]
 func RemoteScopes(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	connection, err := dsHelper.ConnApi.GetMergedConnection(input)
+	if err != nil {
+		return nil, errors.BadInput.Wrap(err, "can't read connection from database")
+	}
+
+	// Create API client
+	apiClient, err := api.NewApiClientFromConnection(context.TODO(), basicRes, connection)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch applications from ArgoCD
+	res, err := apiClient.Get("api/v1/applications", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var response struct {
+		Items []map[string]interface{} `json:"items"`
+	}
+	err = api.UnmarshalResponse(res, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to scope format
+	scopes := make([]map[string]interface{}, 0, len(response.Items))
+	for _, item := range response.Items {
+		if metadata, ok := item["metadata"].(map[string]interface{}); ok {
+			scope := map[string]interface{}{
+				"id":   metadata["uid"],
+				"name": metadata["name"],
+			}
+			if spec, ok := item["spec"].(map[string]interface{}); ok {
+				scope["project"] = spec["project"]
+			}
+			scopes = append(scopes, scope)
+		}
+	}
+
+	return &plugin.ApiResourceOutput{Body: scopes}, nil
 }
 
-// Scope config API handlers (simplified)
+// Scope config API handlers
 func CreateScopeConfig(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeConfigApi.Post(input)
 }
 
 func GetScopeConfigList(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeConfigApi.GetAll(input)
 }
 
 func GetScopeConfig(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeConfigApi.GetDetail(input)
 }
 
 func PatchScopeConfig(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeConfigApi.Patch(input)
 }
 
 func DeleteScopeConfig(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
-	return &plugin.ApiResourceOutput{}, nil
+	return dsHelper.ScopeConfigApi.Delete(input)
 }
