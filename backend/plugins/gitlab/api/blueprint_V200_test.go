@@ -195,7 +195,7 @@ func TestMakeDataSourcePipelinePlanV200(t *testing.T) {
 					PathWithNamespace: pathWithNamespace,
 					HttpUrlToRepo:     httpUrlToRepo,
 					Scope: common.Scope{
-						ConnectionId:		connectionID,
+						ConnectionId: connectionID,
 					},
 				},
 				ScopeConfig: scopeConfig,
@@ -228,13 +228,13 @@ func TestMakeDataSourcePipelinePlanV200(t *testing.T) {
 			{
 				Plugin: "gitextractor",
 				Options: map[string]interface{}{
-					"proxy":    "",
-					"repoId":   expectDomainScopeId,
-					"name":     gitlabProjectName,
-					"fullName": pathWithNamespace,
-					"url":      "https://git:nddtf@this_is_cloneUrl",
+					"proxy":        "",
+					"repoId":       expectDomainScopeId,
+					"name":         gitlabProjectName,
+					"fullName":     pathWithNamespace,
+					"url":          "https://git:nddtf@this_is_cloneUrl",
 					"connectionId": connectionID,
-					"pluginName": pluginName,
+					"pluginName":   pluginName,
 				},
 			},
 		},
