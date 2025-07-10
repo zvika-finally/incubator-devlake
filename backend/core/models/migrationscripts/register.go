@@ -138,5 +138,6 @@ func All() []plugin.MigrationScript {
 		new(createQaTables),
 		new(addPipelinePriority),
 		new(fixNullPriority),
+		new(addIssueFixVerion),
 	}
 }
