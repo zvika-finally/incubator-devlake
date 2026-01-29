@@ -168,7 +168,7 @@
       "id": 8,
       "targets": [
         {
-          "rawSql": "SELECT DATE(detected_at) as date, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY date",
+          "rawSql": "SELECT MIN(detected_at) as time, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
@@ -317,7 +317,7 @@
       "id": 55,
       "targets": [
         {
-          "rawSql": "SELECT DATE(merged_at) as time, AVG(CASE WHEN is_ai_assisted = true THEN churn_ratio30_days END) as ai_churn, AVG(CASE WHEN is_ai_assisted = false THEN churn_ratio30_days END) as non_ai_churn FROM ai_churn_metrics WHERE merged_at IS NOT NULL GROUP BY DATE(merged_at) ORDER BY time",
+          "rawSql": "SELECT MIN(merged_at) as time, AVG(CASE WHEN is_ai_assisted = true THEN churn_ratio30_days END) as ai_churn, AVG(CASE WHEN is_ai_assisted = false THEN churn_ratio30_days END) as non_ai_churn FROM ai_churn_metrics WHERE merged_at IS NOT NULL GROUP BY DATE(merged_at) ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }

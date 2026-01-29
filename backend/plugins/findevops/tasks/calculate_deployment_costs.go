@@ -104,10 +104,11 @@ func calculateTotalCostInWindow(db dal.Dal, projectName string, start, end time.
 	var totalCost float64
 
 	clauses := []dal.Clause{
-		dal.Select("COALESCE(SUM(total_cost), 0) as total"),
+		dal.Select("COALESCE(SUM(cost_allocations.total_cost), 0) as total"),
 		dal.From(&models.CostAllocation{}),
-		dal.Join("LEFT JOIN business_initiatives bi ON bi.id = cost_allocations.initiative_id"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'issues' AND pm.row_id = cost_allocations.issue_id"),
+		dal.Join("LEFT JOIN issues ON issues.id = cost_allocations.issue_id"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
 		dal.Where("pm.project_name = ? AND cost_allocations.calculated_at >= ? AND cost_allocations.calculated_at < ?",
 			projectName, start, end),
 	}

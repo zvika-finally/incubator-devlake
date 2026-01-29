@@ -310,7 +310,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT DATE(violated_at) as date, COUNT(*) as violations FROM agreement_violations WHERE violated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(violated_at) ORDER BY date",
+          "rawSql": "SELECT DATE(violated_at) as time, COUNT(*) as violations FROM agreement_violations WHERE violated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(violated_at) ORDER BY time",
           "refId": "A", "format": "time_series"
         }
       ],

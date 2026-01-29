@@ -111,11 +111,10 @@ func checkPRMergeTime(db dal.Dal, agreement *models.WorkingAgreement, projectNam
 		thresholdHours = agreement.ThresholdValue
 	}
 
-	// Query PRs for this project
+	// Query PRs for this project via repos mapping
 	err := db.All(&prs,
 		dal.From(&code.PullRequest{}),
-		dal.Join("LEFT JOIN repo_mapping rm ON rm.row_id = pull_requests.base_repo_id AND rm.table = 'repos'"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = rm.cicd_scope_id"),
+		dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
 		dal.Where("pm.project_name = ?", projectName),
 	)
 	if err != nil {
@@ -157,13 +156,12 @@ func checkReviewTurnaround(db dal.Dal, agreement *models.WorkingAgreement, proje
 		FirstReviewAt *time.Time
 	}
 
-	// This is a simplified query - in production, would need to join with PR reviews
+	// Query PRs with their first review time via repos mapping
 	err := db.All(&results,
 		dal.Select("pull_requests.id as pr_id, pull_requests.pull_request_key as pr_key, pull_requests.created_date, MIN(pull_request_comments.created_date) as first_review_at"),
 		dal.From(&code.PullRequest{}),
 		dal.Join("LEFT JOIN pull_request_comments ON pull_request_comments.pull_request_id = pull_requests.id"),
-		dal.Join("LEFT JOIN repo_mapping rm ON rm.row_id = pull_requests.base_repo_id AND rm.table = 'repos'"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = rm.cicd_scope_id"),
+		dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
 		dal.Where("pm.project_name = ? AND pull_requests.status = 'OPEN'", projectName),
 		dal.Groupby("pull_requests.id"),
 	)
@@ -200,8 +198,7 @@ func checkWIPLimit(db dal.Dal, agreement *models.WorkingAgreement, projectName s
 	err := db.All(&results,
 		dal.Select("pull_requests.author_id, pull_requests.author_name, COUNT(*) as open_count"),
 		dal.From(&code.PullRequest{}),
-		dal.Join("LEFT JOIN repo_mapping rm ON rm.row_id = pull_requests.base_repo_id AND rm.table = 'repos'"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = rm.cicd_scope_id"),
+		dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
 		dal.Where("pm.project_name = ? AND pull_requests.status = 'OPEN'", projectName),
 		dal.Groupby("pull_requests.author_id, pull_requests.author_name"),
 	)
@@ -323,24 +320,36 @@ func generateComplianceSummaries(db dal.Dal, projectName string, agreements []mo
 func getTotalChecked(db dal.Dal, agreement models.WorkingAgreement, projectName string) int {
 	switch agreement.AgreementType {
 	case models.AgreementPRMergeTime, models.AgreementReviewTurnaround:
+		// Count PRs linked to this project via repos
 		count, _ := db.Count(
 			dal.From(&code.PullRequest{}),
-			dal.Join("LEFT JOIN repo_mapping rm ON rm.row_id = pull_requests.base_repo_id AND rm.table = 'repos'"),
-			dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = rm.cicd_scope_id"),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
 			dal.Where("pm.project_name = ?", projectName),
 		)
 		return int(count)
-	case models.AgreementWIPLimit, models.AgreementIssuesInProgress:
-		// Count unique developers - simplified approach
+	case models.AgreementWIPLimit:
+		// Count unique PR authors for this project
 		var results []struct {
 			AuthorId string
 		}
 		_ = db.All(&results,
 			dal.Select("DISTINCT pull_requests.author_id"),
 			dal.From(&code.PullRequest{}),
-			dal.Join("LEFT JOIN repo_mapping rm ON rm.row_id = pull_requests.base_repo_id AND rm.table = 'repos'"),
-			dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = rm.cicd_scope_id"),
-			dal.Where("pm.project_name = ?", projectName),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+			dal.Where("pm.project_name = ? AND pull_requests.author_id IS NOT NULL AND pull_requests.author_id != ''", projectName),
+		)
+		return len(results)
+	case models.AgreementIssuesInProgress:
+		// Count unique issue assignees for this project
+		var results []struct {
+			AssigneeId string
+		}
+		_ = db.All(&results,
+			dal.Select("DISTINCT issues.assignee_id"),
+			dal.From(&ticket.Issue{}),
+			dal.Join("JOIN board_issues bi ON bi.issue_id = issues.id"),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bi.board_id"),
+			dal.Where("pm.project_name = ? AND issues.assignee_id IS NOT NULL AND issues.assignee_id != ''", projectName),
 		)
 		return len(results)
 	}

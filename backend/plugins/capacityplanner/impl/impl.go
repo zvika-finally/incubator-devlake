@@ -51,7 +51,7 @@ func (p CapacityPlanner) Init(basicRes context.BasicRes) errors.Error {
 }
 
 func (p CapacityPlanner) Description() string {
-	return "Calculate team velocity and forecast initiative completion dates"
+	return "Calculate team velocity (Scrum) or throughput (Kanban) and forecast initiative completion dates"
 }
 
 func (p CapacityPlanner) Dashboards() []plugin.GrafanaDashboard {
@@ -67,10 +67,10 @@ func (p CapacityPlanner) SvgIcon() string {
 func (p CapacityPlanner) RequiredDataEntities() (data []map[string]interface{}, err errors.Error) {
 	return []map[string]interface{}{
 		{
-			"model": "issues",
+			"model": "issues", // Required for both Kanban and Scrum
 		},
 		{
-			"model": "sprints",
+			"model": "sprints", // Optional - only needed for Scrum velocity metrics
 		},
 	}, nil
 }
@@ -98,7 +98,7 @@ func (p CapacityPlanner) IsProjectMetric() bool {
 }
 
 func (p CapacityPlanner) RunAfter() ([]string, errors.Error) {
-	return []string{}, nil // No dependencies - reads only from domain tables (issues, sprints, boards)
+	return []string{}, nil // No dependencies - reads from domain tables (issues, sprints, boards, pull_requests)
 }
 
 func (p CapacityPlanner) Settings() interface{} {
@@ -107,9 +107,12 @@ func (p CapacityPlanner) Settings() interface{} {
 
 func (p CapacityPlanner) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
-		tasks.CalculateVelocityMeta,
-		tasks.ForecastCompletionMeta,
-		tasks.MonteCarloForecastMeta,
+		tasks.CalculateVelocityMeta,           // Sprint-based velocity (Scrum)
+		tasks.CalculateThroughputMeta,         // Time-based throughput (Kanban)
+		tasks.ForecastCompletionKanbanMeta,    // Kanban: issue-count forecasting
+		tasks.MonteCarloForecastKanbanMeta,    // Kanban: Monte Carlo with throughput
+		tasks.ForecastCompletionMeta,          // Scrum: story-point forecasting
+		tasks.MonteCarloForecastMeta,          // Scrum: Monte Carlo with velocity
 		tasks.BrooksLawModelMeta,
 		tasks.CalculateROIMeta,
 		tasks.CalculateFlowEfficiencyMeta,
@@ -174,9 +177,10 @@ func (p CapacityPlanner) MakeMetricPluginPipelinePlanV200(projectName string, op
 					"projectName": projectName,
 				},
 				Subtasks: []string{
-					"calculateVelocity",
-					"forecastCompletion",
-					"monteCarloForecast",
+					"calculateThroughput",           // Kanban: throughput metrics
+					"forecastCompletionKanban",      // Kanban: issue-based forecasting
+					"monteCarloForecastKanban",      // Kanban: probabilistic forecasts
+					"calculateVelocity",             // Scrum: sprint-based (optional)
 					"brooksLawModel",
 					"calculateROI",
 					"calculateFlowEfficiency",

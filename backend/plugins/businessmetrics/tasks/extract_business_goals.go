@@ -43,81 +43,148 @@ func ExtractBusinessGoals(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting extractBusinessGoals for project: %s", data.Options.ProjectName)
 
-	// Query all Epics for this project
-	var epics []ticket.Issue
-	clauses := []dal.Clause{
+	processedCount := 0
+
+	// Query Epics from the raw Jira data (_tool_jira_issues) where original type = 'Epic'
+	// DevLake maps Epic -> REQUIREMENT in the domain layer, so we need to check the tool layer
+	var jiraEpics []struct {
+		IssueKey  string
+		Summary   string
+		Status    string
+		Labels    string
+		CreatedAt *time.Time
+	}
+
+	err := db.All(&jiraEpics,
+		dal.Select("ji.issue_key, ji.summary, ji.std_status as status, ji.labels, ji.created_date as created_at"),
+		dal.From("_tool_jira_issues ji"),
+		dal.Join("LEFT JOIN _tool_jira_board_issues jbi ON jbi.issue_id = ji.issue_id AND jbi.connection_id = ji.connection_id"),
+		dal.Join("LEFT JOIN _tool_jira_boards jb ON jb.board_id = jbi.board_id AND jb.connection_id = jbi.connection_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = CONCAT('jira:JiraBoard:', ji.connection_id, ':', jb.board_id)"),
+		dal.Where("pm.project_name = ? AND ji.type = ?", data.Options.ProjectName, "Epic"),
+	)
+	if err != nil {
+		logger.Error(err, "failed to query epics from tool layer")
+	} else {
+		logger.Info("Found %d Epics from Jira tool layer", len(jiraEpics))
+
+		for _, epic := range jiraEpics {
+			initiative := &models.BusinessInitiative{
+				Id:          "epic:" + epic.IssueKey,
+				Name:        epic.Summary,
+				JiraEpicKey: epic.IssueKey,
+				Status:      mapStatus(epic.Status),
+				CreatedAt:   time.Now(),
+			}
+
+			if epic.Labels != "" {
+				parseLabelsIntoInitiative(initiative, epic.Labels, data)
+			}
+
+			if err := db.CreateOrUpdate(initiative); err != nil {
+				logger.Error(err, "failed to save initiative for epic %s", epic.IssueKey)
+				continue
+			}
+			processedCount++
+		}
+	}
+
+	// Also extract unique epic_key references from issues for Epics that weren't directly synced
+	// but are referenced by other issues
+	var epicRefs []struct {
+		EpicKey    string
+		IssueCount int
+	}
+	err = db.All(&epicRefs,
+		dal.Select("issues.epic_key, COUNT(*) as issue_count"),
 		dal.From(&ticket.Issue{}),
 		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
-		dal.Where("pm.project_name = ? AND issues.type = ?", data.Options.ProjectName, "Epic"),
-	}
-
-	err := db.All(&epics, clauses...)
+		dal.Join("LEFT JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND issues.epic_key IS NOT NULL AND issues.epic_key != ''", data.Options.ProjectName),
+		dal.Groupby("issues.epic_key"),
+	)
 	if err != nil {
-		return errors.Default.Wrap(err, "failed to query epics")
-	}
+		logger.Error(err, "failed to query epic references")
+	} else {
+		logger.Info("Found %d unique epic_key references from issues", len(epicRefs))
 
-	logger.Info("Found %d Epics to process", len(epics))
+		for _, ref := range epicRefs {
+			// Check if we already have this initiative from the direct Epic query
+			existingId := "epic:" + ref.EpicKey
+			var existing models.BusinessInitiative
+			findErr := db.First(&existing, dal.Where("id = ?", existingId))
+			if findErr == nil {
+				// Already exists, skip
+				continue
+			}
 
-	// Process each Epic
-	for _, epic := range epics {
-		initiative := &models.BusinessInitiative{
-			Id:            epic.Id,
-			Name:          epic.Title,
-			JiraEpicKey:   epic.IssueKey,
-			Status:        mapStatus(epic.Status),
-			CreatedAt:     time.Now(),
-		}
+			initiative := &models.BusinessInitiative{
+				Id:          existingId,
+				Name:        ref.EpicKey, // Use key as name since we don't have the title
+				JiraEpicKey: ref.EpicKey,
+				Status:      "active", // Default to active since issues reference it
+				CreatedAt:   time.Now(),
+			}
 
-		// Get labels from the tool layer (Jira issue)
-		var labels string
-		_ = db.First(&labels,
-			dal.Select("labels"),
-			dal.From("_tool_jira_issues"),
-			dal.Where("issue_key = ?", epic.IssueKey),
-		)
-
-		// Parse labels for investment category and other metadata
-		if labels != "" {
-			labelList := strings.Split(labels, ",")
-			for _, label := range labelList {
-				label = strings.TrimSpace(label)
-
-				// Check for investment category label
-				if strings.HasPrefix(label, data.Options.InvestmentLabelPrefix) {
-					initiative.InvestmentCategory = strings.TrimPrefix(label, data.Options.InvestmentLabelPrefix)
-				}
-
-				// Check for stage label
-				if strings.HasPrefix(label, data.Options.StageLabelPrefix) {
-					initiative.DevelopmentStage = strings.TrimPrefix(label, data.Options.StageLabelPrefix)
-				}
-
-				// Check for goal type patterns
-				if strings.HasPrefix(label, "goal:") {
-					initiative.GoalType = strings.TrimPrefix(label, "goal:")
-				}
-
-				// Check for fiscal quarter patterns (e.g., "q1-2026", "2026-q1")
-				if strings.Contains(strings.ToLower(label), "q1") ||
-				   strings.Contains(strings.ToLower(label), "q2") ||
-				   strings.Contains(strings.ToLower(label), "q3") ||
-				   strings.Contains(strings.ToLower(label), "q4") {
-					initiative.FiscalQuarter = label
+			// Try to get details from _tool_jira_issues if the epic exists there
+			var epicDetails struct {
+				Summary string
+				Status  string
+				Labels  string
+			}
+			detailErr := db.First(&epicDetails,
+				dal.Select("summary, std_status as status, labels"),
+				dal.From("_tool_jira_issues"),
+				dal.Where("issue_key = ?", ref.EpicKey),
+			)
+			if detailErr == nil && epicDetails.Summary != "" {
+				initiative.Name = epicDetails.Summary
+				initiative.Status = mapStatus(epicDetails.Status)
+				if epicDetails.Labels != "" {
+					parseLabelsIntoInitiative(initiative, epicDetails.Labels, data)
 				}
 			}
-		}
 
-		// Save or update the initiative
-		err = db.CreateOrUpdate(initiative)
-		if err != nil {
-			logger.Error(err, "failed to save initiative for epic %s", epic.IssueKey)
-			continue
+			if err := db.CreateOrUpdate(initiative); err != nil {
+				logger.Error(err, "failed to save initiative for epic reference %s", ref.EpicKey)
+				continue
+			}
+			processedCount++
 		}
 	}
 
-	logger.Info("Completed extractBusinessGoals: processed %d initiatives", len(epics))
+	logger.Info("Completed extractBusinessGoals: processed %d initiatives", processedCount)
 	return nil
+}
+
+func parseLabelsIntoInitiative(initiative *models.BusinessInitiative, labels string, data *BusinessMetricsTaskData) {
+	labelList := strings.Split(labels, ",")
+	for _, label := range labelList {
+		label = strings.TrimSpace(label)
+
+		// Check for investment category label
+		if strings.HasPrefix(label, data.Options.InvestmentLabelPrefix) {
+			initiative.InvestmentCategory = strings.TrimPrefix(label, data.Options.InvestmentLabelPrefix)
+		}
+
+		// Check for stage label
+		if strings.HasPrefix(label, data.Options.StageLabelPrefix) {
+			initiative.DevelopmentStage = strings.TrimPrefix(label, data.Options.StageLabelPrefix)
+		}
+
+		// Check for goal type patterns
+		if strings.HasPrefix(label, "goal:") {
+			initiative.GoalType = strings.TrimPrefix(label, "goal:")
+		}
+
+		// Check for fiscal quarter patterns (e.g., "q1-2026", "2026-q1")
+		if strings.Contains(strings.ToLower(label), "q1") ||
+			strings.Contains(strings.ToLower(label), "q2") ||
+			strings.Contains(strings.ToLower(label), "q3") ||
+			strings.Contains(strings.ToLower(label), "q4") {
+			initiative.FiscalQuarter = label
+		}
+	}
 }
 
 func mapStatus(jiraStatus string) string {

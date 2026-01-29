@@ -20,7 +20,6 @@ package tasks
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
@@ -60,8 +59,12 @@ var postImplLabels = []string{
 
 // Issue types that indicate different stages
 var preliminaryTypes = []string{"Spike", "Research", "Discovery"}
-var postImplTypes = []string{"Bug", "Defect", "Hotfix", "Support"}
-var developmentTypes = []string{"Story", "Feature", "Enhancement", "Epic"}
+var postImplTypes = []string{"Bug", "Defect", "Hotfix", "Support", "Incident"}
+var developmentTypes = []string{
+	"Story", "Feature", "Enhancement", "Epic",
+	"Requirement", "REQUIREMENT", "Task", "Sub-task", "Subtask",
+	"Improvement", "New Feature", "Change Request",
+}
 
 func CategorizeCapitalization(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
@@ -117,35 +120,14 @@ func CategorizeCapitalization(taskCtx plugin.SubTaskContext) errors.Error {
 		}
 	}
 
-	// Create monthly summary
-	if len(allocations) > 0 && data.Options.FiscalMonth != "" {
-		summary := &models.MonthlyCostSummary{
-			Id:                fmt.Sprintf("%s:%s", data.Options.ProjectName, data.Options.FiscalMonth),
-			ProjectName:       data.Options.ProjectName,
-			FiscalMonth:       data.Options.FiscalMonth,
-			TotalCost:         totalCost,
-			CapitalizableCost: capitalizableCost,
-			ExpenseCost:       expenseCost,
-			PreliminaryCost:   preliminaryCost,
-			DevelopmentCost:   developmentCost,
-			PostImplCost:      postImplCost,
-			CalculatedAt:      time.Now(),
-		}
-
-		if totalCost > 0 {
-			summary.CapitalizationRate = capitalizableCost * 100.0 / totalCost
-		}
-
-		if err := db.CreateOrUpdate(summary); err != nil {
-			logger.Error(err, "failed to save monthly summary")
-		}
-
-		logger.Info("Cost Summary for %s: Total=$%.2f, Capitalizable=$%.2f (%.1f%%), Expense=$%.2f",
-			data.Options.FiscalMonth, totalCost, capitalizableCost,
-			summary.CapitalizationRate, expenseCost)
+	// Regenerate all monthly summaries now that categorization is complete
+	// This recalculates capitalizable/expense costs based on updated ProjectPhase values
+	if err := generateMonthlySummaries(db, data.Options.ProjectName, logger); err != nil {
+		return errors.Default.Wrap(err, "failed to regenerate monthly summaries after categorization")
 	}
 
-	logger.Info("Completed categorizeCapitalization")
+	logger.Info("Completed categorizeCapitalization: Total=$%.2f, Capitalizable=$%.2f, Expense=$%.2f",
+		totalCost, capitalizableCost, expenseCost)
 	return nil
 }
 

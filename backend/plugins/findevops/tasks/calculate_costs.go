@@ -102,26 +102,32 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 		// Check if issue is unallocated (no epic/initiative)
 		isUnallocated := checkIsUnallocated(db, issue)
 
+		// Get initiative/epic ID for attribution
+		initiativeId := getInitiativeId(db, issue)
+
 		// Create cost allocation record
+		// Note: ProjectPhase, CapitalizationCategory, and CategoryReason
+		// are set by the categorizeCapitalization subtask which runs after this
 		allocation := &models.CostAllocation{
 			Id:               fmt.Sprintf("%s:%s", issue.Id, fiscalMonth),
-			IssueId:          issue.Id,
-			FiscalMonth:      fiscalMonth,
-			DeveloperId:      issue.AssigneeId,
-			HoursWorked:      hoursWorked,
-			HourlyRate:       hourlyRate,
-			DeveloperCost:    hoursWorked * hourlyRate,
-			TotalCost:        hoursWorked * hourlyRate,
-			IssueType:        issue.Type,
-			IssueLabels:      labels,
+			InitiativeId:    initiativeId,
+			IssueId:         issue.Id,
+			FiscalMonth:     fiscalMonth,
+			DeveloperId:     issue.AssigneeId,
+			HoursWorked:     hoursWorked,
+			HourlyRate:      hourlyRate,
+			DeveloperCost:   hoursWorked * hourlyRate,
+			TotalCost:       hoursWorked * hourlyRate,
+			IssueType:       issue.Type,
+			IssueLabels:     labels,
 			EstimatedMinutes: estimatedMinutes,
-			ActualMinutes:    actualMinutes,
-			VarianceMinutes:  varianceMinutes,
-			VariancePercent:  variancePercent,
-			OverBudget:       overBudget,
-			IsUnallocated:    isUnallocated,
-			CalculatedAt:     time.Now(),
-			CreatedAt:        time.Now(),
+			ActualMinutes:   actualMinutes,
+			VarianceMinutes: varianceMinutes,
+			VariancePercent: variancePercent,
+			OverBudget:      overBudget,
+			IsUnallocated:   isUnallocated,
+			CalculatedAt:    time.Now(),
+			CreatedAt:       time.Now(),
 		}
 
 		if err := db.CreateOrUpdate(allocation); err != nil {
@@ -210,6 +216,19 @@ func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string,
 	for _, alloc := range allocations {
 		summary.TotalCost += alloc.TotalCost
 
+		// Aggregate costs by ASC 350-40 project phase
+		switch alloc.ProjectPhase {
+		case "preliminary":
+			summary.PreliminaryCost += alloc.TotalCost
+			summary.ExpenseCost += alloc.TotalCost
+		case "development":
+			summary.DevelopmentCost += alloc.TotalCost
+			summary.CapitalizableCost += alloc.TotalCost
+		case "post_implementation":
+			summary.PostImplCost += alloc.TotalCost
+			summary.ExpenseCost += alloc.TotalCost
+		}
+
 		// Track unallocated costs
 		if alloc.IsUnallocated {
 			summary.UnallocatedCost += alloc.TotalCost
@@ -222,6 +241,11 @@ func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string,
 		if alloc.OverBudget {
 			summary.OverBudgetIssueCount++
 		}
+	}
+
+	// Calculate capitalization rate
+	if summary.TotalCost > 0 {
+		summary.CapitalizationRate = summary.CapitalizableCost / summary.TotalCost * 100
 	}
 
 	// Calculate unallocated percentage
@@ -296,3 +320,26 @@ func getFiscalMonth(issue ticket.Issue) string {
 
 	return refDate.Format("2006-01")
 }
+
+// getInitiativeId retrieves the epic or parent issue ID for cost attribution
+func getInitiativeId(db dal.Dal, issue ticket.Issue) string {
+	// Try to get epic_key from Jira issues
+	var epicKey string
+	_ = db.First(&epicKey,
+		dal.Select("epic_key"),
+		dal.From("_tool_jira_issues"),
+		dal.Where("issue_key = ?", issue.IssueKey),
+	)
+
+	if epicKey != "" {
+		return epicKey
+	}
+
+	// Fall back to parent_issue_id from domain layer
+	if issue.ParentIssueId != "" {
+		return issue.ParentIssueId
+	}
+
+	return ""
+}
+
