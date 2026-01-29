@@ -18,24 +18,15 @@ limitations under the License.
 package migrationscripts
 
 import (
-	"github.com/apache/incubator-devlake/core/context"
-	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/plugin"
 )
 
-type addScopeConfigIdToProjects struct{}
-
-func (*addScopeConfigIdToProjects) Up(basicRes context.BasicRes) errors.Error {
-	db := basicRes.GetDal()
-	return db.Exec("ALTER TABLE _tool_testmo_projects ADD COLUMN scope_config_id bigint NOT NULL DEFAULT 0")
+// All return all the migration scripts
+func All() []plugin.MigrationScript {
+	return []plugin.MigrationScript{
+		new(initSchema),
+		new(addExplicitSignals),
+		new(addAIImpact),
+		new(addSettings),
+	}
 }
-
-func (*addScopeConfigIdToProjects) Version() uint64 {
-	return 20250629000001
-}
-
-func (*addScopeConfigIdToProjects) Name() string {
-	return "Add scope_config_id to testmo projects"
-}
-
-var _ plugin.MigrationScript = (*addScopeConfigIdToProjects)(nil)

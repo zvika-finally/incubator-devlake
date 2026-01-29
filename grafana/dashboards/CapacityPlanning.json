@@ -1,0 +1,240 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "panels": [
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "# Capacity Planning & Forecasting\n\n## Monte Carlo Simulation\nRuns **1000 iterations** with velocity variance (default 25%) to produce probabilistic completion forecasts.\n\n```\nfor each iteration:\n  remaining = total_points - completed_points\n  days = 0\n  while remaining > 0:\n    weekly_velocity = gaussian_random(avg_velocity, stddev × variance)\n    remaining -= max(1, weekly_velocity)\n    days += 7\n  store(completion_days)\n\nPercentile = data[min(len × p/100, len-1)]  // Nearest-rank method\n```\n\n## Brooks's Law Model\n**Communication overhead:** `channels = n × (n-1) / 2`\n\n| Team Change | Impact |\n|------------|--------|\n| Hiring (+N) | New hires at 50% productivity during 8-week ramp-up |\n| Reduction (-N) | Linear capacity reduction |\n| Overhead | `1 - (channel_delta / (current_channels + 1)) × 0.1` |\n\n## ROI Calculation\n```\nDirect Benefit = hours_saved/week × team_size × 52 × hourly_cost\nProductivity Benefit = team_hours × (gain%/100) × hourly_cost  \nQuality Benefit = team_hours × 20% × (improvement%/100) × hourly_cost\nPayback Months = (annual_cost / annual_benefit) × 12\n3-Year ROI = ((benefit×3 - cost×3) / cost×3) × 100\n```",
+        "mode": "markdown"
+      },
+      "title": "Algorithms & Formulas",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "id": 2,
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(story_points_completed) as avg_velocity FROM team_velocities",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Avg Sprint Velocity (Story Points)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "id": 3,
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(avg_cycle_time_hours) as avg_cycle FROM team_velocities",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Avg Cycle Time (Hours)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 6 },
+      "id": 4,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as forecasts FROM monte_carlo_forecasts",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Monte Carlo Forecasts",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "fixedColor": "green", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 6 },
+      "id": 30,
+      "targets": [
+        {
+          "rawSql": "SELECT total_annual_benefit FROM investment_rois WHERE investment_type = 'ai_tools' ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "AI Tools Annual Benefit",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 5,
+      "targets": [
+        {
+          "rawSql": "SELECT sprint_name, story_points_completed, issues_completed FROM team_velocities ORDER BY sprint_end_date DESC LIMIT 10",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Recent Sprint Velocities",
+      "type": "barchart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT confidence_level, COUNT(*) as count FROM initiative_forecasts GROUP BY confidence_level",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Forecasts by Confidence Level",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 20 },
+      "id": 10,
+      "options": {
+        "content": "## Monte Carlo Probabilistic Forecasts\n**P50** = 50% chance of completion by this date | **P90** = 90% confidence (recommended for planning)",
+        "mode": "markdown"
+      },
+      "title": "Monte Carlo Explanation",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 23 },
+      "id": 11,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "rawSql": "SELECT mc.initiative_id, mc.simulation_count, mc.velocity_variance, mc.p50_sprints, mc.p75_sprints, mc.p90_sprints, mc.p95_sprints, DATE(mc.p50_date) as p50_date, DATE(mc.p90_date) as p90_date, mc.earliest_days, mc.latest_days, DATE(mc.calculated_at) as calculated FROM monte_carlo_forecasts mc ORDER BY mc.calculated_at DESC LIMIT 20",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Monte Carlo Forecasts (Percentile Completion Dates)",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 31 },
+      "id": 12,
+      "options": {
+        "content": "## Brooks's Law Capacity Modeling\n**Key insight:** Adding people to a late project makes it later. Communication overhead grows quadratically: `n×(n-1)/2`",
+        "mode": "markdown"
+      },
+      "title": "Brooks's Law Explanation",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 34 },
+      "id": 13,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "rawSql": "SELECT project_name, scenario_name, current_team_size, team_size_delta, ramp_up_weeks, current_channels, new_channels, overhead_factor, productivity_factor, projected_deploy_delta, projected_lead_delta, DATE(calculated_at) as calculated FROM capacity_models ORDER BY calculated_at DESC LIMIT 20",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Brooks's Law Scenarios (Team Size Impact)",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 42 },
+      "id": 14,
+      "options": {
+        "content": "## Investment ROI Analysis\n**Constants:** Hourly cost = $75 | Bug fix time = 20% | AI hours saved = 2/week/user | AI quality improvement = 5%",
+        "mode": "markdown"
+      },
+      "title": "ROI Calculation Constants",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 45 },
+      "id": 31,
+      "fieldConfig": {
+        "defaults": { "unit": "monthsago", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 6 },
+            { "color": "red", "value": 12 }
+          ]}
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT payback_months FROM investment_rois WHERE investment_type = 'ai_tools' ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "AI Tools Payback Period",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 45 },
+      "id": 32,
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 100 },
+            { "color": "green", "value": 500 }
+          ]}
+        }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT three_year_roi FROM investment_rois WHERE investment_type = 'ai_tools' ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "AI Tools 3-Year ROI",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 45 },
+      "id": 33,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "rawSql": "SELECT investment_name, investment_type, upfront_cost, monthly_cost, annual_cost, direct_benefit, productivity_benefit, quality_benefit, total_annual_benefit, payback_months, three_year_roi FROM investment_rois ORDER BY calculated_at DESC LIMIT 10",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Investment ROI Details",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 51 },
+      "id": 7,
+      "targets": [
+        {
+          "rawSql": "SELECT initiative_name, total_story_points, completed_story_points, remaining_story_points, percent_complete, estimated_sprints, DATE(estimated_completion_date) as estimated_completion, confidence_level FROM initiative_forecasts ORDER BY estimated_completion_date",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Initiative Completion Forecasts (Deterministic)",
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["capacity", "velocity", "forecasting", "Monte Carlo", "Brooks Law", "ROI"],
+  "time": { "from": "now-90d", "to": "now" },
+  "title": "Capacity Planning & Forecasting",
+  "uid": "capacity-planning-dashboard",
+  "version": 2
+}

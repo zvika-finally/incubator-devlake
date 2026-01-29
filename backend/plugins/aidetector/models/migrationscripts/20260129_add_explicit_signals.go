@@ -23,19 +23,38 @@ import (
 	"github.com/apache/incubator-devlake/core/plugin"
 )
 
-type addScopeConfigIdToProjects struct{}
+var _ plugin.MigrationScript = (*addExplicitSignals)(nil)
 
-func (*addScopeConfigIdToProjects) Up(basicRes context.BasicRes) errors.Error {
+type addExplicitSignals struct{}
+
+func (script *addExplicitSignals) Up(basicRes context.BasicRes) errors.Error {
 	db := basicRes.GetDal()
-	return db.Exec("ALTER TABLE _tool_testmo_projects ADD COLUMN scope_config_id bigint NOT NULL DEFAULT 0")
+
+	// Add explicit signal columns to ai_usage_signals table
+	err := db.AutoMigrate(&aiUsageSignalExplicit20260129{})
+	if err != nil {
+		return errors.Default.Wrap(err, "failed to add explicit signal columns")
+	}
+
+	return nil
 }
 
-func (*addScopeConfigIdToProjects) Version() uint64 {
-	return 20250629000001
+func (script *addExplicitSignals) Version() uint64 {
+	return 20260129000003
 }
 
-func (*addScopeConfigIdToProjects) Name() string {
-	return "Add scope_config_id to testmo projects"
+func (script *addExplicitSignals) Name() string {
+	return "aidetector: add explicit AI tool detection columns"
 }
 
-var _ plugin.MigrationScript = (*addScopeConfigIdToProjects)(nil)
+// Model with new columns for migration
+type aiUsageSignalExplicit20260129 struct {
+	ExplicitToolDetected bool   `gorm:"type:bool"`
+	ExplicitTools        string `gorm:"type:varchar(255)"`
+	ExplicitPatterns     string `gorm:"type:text"`
+	ExplicitSignalScore  int    `gorm:"type:int"`
+}
+
+func (aiUsageSignalExplicit20260129) TableName() string {
+	return "ai_usage_signals"
+}

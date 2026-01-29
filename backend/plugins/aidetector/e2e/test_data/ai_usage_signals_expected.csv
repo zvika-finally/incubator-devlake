@@ -1,0 +1,6 @@
+id,pull_request_id,explicit_tool_detected,explicit_tools,explicit_signal_score,detected_tool
+pr-claude-1,pr-claude-1,true,claude_code,50,claude_code
+pr-copilot-1,pr-copilot-1,true,github_copilot,50,github_copilot
+pr-cursor-1,pr-cursor-1,true,cursor,50,cursor
+pr-normal-1,pr-normal-1,false,,0,unknown
+pr-coderabbit-1,pr-coderabbit-1,true,coderabbit,50,coderabbit

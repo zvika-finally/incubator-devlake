@@ -15,27 +15,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package migrationscripts
+package main
 
 import (
-	"github.com/apache/incubator-devlake/core/context"
-	"github.com/apache/incubator-devlake/core/errors"
-	"github.com/apache/incubator-devlake/core/plugin"
+	"github.com/apache/incubator-devlake/core/runner"
+	"github.com/apache/incubator-devlake/plugins/aidetector/impl"
+	"github.com/spf13/cobra"
 )
 
-type addScopeConfigIdToProjects struct{}
+// PluginEntry exports for Framework to search and load
+var PluginEntry impl.AIDetector //nolint
 
-func (*addScopeConfigIdToProjects) Up(basicRes context.BasicRes) errors.Error {
-	db := basicRes.GetDal()
-	return db.Exec("ALTER TABLE _tool_testmo_projects ADD COLUMN scope_config_id bigint NOT NULL DEFAULT 0")
+// standalone mode for debugging
+func main() {
+	cmd := &cobra.Command{Use: "aidetector"}
+
+	projectName := cmd.Flags().StringP("projectName", "p", "", "project name")
+	timeAfter := cmd.Flags().StringP("timeAfter", "a", "", "collect data that are created after specified time, ie 2006-01-02T15:04:05Z")
+
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		runner.DirectRun(cmd, args, PluginEntry, map[string]interface{}{
+			"projectName": *projectName,
+		}, *timeAfter)
+	}
+	runner.RunCmd(cmd)
 }
-
-func (*addScopeConfigIdToProjects) Version() uint64 {
-	return 20250629000001
-}
-
-func (*addScopeConfigIdToProjects) Name() string {
-	return "Add scope_config_id to testmo projects"
-}
-
-var _ plugin.MigrationScript = (*addScopeConfigIdToProjects)(nil)

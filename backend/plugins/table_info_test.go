@@ -22,16 +22,20 @@ import (
 
 	"github.com/apache/incubator-devlake/helpers/unithelper"
 	ae "github.com/apache/incubator-devlake/plugins/ae/impl"
+	aidetector "github.com/apache/incubator-devlake/plugins/aidetector/impl"
 	argocd "github.com/apache/incubator-devlake/plugins/argocd/impl"
 	azuredevops "github.com/apache/incubator-devlake/plugins/azuredevops_go/impl"
 	bamboo "github.com/apache/incubator-devlake/plugins/bamboo/impl"
 	bitbucket "github.com/apache/incubator-devlake/plugins/bitbucket/impl"
 	bitbucket_server "github.com/apache/incubator-devlake/plugins/bitbucket_server/impl"
+	businessmetrics "github.com/apache/incubator-devlake/plugins/businessmetrics/impl"
+	capacityplanner "github.com/apache/incubator-devlake/plugins/capacityplanner/impl"
 	circleci "github.com/apache/incubator-devlake/plugins/circleci/impl"
 	customize "github.com/apache/incubator-devlake/plugins/customize/impl"
 	dbt "github.com/apache/incubator-devlake/plugins/dbt/impl"
 	dora "github.com/apache/incubator-devlake/plugins/dora/impl"
 	feishu "github.com/apache/incubator-devlake/plugins/feishu/impl"
+	findevops "github.com/apache/incubator-devlake/plugins/findevops/impl"
 	gitee "github.com/apache/incubator-devlake/plugins/gitee/impl"
 	gitextractor "github.com/apache/incubator-devlake/plugins/gitextractor/impl"
 	github "github.com/apache/incubator-devlake/plugins/github/impl"
@@ -64,15 +68,19 @@ func Test_GetPluginTablesInfo(t *testing.T) {
 		ValidatePluginCount: true,
 	})
 	checker.FeedIn("ae/models", ae.AE{}.GetTablesInfo)
+	checker.FeedIn("aidetector/models", aidetector.AIDetector{}.GetTablesInfo)
 	checker.FeedIn("azuredevops_go/models", azuredevops.Azuredevops{}.GetTablesInfo)
 	checker.FeedIn("bamboo/models", bamboo.Bamboo{}.GetTablesInfo)
 	checker.FeedIn("bitbucket/models", bitbucket.Bitbucket{}.GetTablesInfo)
+	checker.FeedIn("businessmetrics/models", businessmetrics.BusinessMetrics{}.GetTablesInfo)
+	checker.FeedIn("capacityplanner/models", capacityplanner.CapacityPlanner{}.GetTablesInfo)
 	checker.FeedIn("bitbucket_server/models", bitbucket_server.BitbucketServer{}.GetTablesInfo)
 	checker.FeedIn("argocd/models", argocd.ArgoCD{}.GetTablesInfo)
 	checker.FeedIn("customize/models", customize.Customize{}.GetTablesInfo)
 	checker.FeedIn("dbt", dbt.Dbt{}.GetTablesInfo)
 	checker.FeedIn("dora/models", dora.Dora{}.GetTablesInfo)
 	checker.FeedIn("feishu/models", feishu.Feishu{}.GetTablesInfo)
+	checker.FeedIn("findevops/models", findevops.FinDevOps{}.GetTablesInfo)
 	checker.FeedIn("gitee/models", gitee.Gitee{}.GetTablesInfo)
 	checker.FeedIn("gitextractor/models", gitextractor.GitExtractor{}.GetTablesInfo)
 	checker.FeedIn("github/models", github.Github{}.GetTablesInfo)

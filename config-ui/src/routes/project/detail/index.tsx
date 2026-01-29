@@ -31,6 +31,7 @@ import { BlueprintDetail, FromEnum } from '@/routes';
 
 import { WebhooksPanel } from './webhooks-panel';
 import { SettingsPanel } from './settings-panel';
+import { MetricSettingsPanel } from './metric-settings-panel';
 import * as S from './styled';
 
 const brandName = import.meta.env.DEVLAKE_BRAND_NAME ?? 'DevLake';
@@ -98,6 +99,11 @@ export const ProjectDetailPage = () => {
               key: 'webhook',
               label: 'Webhooks',
               children: <WebhooksPanel project={data} onRefresh={handleRefresh} />,
+            },
+            {
+              key: 'metric-settings',
+              label: 'Metric Settings',
+              children: <MetricSettingsPanel project={data} />,
             },
             {
               key: 'settings',

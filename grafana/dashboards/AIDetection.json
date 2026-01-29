@@ -1,0 +1,317 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "# AI-Assisted Development Detection\n\nThis dashboard analyzes code patterns to identify pull requests that may have used AI coding assistants.\n\n## Detection Methods\n\n### Explicit Signals (HIGH confidence, max 50 points)\n- **Git trailers:** `Co-Authored-By: Claude`, `Co-Authored-By: GitHub Copilot`\n- **PR body markers:** `Generated with [Claude Code]`, `[Cursor]`, `[Copilot]`\n- **Email domains:** `@anthropic.com`, `@copilot-generated`\n\n### Behavioral Signals (max 50 points combined)\n| Signal | Max Score | Detection Method |\n|--------|-----------|------------------|\n| Rapid Commits | 30 | Avg time between commits < 5 min |\n| PR Size | 20 | Additions > 500 lines per PR |\n| Lines/Minute | 25 | > 50 lines/min production rate |\n| Duplication | 15 | Code pattern analysis |\n| Generic Messages | 10 | Vague commit message detection |\n\n### Confidence Score = Explicit Score + Behavioral Scores (0-100)",
+        "mode": "markdown"
+      },
+      "title": "Detection Algorithms",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "purple", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 4, "x": 0, "y": 5 },
+      "id": 10,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as explicit_detections FROM ai_usage_signals WHERE explicit_tool_detected = true",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Explicit AI Markers Found",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "orange", "value": 60 },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 5, "x": 4, "y": 5 },
+      "id": 2,
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(ai_confidence_score) as avg_confidence FROM ai_usage_signals WHERE ai_confidence_score > 0",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Avg AI Confidence Score",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 6, "w": 5, "x": 9, "y": 5 },
+      "id": 3,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as total_prs FROM ai_usage_signals",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Total PRs Analyzed",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 5, "x": 14, "y": 5 },
+      "id": 4,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as high_confidence FROM ai_usage_signals WHERE ai_confidence_score >= 70",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "High Confidence (≥70%)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 5, "x": 19, "y": 5 },
+      "id": 5,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as medium_confidence FROM ai_usage_signals WHERE ai_confidence_score >= 40 AND ai_confidence_score < 70",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Medium Confidence (40-69%)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 11 },
+      "id": 11,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Explicit Score" }]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT s.explicit_tools as ai_tool, pr.title as pr_title, pr.author_name, s.explicit_signal_score, s.ai_confidence_score as total_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id WHERE s.explicit_tool_detected = true ORDER BY s.detected_at DESC LIMIT 25",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "PRs with Explicit AI Tool Markers",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 11 },
+      "id": 12,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "right" },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(NULLIF(detected_tool, ''), 'unknown') as tool, COUNT(*) as count FROM ai_usage_signals WHERE ai_confidence_score >= 40 GROUP BY detected_tool ORDER BY count DESC",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "AI Tools Detected (Claude, Copilot, Cursor, etc.)",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 19 },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "ai_confidence_score" }]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT s.id, pr.title as pr_title, pr.author_name, s.detected_tool, s.explicit_tool_detected as explicit, s.explicit_signal_score, s.rapid_commit_score, s.pr_size_score, s.lines_per_minute_score, s.ai_confidence_score, s.velocity_multiplier, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id ORDER BY s.ai_confidence_score DESC LIMIT 50",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "All PRs by AI Confidence Score (with signal breakdown)",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 29 },
+      "id": 20,
+      "options": {
+        "content": "## AI Impact Analysis\n\n**Methodology:** Compare 90-day baseline period (before AI adoption) with 30-day current period (after adoption).\n\n**Change Formula:** `((current - baseline) / baseline) × 100` — Sign inverted for time metrics (faster = positive)",
+        "mode": "markdown"
+      },
+      "title": "AI Impact Methodology",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 32 },
+      "id": 21,
+      "targets": [
+        {
+          "rawSql": "SELECT pr_throughput_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "PR Throughput Change (higher = better)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 32 },
+      "id": 22,
+      "targets": [
+        {
+          "rawSql": "SELECT review_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Review Time Change (faster = positive)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 32 },
+      "id": 23,
+      "targets": [
+        {
+          "rawSql": "SELECT lead_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Lead Time Change (faster = positive)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "id": 7,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT CASE WHEN explicit_tool_detected = true THEN 'Explicit (Confirmed)' WHEN ai_confidence_score >= 70 THEN 'High (≥70%)' WHEN ai_confidence_score >= 40 THEN 'Medium (40-69%)' ELSE 'Low (<40%)' END as confidence_level, COUNT(*) as count FROM ai_usage_signals GROUP BY confidence_level ORDER BY count DESC",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Distribution by Detection Confidence",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
+      "id": 8,
+      "targets": [
+        {
+          "rawSql": "SELECT DATE(detected_at) as date, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY date",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "AI Detection Trend Over Time",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["AI", "development", "metrics", "productivity"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "AI-Assisted Development Detection",
+  "uid": "ai-detection-dashboard",
+  "version": 3,
+  "weekStart": ""
+}

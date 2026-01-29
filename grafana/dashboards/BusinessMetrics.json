@@ -1,0 +1,207 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "panels": [
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "# Business Alignment & Team Health Metrics\n\n## Team Health Score (DORA-based, 0-100)\nBased on elite benchmarks from DORA State of DevOps reports:\n\n| Metric | Elite Benchmark | Score Formula |\n|--------|----------------|---------------|\n| Deploy Frequency | 1/day | min(25, (freq / 1.0) × 25) |\n| Lead Time | 24 hours | min(25, (24.0 / hours) × 25) |\n| Change Failure Rate | 5% | min(25, (5.0 / cfr%) × 25) |\n| MTTR | 1 hour | min(25, (1.0 / hours) × 25) |\n\n**Health Levels:** Elite (≥80) | High (≥60) | Medium (≥40) | Low (<40)\n\n## Business Value Score (0-100)\n`Score = 50 (base) + Revenue Impact Weight + Efficiency Bonus`\n\n| Revenue Impact | Weight | Efficiency Ratio | Bonus |\n|---------------|--------|-----------------|-------|\n| Direct | +30 | ≥5 | +20 |\n| Enabling | +20 | ≥2 | +15 |\n| Supporting | +10 | ≥1 | +10 |\n| Cost Center | +0 | >0 | +5 |",
+        "mode": "markdown"
+      },
+      "title": "Scoring Algorithms",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 40 },
+            { "color": "yellow", "value": 60 },
+            { "color": "green", "value": 80 }
+          ]},
+          "max": 100, "min": 0
+        }
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 5 },
+      "id": 20,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "rawSql": "SELECT total_score FROM team_health_scores ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Team Health Score",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 5 },
+      "id": 21,
+      "targets": [
+        {
+          "rawSql": "SELECT health_level FROM team_health_scores ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Health Level",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 22,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "right" },
+        "pieType": "donut"
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT 'Deploy Freq' as metric, deploy_freq_score as score FROM team_health_scores WHERE calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores) UNION ALL SELECT 'Lead Time', lead_time_score FROM team_health_scores WHERE calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores) UNION ALL SELECT 'CFR', cfr_score FROM team_health_scores WHERE calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores) UNION ALL SELECT 'MTTR', mttr_score FROM team_health_scores WHERE calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores)",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "DORA Score Breakdown (25 points each)",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 13 },
+      "id": 2,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as total FROM business_initiatives",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Total Initiatives",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "green", "mode": "fixed" } } },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 13 },
+      "id": 3,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as active FROM business_initiatives WHERE status = 'active'",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Active Initiatives",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 13 },
+      "id": 4,
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(business_value_score) as avg_score FROM business_initiatives WHERE business_value_score > 0",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Avg Business Value Score",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 13 },
+      "id": 5,
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(story_points) as points FROM work_allocations",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Total Story Points Allocated",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(investment_category, 'Uncategorized') as category, COUNT(*) as count FROM business_initiatives GROUP BY investment_category",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Initiatives by Investment Category",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(business_capability, 'Unclassified') as capability, COUNT(*) as count FROM business_initiatives GROUP BY business_capability",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Initiatives by Business Capability",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "id": 9,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(revenue_impact, 'Unknown') as impact, COUNT(*) as count FROM business_initiatives GROUP BY revenue_impact",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Initiatives by Revenue Impact",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+      "id": 8,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "business_value_score" }] },
+      "targets": [
+        {
+          "rawSql": "SELECT bi.name as initiative, bi.jira_epic_key as epic, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio, COUNT(wa.id) as work_items, SUM(wa.story_points) as story_points FROM business_initiatives bi LEFT JOIN work_allocations wa ON wa.initiative_id = bi.id GROUP BY bi.id, bi.name, bi.jira_epic_key, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio ORDER BY bi.business_value_score DESC",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Initiative Summary with Business Value Scores",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 37 },
+      "id": 23,
+      "targets": [
+        {
+          "rawSql": "SELECT project_name, period_start, period_end, deploy_frequency, lead_time_hours, change_failure_rate, mttr_hours, deploy_freq_score, lead_time_score, cfr_score, mttr_score, total_score, health_level, calculated_at FROM team_health_scores ORDER BY calculated_at DESC LIMIT 10",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Team Health Score History (Raw DORA Metrics)",
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["business", "alignment", "initiatives", "DORA", "health"],
+  "time": { "from": "now-90d", "to": "now" },
+  "title": "Business Alignment & Team Health",
+  "uid": "business-metrics-dashboard",
+  "version": 2
+}

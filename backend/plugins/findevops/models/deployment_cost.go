@@ -15,27 +15,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package migrationscripts
+package models
 
 import (
-	"github.com/apache/incubator-devlake/core/context"
-	"github.com/apache/incubator-devlake/core/errors"
-	"github.com/apache/incubator-devlake/core/plugin"
+	"time"
 )
 
-type addScopeConfigIdToProjects struct{}
+// DeploymentCost stores cost per deployment metrics for different time windows
+type DeploymentCost struct {
+	Id                string    `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName       string    `gorm:"type:varchar(255);index"`
+	WindowDays        int       `gorm:"type:int;index"` // 7, 30, or 90 days
+	PeriodStart       time.Time `gorm:"index"`
+	PeriodEnd         time.Time `gorm:"index"`
 
-func (*addScopeConfigIdToProjects) Up(basicRes context.BasicRes) errors.Error {
-	db := basicRes.GetDal()
-	return db.Exec("ALTER TABLE _tool_testmo_projects ADD COLUMN scope_config_id bigint NOT NULL DEFAULT 0")
+	TotalCost           float64 `gorm:"type:decimal(14,2)"`
+	DeploymentCount     int     `gorm:"type:int"`
+	CostPerDeployment   float64 `gorm:"type:decimal(12,2)"`
+
+	CalculatedAt time.Time `gorm:"index"`
 }
 
-func (*addScopeConfigIdToProjects) Version() uint64 {
-	return 20250629000001
+func (DeploymentCost) TableName() string {
+	return "deployment_costs"
 }
-
-func (*addScopeConfigIdToProjects) Name() string {
-	return "Add scope_config_id to testmo projects"
-}
-
-var _ plugin.MigrationScript = (*addScopeConfigIdToProjects)(nil)

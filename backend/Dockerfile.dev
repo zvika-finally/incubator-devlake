@@ -1,0 +1,23 @@
+# Simplified dev Dockerfile for local plugin development
+FROM golang:1.20.5-bookworm
+
+RUN apt-get update && apt-get install -y \
+    gcc cmake libssh2-1-dev libssl-dev zlib1g-dev pkg-config
+
+# Build libgit2 1.3.2 for native architecture only
+RUN mkdir -p /tmp/build && cd /tmp/build && \
+    wget https://github.com/libgit2/libgit2/archive/refs/tags/v1.3.2.tar.gz -O - | tar -xz && \
+    cd libgit2-1.3.2 && \
+    mkdir build && cd build && \
+    cmake .. -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    make -j$(nproc) install && \
+    ldconfig
+
+# Install Go tools
+RUN go install github.com/vektra/mockery/v2@v2.20.0 && \
+    go install github.com/swaggo/swag/cmd/swag@v1.16.1
+
+WORKDIR /app
+
+ENV CGO_ENABLED=1
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig

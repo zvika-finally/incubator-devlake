@@ -1,0 +1,254 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "# FinDevOps - Development Cost & Capitalization\n\nTrack development costs and categorize for **US GAAP ASC 350-40** software capitalization compliance.\n\n## Cost Allocation Formula\n```\nTotal Cost = Hours Worked × Hourly Rate\nCapitalizable = Development Stage work (features, enhancements)\nExpensed = Preliminary + Post-Implementation (maintenance, bugs)\n```\n\n## ASC 350-40 Development Stages\n| Stage | Capitalizable | Activities |\n|-------|--------------|------------|\n| **Preliminary** | ❌ No | Planning, feasibility, design |\n| **Development** | ✅ Yes | Coding, testing, implementation |\n| **Post-Implementation** | ❌ No | Maintenance, training, support |\n\n## Cost Per Deployment\n```\nCost Per Deployment = Total Cost (window) / Deployment Count (window)\nTime Windows: 7 days (weekly), 30 days (monthly), 90 days (quarterly)\n```\n\n**Goal:** Lower cost per deployment = more efficient delivery pipeline",
+        "mode": "markdown"
+      },
+      "title": "Cost Accounting Methodology",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "id": 2,
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total_cost) as total FROM monthly_cost_summaries",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Total Development Cost",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "fixedColor": "green", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "id": 3,
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(capitalizable_cost) as capitalizable FROM monthly_cost_summaries",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Capitalizable Cost (ASC 350-40)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "fixedColor": "red", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 6 },
+      "id": 4,
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(expense_cost) as expense FROM monthly_cost_summaries",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Expensed Cost",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 30 },
+            { "color": "green", "value": 50 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 6 },
+      "id": 5,
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(capitalization_rate) as rate FROM monthly_cost_summaries",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Capitalization Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 12 },
+      "id": 20,
+      "options": {
+        "content": "## Cost Per Deployment Metrics\nLower is better - indicates efficient delivery. Compare across time windows to identify trends.",
+        "mode": "markdown"
+      },
+      "title": "Deployment Cost Analysis",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5000 },
+            { "color": "red", "value": 10000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 15 },
+      "id": 21,
+      "targets": [
+        {
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 7 ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost Per Deploy (7-day window)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5000 },
+            { "color": "red", "value": 10000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 15 },
+      "id": 22,
+      "targets": [
+        {
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 30 ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost Per Deploy (30-day window)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5000 },
+            { "color": "red", "value": 10000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 15 },
+      "id": 23,
+      "targets": [
+        {
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 90 ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost Per Deploy (90-day window)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 21 },
+      "id": 24,
+      "targets": [
+        {
+          "rawSql": "SELECT project_name, window_days, DATE(period_start) as period_start, DATE(period_end) as period_end, total_cost, deployment_count, cost_per_deployment, DATE(calculated_at) as calculated FROM deployment_costs ORDER BY calculated_at DESC, window_days LIMIT 30",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Deployment Cost History (by Time Window)",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT project_phase as phase, SUM(total_cost) as cost FROM cost_allocations GROUP BY project_phase",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost by Development Phase (ASC 350-40)",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "id": 7,
+      "targets": [
+        {
+          "rawSql": "SELECT fiscal_month, capitalizable_cost, expense_cost FROM monthly_cost_summaries ORDER BY fiscal_month",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Monthly Cost Breakdown (Capitalizable vs Expensed)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+      "id": 25,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT capitalization_category as category, SUM(total_cost) as cost FROM cost_allocations GROUP BY capitalization_category",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost by Capitalization Category",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+      "id": 26,
+      "targets": [
+        {
+          "rawSql": "SELECT window_days, AVG(cost_per_deployment) as avg_cost FROM deployment_costs GROUP BY window_days ORDER BY window_days",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Avg Cost Per Deployment by Window",
+      "type": "barchart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 45 },
+      "id": 8,
+      "targets": [
+        {
+          "rawSql": "SELECT issue_id, issue_type, project_phase, capitalization_category, hours_worked, hourly_rate, total_cost, category_reason FROM cost_allocations ORDER BY total_cost DESC LIMIT 50",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Cost Allocations Detail (Top 50 by Cost)",
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["FinDevOps", "cost", "capitalization", "ASC 350-40", "deployment"],
+  "time": { "from": "now-90d", "to": "now" },
+  "title": "FinDevOps - Cost & Capitalization",
+  "uid": "findevops-dashboard",
+  "version": 2
+}

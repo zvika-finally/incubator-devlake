@@ -15,27 +15,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package migrationscripts
+package api
 
 import (
 	"github.com/apache/incubator-devlake/core/context"
-	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/plugin"
+	"github.com/apache/incubator-devlake/helpers/pluginhelper/api"
+	"github.com/apache/incubator-devlake/plugins/businessmetrics/models"
 )
 
-type addScopeConfigIdToProjects struct{}
+var basicRes context.BasicRes
+var settingsHelper *api.MetricSettingsApiHelper[*models.BusinessMetricsSettings]
 
-func (*addScopeConfigIdToProjects) Up(basicRes context.BasicRes) errors.Error {
-	db := basicRes.GetDal()
-	return db.Exec("ALTER TABLE _tool_testmo_projects ADD COLUMN scope_config_id bigint NOT NULL DEFAULT 0")
+func Init(br context.BasicRes, p plugin.PluginMeta) {
+	basicRes = br
+	settingsHelper = api.NewMetricSettingsApiHelper[*models.BusinessMetricsSettings](
+		br,
+		p.Name(),
+		func() *models.BusinessMetricsSettings {
+			return models.NewDefaultSettings()
+		},
+	)
 }
 
-func (*addScopeConfigIdToProjects) Version() uint64 {
-	return 20250629000001
+// GetSettingsForProject is used by PrepareTaskData to load settings
+func GetSettingsForProject(projectName string) (*models.BusinessMetricsSettings, error) {
+	settings, err := settingsHelper.GetSettings(projectName)
+	if err != nil {
+		return nil, err
+	}
+	return settings, nil
 }
-
-func (*addScopeConfigIdToProjects) Name() string {
-	return "Add scope_config_id to testmo projects"
-}
-
-var _ plugin.MigrationScript = (*addScopeConfigIdToProjects)(nil)

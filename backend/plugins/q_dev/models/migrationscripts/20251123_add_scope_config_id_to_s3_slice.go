@@ -30,7 +30,7 @@ func (*addScopeConfigIdToS3Slice) Up(basicRes context.BasicRes) errors.Error {
 	// Add scope_config_id column to _tool_q_dev_s3_slices table
 	err := db.Exec(`
 		ALTER TABLE _tool_q_dev_s3_slices
-		ADD COLUMN scope_config_id BIGINT UNSIGNED DEFAULT 0
+		ADD COLUMN scope_config_id BIGINT DEFAULT 0
 	`)
 	if err != nil {
 		return errors.Convert(err)
