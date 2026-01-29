@@ -11,21 +11,29 @@
   "panels": [
     {
       "datasource": "mysql",
-      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
       "id": 1,
       "options": {
-        "content": "# AI-Assisted Development Detection\n\nThis dashboard analyzes code patterns to identify pull requests that may have used AI coding assistants.\n\n## Detection Methods\n\n### Explicit Signals (HIGH confidence, max 50 points)\n- **Git trailers:** `Co-Authored-By: Claude`, `Co-Authored-By: GitHub Copilot`\n- **PR body markers:** `Generated with [Claude Code]`, `[Cursor]`, `[Copilot]`\n- **Email domains:** `@anthropic.com`, `@copilot-generated`\n\n### Behavioral Signals (max 50 points combined)\n| Signal | Max Score | Detection Method |\n|--------|-----------|------------------|\n| Rapid Commits | 30 | Avg time between commits < 5 min |\n| PR Size | 20 | Additions > 500 lines per PR |\n| Lines/Minute | 25 | > 50 lines/min production rate |\n| Duplication | 15 | Code pattern analysis |\n| Generic Messages | 10 | Vague commit message detection |\n\n### Confidence Score = Explicit Score + Behavioral Scores (0-100)",
+        "content": "# AI-Assisted Development Dashboard\n\nComprehensive view of AI coding assistant usage across your organization. Includes detection analytics, code churn analysis, and direct metrics from Cursor and Claude Code.\n\n**Data Sources:** PR analysis (detection), Cursor Business API, Claude Code Admin API",
         "mode": "markdown"
       },
-      "title": "Detection Algorithms",
+      "title": "",
       "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+      "id": 100,
+      "panels": [],
+      "title": "AI Detection Overview",
+      "type": "row"
     },
     {
       "datasource": "mysql",
       "fieldConfig": {
         "defaults": { "color": { "fixedColor": "purple", "mode": "fixed" } }
       },
-      "gridPos": { "h": 6, "w": 4, "x": 0, "y": 5 },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 5 },
       "id": 10,
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
@@ -37,7 +45,7 @@
           "format": "table"
         }
       ],
-      "title": "Explicit AI Markers Found",
+      "title": "Explicit AI Markers",
       "type": "stat"
     },
     {
@@ -57,7 +65,7 @@
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 6, "w": 5, "x": 4, "y": 5 },
+      "gridPos": { "h": 5, "w": 5, "x": 4, "y": 5 },
       "id": 2,
       "options": {
         "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
@@ -69,7 +77,7 @@
           "format": "table"
         }
       ],
-      "title": "Avg AI Confidence Score",
+      "title": "Avg AI Confidence",
       "type": "gauge"
     },
     {
@@ -77,7 +85,7 @@
       "fieldConfig": {
         "defaults": { "color": { "mode": "palette-classic" } }
       },
-      "gridPos": { "h": 6, "w": 5, "x": 9, "y": 5 },
+      "gridPos": { "h": 5, "w": 5, "x": 9, "y": 5 },
       "id": 3,
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
@@ -97,7 +105,7 @@
       "fieldConfig": {
         "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } }
       },
-      "gridPos": { "h": 6, "w": 5, "x": 14, "y": 5 },
+      "gridPos": { "h": 5, "w": 5, "x": 14, "y": 5 },
       "id": 4,
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
@@ -117,7 +125,7 @@
       "fieldConfig": {
         "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" } }
       },
-      "gridPos": { "h": 6, "w": 5, "x": 19, "y": 5 },
+      "gridPos": { "h": 5, "w": 5, "x": 19, "y": 5 },
       "id": 5,
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
@@ -134,7 +142,508 @@
     },
     {
       "datasource": "mysql",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 11 },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 10 },
+      "id": 12,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "right" },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COALESCE(NULLIF(detected_tool, ''), 'unknown') as tool, COUNT(*) as count FROM ai_usage_signals WHERE ai_confidence_score >= 40 GROUP BY detected_tool ORDER BY count DESC",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "AI Tools Detected",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 10 },
+      "id": 8,
+      "targets": [
+        {
+          "rawSql": "SELECT DATE(detected_at) as date, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY date",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "AI Detection Trend Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "id": 101,
+      "panels": [],
+      "title": "Code Churn Analysis (AI vs Non-AI)",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 18 },
+      "id": 50,
+      "options": {
+        "content": "**Code Churn** measures how much code is modified after initial merge. Research (GitClear) shows AI-generated code has ~41% higher churn rate. Lower churn = more stable code.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.15 },
+              { "color": "orange", "value": 0.25 },
+              { "color": "red", "value": 0.40 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 21 },
+      "id": 51,
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(churn_ratio30_days) as ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = true",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "AI Code Churn (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.15 },
+              { "color": "orange", "value": 0.25 },
+              { "color": "red", "value": 0.40 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 21 },
+      "id": 52,
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(churn_ratio30_days) as non_ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = false",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Non-AI Code Churn (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "orange", "value": 40 },
+              { "color": "red", "value": 60 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 21 },
+      "id": 53,
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT churn_difference_percent FROM project_churn_summaries ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "AI vs Non-AI Difference %",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 21 },
+      "id": 54,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as total FROM ai_churn_metrics",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "PRs with Churn Data",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 26 },
+      "id": 55,
+      "targets": [
+        {
+          "rawSql": "SELECT DATE(merged_at) as time, AVG(CASE WHEN is_ai_assisted = true THEN churn_ratio30_days END) as ai_churn, AVG(CASE WHEN is_ai_assisted = false THEN churn_ratio30_days END) as non_ai_churn FROM ai_churn_metrics WHERE merged_at IS NOT NULL GROUP BY DATE(merged_at) ORDER BY time",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Code Churn Over Time: AI vs Non-AI",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "id": 102,
+      "panels": [],
+      "title": "AI Tool Usage (Cursor & Claude Code)",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 34 },
+      "id": 60,
+      "options": {
+        "content": "Direct metrics from AI coding tools. **Requires configured connections** - panels show 'No data' if Cursor Business or Claude Code connections aren't set up.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "blue", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 37 },
+      "id": 61,
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total_suggestions) as suggestions FROM cursor_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Cursor: Suggestions (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "green", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 37 },
+      "id": 62,
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total_acceptances) as acceptances FROM cursor_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Cursor: Accepted (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "green", "value": 60 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 37 },
+      "id": 63,
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(acceptance_rate) as rate FROM cursor_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Cursor: Accept Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 37 },
+      "id": 64,
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total_tool_uses) as tool_uses FROM claude_code_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Claude Code: Tool Uses (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "purple", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 37 },
+      "id": 65,
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(total_sessions) as sessions FROM claude_code_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Claude Code: Sessions (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "yellow", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 37 },
+      "id": 66,
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(lines_added) as lines FROM claude_code_usage_metrics WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Claude Code: Lines Added (30d)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 42 },
+      "id": 67,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT date as time, total_suggestions as suggestions, total_acceptances as acceptances, daily_active_users as active_users FROM cursor_usage_metrics ORDER BY date",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Cursor Usage Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 42 },
+      "id": 68,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT date as time, total_tool_uses as tool_uses, total_sessions as sessions, lines_added FROM claude_code_usage_metrics ORDER BY date",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ],
+      "title": "Claude Code Usage Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 49 },
+      "id": 69,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "acceptances" }]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT user_email, SUM(tab_acceptances + composer_acceptances) as acceptances, AVG(acceptance_rate) as avg_rate, COUNT(DISTINCT date) as active_days FROM cursor_user_metrics GROUP BY user_email ORDER BY acceptances DESC LIMIT 20",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Top Cursor Users",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 49 },
+      "id": 70,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "tool_uses" }]
+      },
+      "targets": [
+        {
+          "rawSql": "SELECT user_email, SUM(total_tool_uses) as tool_uses, SUM(lines_written) as lines_written, COUNT(DISTINCT date) as active_days FROM claude_code_user_metrics GROUP BY user_email ORDER BY tool_uses DESC LIMIT 20",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Top Claude Code Users",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 56 },
+      "id": 103,
+      "panels": [],
+      "title": "AI Impact Analysis",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 57 },
+      "id": 20,
+      "options": {
+        "content": "**Methodology:** Compare 90-day baseline period (before AI adoption) with 30-day current period (after adoption). Sign inverted for time metrics (faster = positive improvement).",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 60 },
+      "id": 21,
+      "targets": [
+        {
+          "rawSql": "SELECT pr_throughput_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "PR Throughput Change",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 60 },
+      "id": 22,
+      "targets": [
+        {
+          "rawSql": "SELECT review_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Review Time Change (faster = +)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 0 },
+            { "color": "green", "value": 10 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 60 },
+      "id": 23,
+      "targets": [
+        {
+          "rawSql": "SELECT lead_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "Lead Time Change (faster = +)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 65 },
+      "id": 104,
+      "panels": [],
+      "title": "Detailed Analysis",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 66 },
       "id": 11,
       "options": {
         "showHeader": true,
@@ -152,127 +661,7 @@
     },
     {
       "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" } }
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 11 },
-      "id": 12,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "right" },
-        "pieType": "pie",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": true }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT COALESCE(NULLIF(detected_tool, ''), 'unknown') as tool, COUNT(*) as count FROM ai_usage_signals WHERE ai_confidence_score >= 40 GROUP BY detected_tool ORDER BY count DESC",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "AI Tools Detected (Claude, Copilot, Cursor, etc.)",
-      "type": "piechart"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 19 },
-      "id": 6,
-      "options": {
-        "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "ai_confidence_score" }]
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT s.id, pr.title as pr_title, pr.author_name, s.detected_tool, s.explicit_tool_detected as explicit, s.explicit_signal_score, s.rapid_commit_score, s.pr_size_score, s.lines_per_minute_score, s.ai_confidence_score, s.velocity_multiplier, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id ORDER BY s.ai_confidence_score DESC LIMIT 50",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "All PRs by AI Confidence Score (with signal breakdown)",
-      "type": "table"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 29 },
-      "id": 20,
-      "options": {
-        "content": "## AI Impact Analysis\n\n**Methodology:** Compare 90-day baseline period (before AI adoption) with 30-day current period (after adoption).\n\n**Change Formula:** `((current - baseline) / baseline) × 100` — Sign inverted for time metrics (faster = positive)",
-        "mode": "markdown"
-      },
-      "title": "AI Impact Methodology",
-      "type": "text"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "red", "value": null },
-            { "color": "yellow", "value": 0 },
-            { "color": "green", "value": 10 }
-          ]}
-        }
-      },
-      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 32 },
-      "id": 21,
-      "targets": [
-        {
-          "rawSql": "SELECT pr_throughput_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "PR Throughput Change (higher = better)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "red", "value": null },
-            { "color": "yellow", "value": 0 },
-            { "color": "green", "value": 10 }
-          ]}
-        }
-      },
-      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 32 },
-      "id": 22,
-      "targets": [
-        {
-          "rawSql": "SELECT review_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Review Time Change (faster = positive)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "unit": "percent", "color": { "mode": "thresholds" },
-          "thresholds": { "mode": "absolute", "steps": [
-            { "color": "red", "value": null },
-            { "color": "yellow", "value": 0 },
-            { "color": "green", "value": 10 }
-          ]}
-        }
-      },
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 32 },
-      "id": 23,
-      "targets": [
-        {
-          "rawSql": "SELECT lead_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Lead Time Change (faster = positive)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 38 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 66 },
       "id": 7,
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom" },
@@ -291,27 +680,31 @@
     },
     {
       "datasource": "mysql",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 38 },
-      "id": 8,
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 74 },
+      "id": 6,
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "ai_confidence_score" }]
+      },
       "targets": [
         {
-          "rawSql": "SELECT DATE(detected_at) as date, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY date",
+          "rawSql": "SELECT s.id, pr.title as pr_title, pr.author_name, s.detected_tool, s.explicit_tool_detected as explicit, s.explicit_signal_score, s.rapid_commit_score, s.pr_size_score, s.lines_per_minute_score, s.ai_confidence_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id ORDER BY s.ai_confidence_score DESC LIMIT 50",
           "refId": "A",
-          "format": "time_series"
+          "format": "table"
         }
       ],
-      "title": "AI Detection Trend Over Time",
-      "type": "timeseries"
+      "title": "All PRs by AI Confidence Score (with signal breakdown)",
+      "type": "table"
     }
   ],
   "schemaVersion": 38,
-  "tags": ["AI", "development", "metrics", "productivity"],
+  "tags": ["AI", "development", "metrics", "productivity", "cursor", "claude-code"],
   "templating": { "list": [] },
   "time": { "from": "now-30d", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "AI-Assisted Development Detection",
+  "title": "AI-Assisted Development",
   "uid": "ai-detection-dashboard",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

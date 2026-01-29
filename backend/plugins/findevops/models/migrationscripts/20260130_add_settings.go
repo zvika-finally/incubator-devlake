@@ -37,14 +37,14 @@ type finDevOpsSettings20260130 struct {
 	// Capitalization framework
 	CapitalizationFramework string `gorm:"type:varchar(50);default:'asc_350_40_stages'"`
 
-	// ASC 350-40 label mappings (JSON arrays)
-	PreliminaryLabels        string `gorm:"type:text;default:'[\"research\",\"spike\",\"investigation\",\"feasibility\",\"discovery\",\"poc\",\"proof-of-concept\",\"planning\"]'"`
-	PostImplementationLabels string `gorm:"type:text;default:'[\"bug\",\"hotfix\",\"maintenance\",\"ktlo\",\"support\",\"incident\",\"fix\",\"patch\",\"tech-debt\"]'"`
+	// ASC 350-40 label mappings (JSON arrays) - defaults handled in application code
+	PreliminaryLabels        string `gorm:"type:text"`
+	PostImplementationLabels string `gorm:"type:text"`
 
-	// Issue type mappings (JSON arrays)
-	PreliminaryTypes        string `gorm:"type:text;default:'[\"Spike\",\"Research\",\"Discovery\"]'"`
-	DevelopmentTypes        string `gorm:"type:text;default:'[\"Story\",\"Feature\",\"Enhancement\",\"Epic\"]'"`
-	PostImplementationTypes string `gorm:"type:text;default:'[\"Bug\",\"Defect\",\"Hotfix\",\"Support\"]'"`
+	// Issue type mappings (JSON arrays) - defaults handled in application code
+	PreliminaryTypes        string `gorm:"type:text"`
+	DevelopmentTypes        string `gorm:"type:text"`
+	PostImplementationTypes string `gorm:"type:text"`
 }
 
 func (finDevOpsSettings20260130) TableName() string {

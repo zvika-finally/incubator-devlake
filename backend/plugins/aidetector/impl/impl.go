@@ -82,6 +82,8 @@ func (p AIDetector) GetTablesInfo() []dal.Tabler {
 		&models.DeveloperBaseline{},
 		&models.AIImpactMetric{},
 		&models.AIDetectorSettings{},
+		&models.AIChurnMetric{},
+		&models.ProjectChurnSummary{},
 	}
 }
 
@@ -94,7 +96,7 @@ func (p AIDetector) IsProjectMetric() bool {
 }
 
 func (p AIDetector) RunAfter() ([]string, errors.Error) {
-	return []string{}, nil
+	return []string{"dora"}, nil // Needs DORA metrics (project_pr_metrics table) for lead time calculation
 }
 
 func (p AIDetector) Settings() interface{} {
@@ -107,7 +109,8 @@ func (p AIDetector) SubTaskMetas() []plugin.SubTaskMeta {
 		tasks.AnalyzeCommitPatternsMeta,   // Then: behavioral patterns
 		tasks.AnalyzePRCharacteristicsMeta,
 		tasks.ScoreAIConfidenceMeta,       // Combine all scores
-		tasks.CalculateAIImpactMeta,       // Finally: calculate productivity impact
+		tasks.CalculateAIImpactMeta,       // Calculate productivity impact
+		tasks.AnalyzeCodeChurnMeta,        // Analyze code churn for AI vs non-AI PRs
 	}
 }
 
@@ -174,6 +177,7 @@ func (p AIDetector) MakeMetricPluginPipelinePlanV200(projectName string, options
 					"analyzePRCharacteristics",
 					"scoreAIConfidence",
 					"calculateAIImpact",
+					"analyzeCodeChurn",
 				},
 			},
 		},

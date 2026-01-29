@@ -27,5 +27,6 @@ func All() []plugin.MigrationScript {
 		new(initSchema),
 		new(addHealthAndCapability),
 		new(addSettings),
+		new(addWorkingAgreements),
 	}
 }

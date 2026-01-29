@@ -183,34 +183,46 @@ func calculatePeriodMetrics(db dal.Dal, projectName string, start, end time.Time
 	}
 
 	// Calculate average review time (hours from PR creation to merge)
-	var avgReviewTime float64
+	type reviewTimeResult struct {
+		AvgReviewTime *float64 `gorm:"column:avg_review_time"`
+	}
+	var results []reviewTimeResult
 	reviewTimeClauses := []dal.Clause{
-		dal.Select("AVG(EXTRACT(EPOCH FROM (merged_date - created_date)) / 3600) as avg_review_time"),
+		dal.Select("AVG((UNIX_TIMESTAMP(merged_date) - UNIX_TIMESTAMP(created_date)) / 3600) as avg_review_time"),
 		dal.From(&code.PullRequest{}),
 		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
 		dal.Where("pm.project_name = ? AND pull_requests.merged_date >= ? AND pull_requests.merged_date < ? AND pull_requests.merged_date IS NOT NULL",
 			projectName, start, end),
 	}
-	err = db.First(&avgReviewTime, reviewTimeClauses...)
-	if err != nil && !db.IsErrorNotFound(err) {
+	// Use db.All() instead of db.First() to avoid automatic ORDER BY on aggregate queries
+	err = db.All(&results, reviewTimeClauses...)
+	if err != nil {
 		return nil, errors.Default.Wrap(err, "failed to calculate review time")
 	}
-	metrics.reviewTime = avgReviewTime
+	if len(results) > 0 && results[0].AvgReviewTime != nil {
+		metrics.reviewTime = *results[0].AvgReviewTime
+	}
 
 	// Calculate lead time using project_pr_metrics if available
-	var avgLeadTime float64
+	type leadTimeResult struct {
+		AvgLeadTime *float64 `gorm:"column:avg_lead_time"`
+	}
+	var leadResults []leadTimeResult
 	leadTimeClauses := []dal.Clause{
 		dal.Select("AVG(pr_coding_time + pr_pickup_time + pr_review_time + pr_deploy_time) / 3600000 as avg_lead_time"),
 		dal.From("project_pr_metrics"),
 		dal.Where("project_name = ? AND pr_merged_date >= ? AND pr_merged_date < ?",
 			projectName, start, end),
 	}
-	err = db.First(&avgLeadTime, leadTimeClauses...)
-	if err != nil && !db.IsErrorNotFound(err) {
+	// Use db.All() instead of db.First() to avoid automatic ORDER BY on aggregate queries
+	err = db.All(&leadResults, leadTimeClauses...)
+	if err != nil {
 		// Fall back to review time if project_pr_metrics not available
 		metrics.leadTime = metrics.reviewTime
+	} else if len(leadResults) > 0 && leadResults[0].AvgLeadTime != nil {
+		metrics.leadTime = *leadResults[0].AvgLeadTime
 	} else {
-		metrics.leadTime = avgLeadTime
+		metrics.leadTime = metrics.reviewTime
 	}
 
 	return metrics, nil

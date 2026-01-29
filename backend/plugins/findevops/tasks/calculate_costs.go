@@ -83,20 +83,45 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 			dal.Where("issue_key = ?", issue.IssueKey),
 		)
 
+		// Calculate budget variance from Jira estimates
+		var estimatedMinutes, actualMinutes int64
+		if issue.OriginalEstimateMinutes != nil {
+			estimatedMinutes = *issue.OriginalEstimateMinutes
+		}
+		if issue.TimeSpentMinutes != nil {
+			actualMinutes = *issue.TimeSpentMinutes
+		}
+
+		varianceMinutes := estimatedMinutes - actualMinutes
+		var variancePercent float64
+		if estimatedMinutes > 0 {
+			variancePercent = float64(varianceMinutes) / float64(estimatedMinutes) * 100
+		}
+		overBudget := actualMinutes > estimatedMinutes && estimatedMinutes > 0
+
+		// Check if issue is unallocated (no epic/initiative)
+		isUnallocated := checkIsUnallocated(db, issue)
+
 		// Create cost allocation record
 		allocation := &models.CostAllocation{
-			Id:            fmt.Sprintf("%s:%s", issue.Id, fiscalMonth),
-			IssueId:       issue.Id,
-			FiscalMonth:   fiscalMonth,
-			DeveloperId:   issue.AssigneeId,
-			HoursWorked:   hoursWorked,
-			HourlyRate:    hourlyRate,
-			DeveloperCost: hoursWorked * hourlyRate,
-			TotalCost:     hoursWorked * hourlyRate,
-			IssueType:     issue.Type,
-			IssueLabels:   labels,
-			CalculatedAt:  time.Now(),
-			CreatedAt:     time.Now(),
+			Id:               fmt.Sprintf("%s:%s", issue.Id, fiscalMonth),
+			IssueId:          issue.Id,
+			FiscalMonth:      fiscalMonth,
+			DeveloperId:      issue.AssigneeId,
+			HoursWorked:      hoursWorked,
+			HourlyRate:       hourlyRate,
+			DeveloperCost:    hoursWorked * hourlyRate,
+			TotalCost:        hoursWorked * hourlyRate,
+			IssueType:        issue.Type,
+			IssueLabels:      labels,
+			EstimatedMinutes: estimatedMinutes,
+			ActualMinutes:    actualMinutes,
+			VarianceMinutes:  varianceMinutes,
+			VariancePercent:  variancePercent,
+			OverBudget:       overBudget,
+			IsUnallocated:    isUnallocated,
+			CalculatedAt:     time.Now(),
+			CreatedAt:        time.Now(),
 		}
 
 		if err := db.CreateOrUpdate(allocation); err != nil {
@@ -104,11 +129,119 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 		}
 	}
 
+	// Generate monthly cost summaries
+	if err := generateMonthlySummaries(db, data.Options.ProjectName, logger); err != nil {
+		return errors.Default.Wrap(err, "failed to generate monthly summaries")
+	}
+
 	logger.Info("Completed calculateCosts")
 	return nil
 }
 
-func loadHourlyRates(db dal.Dal, defaultRate float64, logger log.Logger) map[string]float64 {
+// checkIsUnallocated determines if an issue has no epic or initiative attribution
+func checkIsUnallocated(db dal.Dal, issue ticket.Issue) bool {
+	// Check for epic_key in Jira issues
+	var epicKey string
+	_ = db.First(&epicKey,
+		dal.Select("epic_key"),
+		dal.From("_tool_jira_issues"),
+		dal.Where("issue_key = ?", issue.IssueKey),
+	)
+
+	if epicKey != "" {
+		return false
+	}
+
+	// Check for parent_issue_id in domain layer
+	if issue.ParentIssueId != "" {
+		return false
+	}
+
+	return true
+}
+
+// generateMonthlySummaries aggregates cost allocations into monthly summaries
+func generateMonthlySummaries(db dal.Dal, projectName string, logger log.Logger) errors.Error {
+	logger.Info("Generating monthly cost summaries for project: %s", projectName)
+
+	// Get distinct fiscal months with allocations
+	var months []string
+	err := db.All(&months,
+		dal.Select("DISTINCT fiscal_month"),
+		dal.From(&models.CostAllocation{}),
+		dal.Join("LEFT JOIN issues ON issues.id = cost_allocations.issue_id"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ?", projectName),
+	)
+	if err != nil {
+		return errors.Default.Wrap(err, "failed to get distinct fiscal months")
+	}
+
+	for _, month := range months {
+		summary := calculateMonthlySummary(db, projectName, month, logger)
+		if err := db.CreateOrUpdate(summary); err != nil {
+			logger.Error(err, "failed to save monthly summary for %s", month)
+		}
+	}
+
+	return nil
+}
+
+// calculateMonthlySummary generates aggregated metrics for a fiscal month
+func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string, _ log.Logger) *models.MonthlyCostSummary {
+	var allocations []models.CostAllocation
+	_ = db.All(&allocations,
+		dal.From(&models.CostAllocation{}),
+		dal.Join("LEFT JOIN issues ON issues.id = cost_allocations.issue_id"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND cost_allocations.fiscal_month = ?", projectName, fiscalMonth),
+	)
+
+	summary := &models.MonthlyCostSummary{
+		Id:           fmt.Sprintf("%s:%s", projectName, fiscalMonth),
+		ProjectName:  projectName,
+		FiscalMonth:  fiscalMonth,
+		CalculatedAt: time.Now(),
+	}
+
+	var totalEstimatedMinutes, totalActualMinutes int64
+	for _, alloc := range allocations {
+		summary.TotalCost += alloc.TotalCost
+
+		// Track unallocated costs
+		if alloc.IsUnallocated {
+			summary.UnallocatedCost += alloc.TotalCost
+			summary.OrphanIssueCount++
+		}
+
+		// Track budget variance
+		totalEstimatedMinutes += alloc.EstimatedMinutes
+		totalActualMinutes += alloc.ActualMinutes
+		if alloc.OverBudget {
+			summary.OverBudgetIssueCount++
+		}
+	}
+
+	// Calculate unallocated percentage
+	if summary.TotalCost > 0 {
+		summary.UnallocatedPercent = summary.UnallocatedCost / summary.TotalCost * 100
+	}
+
+	// Calculate budget variance at monthly level
+	// Use default hourly rate for converting minutes to cost (simplified)
+	defaultHourlyRate := 87.0 // TODO: get from settings
+	summary.TotalEstimatedCost = float64(totalEstimatedMinutes) / 60.0 * defaultHourlyRate
+	summary.TotalActualCost = float64(totalActualMinutes) / 60.0 * defaultHourlyRate
+	if summary.TotalEstimatedCost > 0 {
+		summary.BudgetVariance = (summary.TotalEstimatedCost - summary.TotalActualCost) / summary.TotalEstimatedCost * 100
+	}
+
+	return summary
+}
+
+func loadHourlyRates(db dal.Dal, _ float64, logger log.Logger) map[string]float64 {
 	rateMap := make(map[string]float64)
 
 	var rates []models.DeveloperHourlyRate

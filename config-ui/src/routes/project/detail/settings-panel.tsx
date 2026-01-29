@@ -47,6 +47,18 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
   const [issueTrace, setIssueTrace] = useState({
     enable: false,
   });
+  const [aidetector, setAidetector] = useState({
+    enable: false,
+  });
+  const [businessmetrics, setBusinessmetrics] = useState({
+    enable: false,
+  });
+  const [capacityplanner, setCapacityplanner] = useState({
+    enable: false,
+  });
+  const [findevops, setFindevops] = useState({
+    enable: false,
+  });
   const [operating, setOperating] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -56,6 +68,10 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
     const dora = project.metrics.find((ms) => ms.pluginName === 'dora');
     const linker = project.metrics.find((ms) => ms.pluginName === 'linker');
     const issueTrace = project.metrics.find((ms) => ms.pluginName === 'issue_trace');
+    const aidetector = project.metrics.find((ms) => ms.pluginName === 'aidetector');
+    const businessmetrics = project.metrics.find((ms) => ms.pluginName === 'businessmetrics');
+    const capacityplanner = project.metrics.find((ms) => ms.pluginName === 'capacityplanner');
+    const findevops = project.metrics.find((ms) => ms.pluginName === 'findevops');
 
     setName(project.name);
     setDora({
@@ -67,6 +83,18 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
     });
     setIssueTrace({
       enable: issueTrace?.enable ?? false,
+    });
+    setAidetector({
+      enable: aidetector?.enable ?? false,
+    });
+    setBusinessmetrics({
+      enable: businessmetrics?.enable ?? false,
+    });
+    setCapacityplanner({
+      enable: capacityplanner?.enable ?? false,
+    });
+    setFindevops({
+      enable: findevops?.enable ?? false,
     });
   }, [project]);
 
@@ -93,6 +121,26 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
               pluginName: 'issue_trace',
               pluginOption: {},
               enable: issueTrace.enable,
+            },
+            {
+              pluginName: 'aidetector',
+              pluginOption: {},
+              enable: aidetector.enable,
+            },
+            {
+              pluginName: 'businessmetrics',
+              pluginOption: {},
+              enable: businessmetrics.enable,
+            },
+            {
+              pluginName: 'capacityplanner',
+              pluginOption: {},
+              enable: capacityplanner.enable,
+            },
+            {
+              pluginName: 'findevops',
+              pluginOption: {},
+              enable: findevops.enable,
             },
           ],
         }),
@@ -190,6 +238,38 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
               </Checkbox>
             }
             description="Parse the issue status and assignee history from issue changelogs. Currently, only Jira issues are supported."
+          />
+          <Block
+            title={
+              <Checkbox checked={aidetector.enable} onChange={(e) => setAidetector({ enable: e.target.checked })}>
+                Enable AI Detector
+              </Checkbox>
+            }
+            description="Detect AI-assisted code by analyzing commit and PR patterns (Jellyfish-style approach)."
+          />
+          <Block
+            title={
+              <Checkbox checked={businessmetrics.enable} onChange={(e) => setBusinessmetrics({ enable: e.target.checked })}>
+                Enable Business Metrics
+              </Checkbox>
+            }
+            description="Extract business initiatives from Jira Epics and calculate work alignment."
+          />
+          <Block
+            title={
+              <Checkbox checked={capacityplanner.enable} onChange={(e) => setCapacityplanner({ enable: e.target.checked })}>
+                Enable Capacity Planner
+              </Checkbox>
+            }
+            description="Calculate team velocity and forecast initiative completion dates."
+          />
+          <Block
+            title={
+              <Checkbox checked={findevops.enable} onChange={(e) => setFindevops({ enable: e.target.checked })}>
+                Enable FinDevOps
+              </Checkbox>
+            }
+            description="Calculate development costs and categorize for US GAAP ASC 350-40 capitalization compliance."
           />
           <Block>
             <Button type="primary" loading={operating} disabled={!name} onClick={handleUpdate}>

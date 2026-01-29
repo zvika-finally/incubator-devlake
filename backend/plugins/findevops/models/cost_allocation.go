@@ -48,6 +48,16 @@ type CostAllocation struct {
 	IssueType              string    `gorm:"type:varchar(50)"`
 	IssueLabels            string    `gorm:"type:text"`
 
+	// Budget variance tracking (from Jira estimates)
+	EstimatedMinutes       int64     `gorm:"type:bigint"`         // From OriginalEstimateMinutes
+	ActualMinutes          int64     `gorm:"type:bigint"`         // From TimeSpentMinutes
+	VarianceMinutes        int64     `gorm:"type:bigint"`         // Estimated - Actual (positive = under budget)
+	VariancePercent        float64   `gorm:"type:decimal(8,2)"`   // (Estimated - Actual) / Estimated * 100
+	OverBudget             bool      `gorm:"type:bool"`           // ActualMinutes > EstimatedMinutes
+
+	// Unallocated tracking
+	IsUnallocated          bool      `gorm:"type:bool;index"`     // No epic/initiative attribution
+
 	CalculatedAt           time.Time
 	CreatedAt              time.Time
 }
@@ -77,6 +87,17 @@ type MonthlyCostSummary struct {
 	KTLOCost              float64   `gorm:"type:decimal(14,2)"`
 	PlatformCost          float64   `gorm:"type:decimal(14,2)"`
 	TechDebtCost          float64   `gorm:"type:decimal(14,2)"`
+
+	// Unallocated cost tracking
+	UnallocatedCost       float64   `gorm:"type:decimal(14,2)"`  // Cost not attributed to initiatives
+	UnallocatedPercent    float64   `gorm:"type:decimal(5,2)"`   // UnallocatedCost/TotalCost * 100 (target: <10%)
+	OrphanIssueCount      int       `gorm:"type:int"`            // Count of issues without epic/initiative
+
+	// Budget variance tracking
+	TotalEstimatedCost    float64   `gorm:"type:decimal(14,2)"`  // Sum of estimated costs
+	TotalActualCost       float64   `gorm:"type:decimal(14,2)"`  // Sum of actual costs
+	BudgetVariance        float64   `gorm:"type:decimal(8,2)"`   // (Estimated - Actual) / Estimated * 100
+	OverBudgetIssueCount  int       `gorm:"type:int"`            // Count of issues exceeding estimate
 
 	CalculatedAt          time.Time
 }

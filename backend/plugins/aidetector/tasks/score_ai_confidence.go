@@ -71,7 +71,7 @@ func ScoreAIConfidence(taskCtx plugin.SubTaskContext) errors.Error {
 		// Scoring breakdown:
 		//
 		// EXPLICIT SIGNALS (HIGH confidence):
-		// - Git trailers / PR body markers: max 50 points
+		// - Git trailers / PR body markers: max 70 points
 		//
 		// BEHAVIORAL SIGNALS (lower confidence):
 		// - Rapid commits: max 30 points
@@ -80,7 +80,7 @@ func ScoreAIConfidence(taskCtx plugin.SubTaskContext) errors.Error {
 		// - Code duplication: max 15 points (not implemented yet)
 		// - Generic messages: max 10 points
 		//
-		// Note: Explicit signals alone can trigger detection (50+ = confident)
+		// Note: Explicit signals alone can trigger detection (70+ = highly confident)
 		//       Behavioral signals require multiple indicators
 		totalScore := signal.ExplicitSignalScore +
 			signal.RapidCommitScore +

@@ -138,17 +138,23 @@ func queryDORAMetrics(db dal.Dal, projectName string, start, end time.Time) (*do
 	}
 
 	// Lead time: average from project_pr_metrics
-	var avgLeadTime float64
+	type leadTimeResult struct {
+		AvgLeadTime *float64 `gorm:"column:avg_lead_time"`
+	}
+	var results []leadTimeResult
 	leadTimeClauses := []dal.Clause{
 		dal.Select("AVG(pr_coding_time + pr_pickup_time + pr_review_time + pr_deploy_time) / 3600000 as avg_lead_time"),
 		dal.From("project_pr_metrics"),
 		dal.Where("project_name = ? AND pr_merged_date >= ? AND pr_merged_date < ?",
 			projectName, start, end),
 	}
-	if err := db.First(&avgLeadTime, leadTimeClauses...); err != nil && !db.IsErrorNotFound(err) {
+	// Use db.All() instead of db.First() to avoid automatic ORDER BY on aggregate queries
+	if err := db.All(&results, leadTimeClauses...); err != nil {
 		return nil, errors.Default.Wrap(err, "failed to query lead time")
 	}
-	metrics.leadTimeHours = avgLeadTime
+	if len(results) > 0 && results[0].AvgLeadTime != nil {
+		metrics.leadTimeHours = *results[0].AvgLeadTime
+	}
 
 	// Change failure rate: failed deployments / total deployments
 	failedDeployClauses := []dal.Clause{

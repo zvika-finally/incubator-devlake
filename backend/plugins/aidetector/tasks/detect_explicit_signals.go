@@ -20,6 +20,7 @@ package tasks
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
@@ -226,6 +227,8 @@ func DetectExplicitSignals(taskCtx plugin.SubTaskContext) errors.Error {
 			signal = models.AIUsageSignal{
 				Id:            pr.Id,
 				PullRequestId: pr.Id,
+				DetectedAt:    time.Now(),
+				CreatedAt:     time.Now(),
 			}
 		}
 
@@ -275,9 +278,11 @@ func DetectExplicitSignals(taskCtx plugin.SubTaskContext) errors.Error {
 			signal.ExplicitTools = strings.Join(combined.Tools, ",")
 			signal.ExplicitPatterns = strings.Join(combined.Signals, "; ")
 
-			// Use the highest confidence as the score (scaled to 0-50 for the 100-point system)
-			// eng-product-metrics uses 0.0-1.0, we use 0-100 with explicit max of 50
-			signal.ExplicitSignalScore = min(combined.Confidence/2, 50)
+			// Use the highest confidence as the score (scaled to 0-70 for the 100-point system)
+			// Explicit tool detection is highly reliable and should carry significant weight
+			// We give it up to 70 points (out of 100 total) to ensure proper AI detection
+			// For confidence of 85-95, this gives 68-76 points (capped at 70)
+			signal.ExplicitSignalScore = min(int(float64(combined.Confidence)*0.8), 70)
 
 			// Set detected tool to the first (primary) tool
 			if len(combined.Tools) > 0 {

@@ -84,7 +84,10 @@ func (tp *TokenProvider) needsRefresh() bool {
 		}
 	}
 
-	return time.Now().Add(buffer).After(tp.conn.TokenExpiresAt)
+	if tp.conn.TokenExpiresAt == nil {
+		return false
+	}
+	return time.Now().Add(buffer).After(*tp.conn.TokenExpiresAt)
 }
 
 func (tp *TokenProvider) refreshToken() errors.Error {

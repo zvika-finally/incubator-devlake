@@ -76,43 +76,48 @@ func GeneratePlanJsonV200(
 			sourcePlans[i] = removeCollectorTasks(plan)
 		}
 
-		// remove gitextractor plugin if it's not the only task
-		for i, plan := range sourcePlans {
-			for j, stage := range plan {
-				newStage := make(coreModels.PipelineStage, 0, len(stage))
-				hasGitExtractor := false
-				for _, task := range stage {
-					if task.Plugin != "gitextractor" {
-						newStage = append(newStage, task)
-					} else {
-						hasGitExtractor = true
-					}
-				}
-				if !hasGitExtractor || len(newStage) > 0 {
-					sourcePlans[i][j] = newStage
-				}
-			}
-		}
+		// NOTE: We intentionally do NOT remove gitextractor here, even though skipCollectors is true.
+		// Gitextractor provides essential domain layer data (commit_files) that downstream plugins
+		// depend on, such as aidetector's code churn analysis. Removing it breaks these dependencies
+		// and causes empty result sets. Gitextractor is smart enough to handle incremental updates
+		// on its own, so it's safe to include even in incremental runs.
 	}
 
-	// make plans for metric plugins
-	metricPlans := make([]coreModels.PipelinePlan, len(metrics))
-	i := 0
-	for metricPluginName, metricPluginOptJson := range metrics {
+	// make plans for metric plugins with dependency ordering
+	// Extract plugin names from metrics map
+	pluginNames := make([]string, 0, len(metrics))
+	for name := range metrics {
+		pluginNames = append(pluginNames, name)
+	}
+
+	// Sort plugins by dependencies
+	sortedPluginNames, err := sortMetricPluginsByDependencies(pluginNames)
+	if err != nil {
+		return nil, errors.Default.Wrap(err, "failed to sort metric plugins by dependencies")
+	}
+
+	// Generate plans in dependency order
+	metricPlans := make([]coreModels.PipelinePlan, 0, len(sortedPluginNames))
+	for _, metricPluginName := range sortedPluginNames {
+		metricPluginOptJson := metrics[metricPluginName]
+
 		p, err := plugin.GetPlugin(metricPluginName)
 		if err != nil {
 			return nil, err
 		}
+
 		if pluginBp, ok := p.(plugin.MetricPluginBlueprintV200); ok {
 			// If we enable one metric plugin, even if it has nil option, we still process it
 			if len(metricPluginOptJson) == 0 {
 				metricPluginOptJson = json.RawMessage("{}")
 			}
-			metricPlans[i], err = pluginBp.MakeMetricPluginPipelinePlanV200(projectName, metricPluginOptJson)
+
+			plan, err := pluginBp.MakeMetricPluginPipelinePlanV200(projectName, metricPluginOptJson)
 			if err != nil {
 				return nil, err
 			}
-			i++
+
+			metricPlans = append(metricPlans, plan)
 		} else {
 			return nil, errors.Default.New(
 				fmt.Sprintf("plugin %s does not support MetricPluginBlueprintV200", metricPluginName),
@@ -132,10 +137,17 @@ func GeneratePlanJsonV200(
 			}
 		}
 	}
+	// Merge metric plans sequentially to preserve dependency order
+	var sequentialMetricPlan coreModels.PipelinePlan
+	if len(metricPlans) > 0 {
+		sequentialMetricPlan = SequentializePipelinePlans(metricPlans...)
+	}
+
+	// Final plan assembly
 	plan := SequentializePipelinePlans(
 		planForProjectMapping,
 		ParallelizePipelinePlans(sourcePlans...),
-		ParallelizePipelinePlans(metricPlans...),
+		sequentialMetricPlan,
 	)
 	return plan, err
 }

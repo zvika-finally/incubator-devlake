@@ -28,5 +28,6 @@ func All() []plugin.MigrationScript {
 		new(addExplicitSignals),
 		new(addAIImpact),
 		new(addSettings),
+		new(addCodeChurn),
 	}
 }

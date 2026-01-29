@@ -196,6 +196,168 @@
       ],
       "title": "Team Health Score History (Raw DORA Metrics)",
       "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 45 },
+      "id": 100,
+      "panels": [],
+      "title": "Working Agreements (Swarmia-style)",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 46 },
+      "id": 101,
+      "options": {
+        "content": "## Working Agreements\nTeam-defined thresholds for key development practices. Violations are tracked automatically.\n\n| Agreement Type | Description | Common Thresholds |\n|---------------|-------------|-------------------|\n| PR Merge Time | Max time from PR open to merge | 7 days |\n| Review Turnaround | Max time to first review | 24 hours |\n| WIP Limit | Max open PRs per developer | 3 PRs |\n| Issues In Progress | Max issues in progress per developer | 2 issues |",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "blue", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 50 },
+      "id": 102,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as agreements FROM working_agreements",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Total Agreements",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 50 },
+      "id": 103,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as active_violations FROM agreement_violations WHERE is_resolved = false",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Active Violations",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": 80 },
+            { "color": "green", "value": 95 }
+          ]},
+          "unit": "percent",
+          "max": 100, "min": 0
+        }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 50 },
+      "id": 104,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "rawSql": "SELECT AVG(compliance_rate) as avg_compliance FROM agreement_compliance_summaries WHERE period_end >= DATE_SUB(NOW(), INTERVAL 30 DAY)",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "30-Day Compliance Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "green", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 50 },
+      "id": 105,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as resolved_today FROM agreement_violations WHERE is_resolved = true AND DATE(resolved_at) = CURDATE()",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Resolved Today",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 55 },
+      "id": 106,
+      "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
+      "targets": [
+        {
+          "rawSql": "SELECT agreement_type as type, COUNT(*) as count FROM agreement_violations WHERE is_resolved = false GROUP BY agreement_type",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Active Violations by Type",
+      "type": "piechart"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 55 },
+      "id": 107,
+      "targets": [
+        {
+          "rawSql": "SELECT DATE(violated_at) as date, COUNT(*) as violations FROM agreement_violations WHERE violated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(violated_at) ORDER BY date",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Violations Over Time (Last 30 Days)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 63 },
+      "id": 108,
+      "options": { "showHeader": true, "sortBy": [{ "desc": false, "displayName": "is_resolved" }] },
+      "targets": [
+        {
+          "rawSql": "SELECT wa.project_name, wa.agreement_type, wa.threshold_value, wa.threshold_unit, wa.alert_enabled, wa.description FROM working_agreements wa ORDER BY wa.project_name, wa.agreement_type",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Configured Working Agreements",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 71 },
+      "id": 109,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "violated_at" }] },
+      "targets": [
+        {
+          "rawSql": "SELECT av.project_name, av.agreement_type, av.entity_type, av.entity_key, av.current_value, av.threshold_value, av.excess_value, av.violated_at, av.is_resolved, av.resolved_at FROM agreement_violations av ORDER BY av.is_resolved ASC, av.violated_at DESC LIMIT 50",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Recent Violations (Last 50)",
+      "type": "table"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 81 },
+      "id": 110,
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "rawSql": "SELECT project_name, agreement_type, DATE(period_start) as period_start, DATE(period_end) as period_end, total_checked, total_compliant, total_violations, compliance_rate, average_value, p50_value, p90_value FROM agreement_compliance_summaries ORDER BY period_end DESC, project_name LIMIT 20",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Compliance Summary by Period",
+      "type": "table"
     }
   ],
   "schemaVersion": 38,

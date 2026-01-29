@@ -32,6 +32,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// timePtr is a helper function to create a pointer to a time.Time value
+func timePtrRT(t time.Time) *time.Time {
+	return &t
+}
+
 func TestRoundTripper401Refresh(t *testing.T) {
 	mockRT := new(MockRoundTripper)
 	client := &http.Client{Transport: mockRT}
@@ -44,7 +49,7 @@ func TestRoundTripper401Refresh(t *testing.T) {
 					Token: "old_token",
 				},
 			},
-			TokenExpiresAt: time.Now().Add(10 * time.Minute), // Not expired
+			TokenExpiresAt: timePtrRT(time.Now().Add(10 * time.Minute)), // Not expired
 			GithubAppKey: models.GithubAppKey{
 				AppKey: api.AppKey{
 					AppId:     "123",

@@ -1,0 +1,9 @@
+id,issue_id,field_name,from_value,to_value,created_date
+cl1,issue1,status,Open,In Progress,2026-01-02 10:00:00
+cl2,issue1,status,In Progress,In Review,2026-01-10 10:00:00
+cl3,issue1,status,In Review,Done,2026-01-15 10:00:00
+cl4,issue2,status,Open,In Progress,2026-01-06 10:00:00
+cl5,issue2,status,In Progress,Done,2026-01-12 10:00:00
+cl6,issue3,status,Open,Blocked,2026-01-11 10:00:00
+cl7,issue3,status,Blocked,In Progress,2026-01-14 10:00:00
+cl8,issue3,status,In Progress,Done,2026-01-18 10:00:00

@@ -82,6 +82,9 @@ func (p BusinessMetrics) GetTablesInfo() []dal.Tabler {
 		&models.WorkAllocation{},
 		&models.TeamHealthScore{},
 		&models.BusinessMetricsSettings{},
+		&models.WorkingAgreement{},
+		&models.AgreementViolation{},
+		&models.AgreementComplianceSummary{},
 	}
 }
 
@@ -94,7 +97,7 @@ func (p BusinessMetrics) IsProjectMetric() bool {
 }
 
 func (p BusinessMetrics) RunAfter() ([]string, errors.Error) {
-	return []string{}, nil
+	return []string{"dora"}, nil // Needs DORA metrics (project_pr_metrics table)
 }
 
 func (p BusinessMetrics) Settings() interface{} {
@@ -107,6 +110,7 @@ func (p BusinessMetrics) SubTaskMetas() []plugin.SubTaskMeta {
 		tasks.CalculateAlignmentMeta,
 		tasks.CalculateHealthScoreMeta,
 		tasks.CalculateBusinessValueMeta,
+		tasks.CheckAgreementsMeta,
 	}
 }
 
@@ -148,6 +152,21 @@ func (p BusinessMetrics) ApiResources() map[string]map[string]plugin.ApiResource
 			"PUT":    api.PutSettings,
 			"DELETE": api.DeleteSettings,
 		},
+		"agreements/:projectName": {
+			"GET":  api.ListAgreements,
+			"POST": api.CreateAgreement,
+		},
+		"agreements/:projectName/:agreementType": {
+			"GET":    api.GetAgreement,
+			"PUT":    api.UpdateAgreement,
+			"DELETE": api.DeleteAgreement,
+		},
+		"violations/:projectName": {
+			"GET": api.ListViolations,
+		},
+		"compliance/:projectName": {
+			"GET": api.GetComplianceSummary,
+		},
 	}
 }
 
@@ -172,6 +191,7 @@ func (p BusinessMetrics) MakeMetricPluginPipelinePlanV200(projectName string, op
 					"calculateAlignment",
 					"calculateHealthScore",
 					"calculateBusinessValue",
+					"checkAgreements",
 				},
 			},
 		},

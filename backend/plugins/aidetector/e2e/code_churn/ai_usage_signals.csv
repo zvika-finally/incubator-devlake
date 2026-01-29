@@ -1,0 +1,5 @@
+id,pull_request_id,project_name,ai_confidence_score,explicit_tool_detected,detection_method,calculated_at
+sig1,pr1,project1,85,true,explicit_marker,2026-01-10 10:00:00
+sig2,pr2,project1,20,false,behavioral,2026-01-11 10:00:00
+sig3,pr3,project1,90,true,explicit_marker,2026-01-12 10:00:00
+sig4,pr4,project1,15,false,behavioral,2026-01-13 10:00:00

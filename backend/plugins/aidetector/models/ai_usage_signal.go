@@ -32,7 +32,7 @@ type AIUsageSignal struct {
 	ExplicitToolDetected bool      `gorm:"type:bool"`           // True if explicit AI marker found
 	ExplicitTools        string    `gorm:"type:varchar(255)"`   // Comma-separated list of detected tools
 	ExplicitPatterns     string    `gorm:"type:text"`           // Matched patterns for audit trail
-	ExplicitSignalScore  int       `gorm:"type:int"`            // Score from explicit markers (max 50)
+	ExplicitSignalScore  int       `gorm:"type:int"`            // Score from explicit markers (max 70)
 
 	// Behavioral signals (each contributes to confidence score)
 	RapidCommitScore    int       `gorm:"type:int"` // Score from rapid commit velocity (max 30)

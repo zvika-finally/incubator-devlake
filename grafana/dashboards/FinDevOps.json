@@ -243,6 +243,259 @@
       ],
       "title": "Cost Allocations Detail (Top 50 by Cost)",
       "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 },
+      "id": 100,
+      "panels": [],
+      "title": "Budget Variance Analysis",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 56 },
+      "id": 101,
+      "options": {
+        "content": "## Budget Variance Tracking\nCompares estimated vs actual time spent on issues (from Jira time tracking).\n\n**Formula:** `Variance % = ((Estimated - Actual) / Estimated) × 100`\n\n| Variance | Interpretation |\n|----------|----------------|\n| Positive | Under budget (faster than estimated) |\n| Zero | On budget |\n| Negative | Over budget (took longer than estimated) |\n\n**Goal:** Track estimation accuracy to improve future planning.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "yellow", "value": -10 },
+            { "color": "green", "value": 0 }
+          ]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 60 },
+      "id": 102,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "rawSql": "SELECT budget_variance FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Current Month Budget Variance",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "fixedColor": "blue", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 60 },
+      "id": 103,
+      "targets": [
+        {
+          "rawSql": "SELECT total_estimated_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Estimated Cost (This Month)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 50000 },
+            { "color": "red", "value": 100000 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 60 },
+      "id": 104,
+      "targets": [
+        {
+          "rawSql": "SELECT total_actual_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Actual Cost (This Month)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "red", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 60 },
+      "id": 105,
+      "targets": [
+        {
+          "rawSql": "SELECT over_budget_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Over Budget Issues",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 66 },
+      "id": 106,
+      "targets": [
+        {
+          "rawSql": "SELECT fiscal_month, total_estimated_cost, total_actual_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Estimated vs Actual Cost Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 66 },
+      "id": 107,
+      "targets": [
+        {
+          "rawSql": "SELECT fiscal_month, budget_variance FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Budget Variance % Over Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 74 },
+      "id": 200,
+      "panels": [],
+      "title": "Unallocated Cost Tracking",
+      "type": "row"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 75 },
+      "id": 201,
+      "options": {
+        "content": "## Unallocated Cost\nTracks development cost not attributed to any epic or initiative. **Target: <10%**\n\nHigh unallocated cost indicates orphan issues that need epic/initiative linking for proper cost attribution.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 10 },
+            { "color": "red", "value": 20 }
+          ]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 78 },
+      "id": 202,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        {
+          "rawSql": "SELECT unallocated_percent FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Unallocated Cost %",
+      "type": "gauge"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "unit": "currencyUSD", "color": { "fixedColor": "orange", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 78 },
+      "id": 203,
+      "targets": [
+        {
+          "rawSql": "SELECT unallocated_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Unallocated Cost ($)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" } }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 78 },
+      "id": 204,
+      "targets": [
+        {
+          "rawSql": "SELECT orphan_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Orphan Issues (No Epic)",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 78 },
+      "id": 205,
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) as unallocated_issues FROM cost_allocations WHERE is_unallocated = true",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Total Unallocated Issues",
+      "type": "stat"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 84 },
+      "id": 206,
+      "targets": [
+        {
+          "rawSql": "SELECT fiscal_month, unallocated_percent FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Unallocated % Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 84 },
+      "id": 207,
+      "targets": [
+        {
+          "rawSql": "SELECT fiscal_month, orphan_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "refId": "A", "format": "time_series"
+        }
+      ],
+      "title": "Orphan Issue Count Trend",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "mysql",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 92 },
+      "id": 208,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "total_cost" }] },
+      "targets": [
+        {
+          "rawSql": "SELECT issue_id, issue_type, fiscal_month, hours_worked, total_cost, estimated_minutes, actual_minutes, variance_minutes, variance_percent, over_budget FROM cost_allocations WHERE is_unallocated = true ORDER BY total_cost DESC LIMIT 50",
+          "refId": "A", "format": "table"
+        }
+      ],
+      "title": "Unallocated Issues Detail (Top 50 by Cost)",
+      "type": "table"
     }
   ],
   "schemaVersion": 38,

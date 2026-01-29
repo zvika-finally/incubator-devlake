@@ -44,7 +44,7 @@ func DecodeAndValidateTaskOptions(options map[string]interface{}) (*AIDetectorOp
 	}
 	// Set defaults
 	if op.ConfidenceThreshold == 0 {
-		op.ConfidenceThreshold = 70 // Default: 70% confidence to flag as AI-assisted
+		op.ConfidenceThreshold = 65 // Default: 65% confidence to flag as AI-assisted
 	}
 	return &op, nil
 }

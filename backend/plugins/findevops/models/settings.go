@@ -36,16 +36,16 @@ type FinDevOpsSettings struct {
 	CapitalizationFramework string `json:"capitalizationFramework" gorm:"type:varchar(50);default:'asc_350_40_stages'"`
 
 	// ASC 350-40 label mappings (JSON arrays)
-	// Labels that indicate preliminary stage (expensed)
-	PreliminaryLabels string `json:"preliminaryLabels" gorm:"type:text;default:'[\"research\",\"spike\",\"investigation\",\"feasibility\",\"discovery\",\"poc\",\"proof-of-concept\",\"planning\"]'"`
+	// Labels that indicate preliminary stage (expensed) - defaults via NewDefaultSettings()
+	PreliminaryLabels string `json:"preliminaryLabels" gorm:"type:text"`
 
-	// Labels that indicate post-implementation stage (expensed)
-	PostImplementationLabels string `json:"postImplementationLabels" gorm:"type:text;default:'[\"bug\",\"hotfix\",\"maintenance\",\"ktlo\",\"support\",\"incident\",\"fix\",\"patch\",\"tech-debt\"]'"`
+	// Labels that indicate post-implementation stage (expensed) - defaults via NewDefaultSettings()
+	PostImplementationLabels string `json:"postImplementationLabels" gorm:"type:text"`
 
-	// Issue type mappings (JSON arrays)
-	PreliminaryTypes string `json:"preliminaryTypes" gorm:"type:text;default:'[\"Spike\",\"Research\",\"Discovery\"]'"`
-	DevelopmentTypes string `json:"developmentTypes" gorm:"type:text;default:'[\"Story\",\"Feature\",\"Enhancement\",\"Epic\"]'"`
-	PostImplementationTypes string `json:"postImplementationTypes" gorm:"type:text;default:'[\"Bug\",\"Defect\",\"Hotfix\",\"Support\"]'"`
+	// Issue type mappings (JSON arrays) - defaults via NewDefaultSettings()
+	PreliminaryTypes        string `json:"preliminaryTypes" gorm:"type:text"`
+	DevelopmentTypes        string `json:"developmentTypes" gorm:"type:text"`
+	PostImplementationTypes string `json:"postImplementationTypes" gorm:"type:text"`
 }
 
 func (FinDevOpsSettings) TableName() string {

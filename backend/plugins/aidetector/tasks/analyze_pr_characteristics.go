@@ -18,6 +18,8 @@ limitations under the License.
 package tasks
 
 import (
+	"time"
+
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/log"
@@ -105,7 +107,7 @@ func calculateDeveloperBaselines(db dal.Dal, projectName string, logger log.Logg
 			pr.author_id,
 			AVG(pr.additions) as avg_additions,
 			AVG(pr.deletions) as avg_deletions,
-			AVG(EXTRACT(EPOCH FROM (pr.merged_date - pr.created_date)) / 3600) as avg_cycle_hours,
+			AVG((UNIX_TIMESTAMP(pr.merged_date) - UNIX_TIMESTAMP(pr.created_date)) / 3600) as avg_cycle_hours,
 			COUNT(*) as pr_count
 		`),
 		dal.From("pull_requests pr"),
@@ -136,6 +138,7 @@ func calculateDeveloperBaselines(db dal.Dal, projectName string, logger log.Logg
 			AvgPRDeletions:    avgDeletions,
 			AvgCycleTimeHours: avgCycleHours,
 			PRCount:           prCount,
+			CalculatedAt:      time.Now(),
 		}
 		baselines[authorId] = baseline
 

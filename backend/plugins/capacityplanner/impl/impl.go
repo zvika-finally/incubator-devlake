@@ -84,6 +84,8 @@ func (p CapacityPlanner) GetTablesInfo() []dal.Tabler {
 		&models.CapacityModel{},
 		&models.InvestmentROI{},
 		&models.CapacityPlannerSettings{},
+		&models.IssueFlowMetric{},
+		&models.ProjectFlowSummary{},
 	}
 }
 
@@ -96,7 +98,7 @@ func (p CapacityPlanner) IsProjectMetric() bool {
 }
 
 func (p CapacityPlanner) RunAfter() ([]string, errors.Error) {
-	return []string{"businessmetrics"}, nil
+	return []string{}, nil // No dependencies - reads only from domain tables (issues, sprints, boards)
 }
 
 func (p CapacityPlanner) Settings() interface{} {
@@ -110,6 +112,7 @@ func (p CapacityPlanner) SubTaskMetas() []plugin.SubTaskMeta {
 		tasks.MonteCarloForecastMeta,
 		tasks.BrooksLawModelMeta,
 		tasks.CalculateROIMeta,
+		tasks.CalculateFlowEfficiencyMeta,
 	}
 }
 
@@ -176,6 +179,7 @@ func (p CapacityPlanner) MakeMetricPluginPipelinePlanV200(projectName string, op
 					"monteCarloForecast",
 					"brooksLawModel",
 					"calculateROI",
+					"calculateFlowEfficiency",
 				},
 			},
 		},
