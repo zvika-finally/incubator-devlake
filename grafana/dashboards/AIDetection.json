@@ -40,7 +40,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as explicit_detections FROM ai_usage_signals WHERE explicit_tool_detected = true",
+          "rawSql": "SELECT COUNT(*) as explicit_detections FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.explicit_tool_detected = true AND pm.project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -72,7 +72,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT AVG(ai_confidence_score) as avg_confidence FROM ai_usage_signals WHERE ai_confidence_score > 0",
+          "rawSql": "SELECT AVG(s.ai_confidence_score) as avg_confidence FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.ai_confidence_score > 0 AND pm.project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -92,7 +92,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as total_prs FROM ai_usage_signals",
+          "rawSql": "SELECT COUNT(*) as total_prs FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE pm.project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -112,7 +112,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as high_confidence FROM ai_usage_signals WHERE ai_confidence_score >= 70",
+          "rawSql": "SELECT COUNT(*) as high_confidence FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.ai_confidence_score >= 70 AND pm.project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -132,7 +132,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as medium_confidence FROM ai_usage_signals WHERE ai_confidence_score >= 40 AND ai_confidence_score < 70",
+          "rawSql": "SELECT COUNT(*) as medium_confidence FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.ai_confidence_score >= 40 AND s.ai_confidence_score < 70 AND pm.project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -154,7 +154,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(NULLIF(detected_tool, ''), 'unknown') as tool, COUNT(*) as count FROM ai_usage_signals WHERE ai_confidence_score >= 40 GROUP BY detected_tool ORDER BY count DESC",
+          "rawSql": "SELECT COALESCE(NULLIF(s.detected_tool, ''), 'unknown') as tool, COUNT(*) as count FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.ai_confidence_score >= 40 AND pm.project_name in (${project:sqlstring}) GROUP BY s.detected_tool ORDER BY count DESC",
           "refId": "A",
           "format": "table"
         }
@@ -168,7 +168,7 @@
       "id": 8,
       "targets": [
         {
-          "rawSql": "SELECT MIN(detected_at) as time, AVG(ai_confidence_score) as avg_score, SUM(CASE WHEN explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals GROUP BY DATE(detected_at) ORDER BY time",
+          "rawSql": "SELECT MIN(s.detected_at) as time, AVG(s.ai_confidence_score) as avg_score, SUM(CASE WHEN s.explicit_tool_detected = true THEN 1 ELSE 0 END) as explicit_count FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE pm.project_name in (${project:sqlstring}) GROUP BY DATE(s.detected_at) ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
@@ -219,7 +219,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT AVG(churn_ratio30_days) as ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = true",
+          "rawSql": "SELECT AVG(churn_ratio30_days) as ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = true AND project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -251,7 +251,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT AVG(churn_ratio30_days) as non_ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = false",
+          "rawSql": "SELECT AVG(churn_ratio30_days) as non_ai_churn FROM ai_churn_metrics WHERE is_ai_assisted = false AND project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -283,7 +283,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT churn_difference_percent FROM project_churn_summaries ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT churn_difference_percent FROM project_churn_summaries WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -303,7 +303,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as total FROM ai_churn_metrics",
+          "rawSql": "SELECT COUNT(*) as total FROM ai_churn_metrics WHERE project_name in (${project:sqlstring})",
           "refId": "A",
           "format": "table"
         }
@@ -317,7 +317,7 @@
       "id": 55,
       "targets": [
         {
-          "rawSql": "SELECT MIN(merged_at) as time, AVG(CASE WHEN is_ai_assisted = true THEN churn_ratio30_days END) as ai_churn, AVG(CASE WHEN is_ai_assisted = false THEN churn_ratio30_days END) as non_ai_churn FROM ai_churn_metrics WHERE merged_at IS NOT NULL GROUP BY DATE(merged_at) ORDER BY time",
+          "rawSql": "SELECT MIN(merged_at) as time, AVG(CASE WHEN is_ai_assisted = true THEN churn_ratio30_days END) as ai_churn, AVG(CASE WHEN is_ai_assisted = false THEN churn_ratio30_days END) as non_ai_churn FROM ai_churn_metrics WHERE merged_at IS NOT NULL AND project_name in (${project:sqlstring}) GROUP BY DATE(merged_at) ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
@@ -338,7 +338,7 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 34 },
       "id": 60,
       "options": {
-        "content": "Direct metrics from AI coding tools. **Requires configured connections** - panels show 'No data' if Cursor Business or Claude Code connections aren't set up.",
+        "content": "Direct metrics from AI coding tools. **Requires configured connections** - panels show 'No data' if Cursor Business or Claude Code connections aren't set up. *Note: These metrics are organization-wide and not filtered by project.*",
         "mode": "markdown"
       },
       "title": "",
@@ -579,7 +579,7 @@
       "id": 21,
       "targets": [
         {
-          "rawSql": "SELECT pr_throughput_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT pr_throughput_change FROM ai_impact_metrics WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -602,7 +602,7 @@
       "id": 22,
       "targets": [
         {
-          "rawSql": "SELECT review_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT review_time_change FROM ai_impact_metrics WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -625,7 +625,7 @@
       "id": 23,
       "targets": [
         {
-          "rawSql": "SELECT lead_time_change FROM ai_impact_metrics ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT lead_time_change FROM ai_impact_metrics WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -651,7 +651,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT s.explicit_tools as ai_tool, pr.title as pr_title, pr.author_name, s.explicit_signal_score, s.ai_confidence_score as total_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id WHERE s.explicit_tool_detected = true ORDER BY s.detected_at DESC LIMIT 25",
+          "rawSql": "SELECT s.explicit_tools as ai_tool, pr.title as pr_title, pr.author_name, s.explicit_signal_score, s.ai_confidence_score as total_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s JOIN pull_requests pr ON pr.id = s.pull_request_id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE s.explicit_tool_detected = true AND pm.project_name in (${project:sqlstring}) ORDER BY s.detected_at DESC LIMIT 25",
           "refId": "A",
           "format": "table"
         }
@@ -670,7 +670,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT CASE WHEN explicit_tool_detected = true THEN 'Explicit (Confirmed)' WHEN ai_confidence_score >= 70 THEN 'High (≥70%)' WHEN ai_confidence_score >= 40 THEN 'Medium (40-69%)' ELSE 'Low (<40%)' END as confidence_level, COUNT(*) as count FROM ai_usage_signals GROUP BY confidence_level ORDER BY count DESC",
+          "rawSql": "SELECT CASE WHEN s.explicit_tool_detected = true THEN 'Explicit (Confirmed)' WHEN s.ai_confidence_score >= 70 THEN 'High (≥70%)' WHEN s.ai_confidence_score >= 40 THEN 'Medium (40-69%)' ELSE 'Low (<40%)' END as confidence_level, COUNT(*) as count FROM ai_usage_signals s JOIN pull_requests pr ON s.pull_request_id = pr.id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE pm.project_name in (${project:sqlstring}) GROUP BY confidence_level ORDER BY count DESC",
           "refId": "A",
           "format": "table"
         }
@@ -688,7 +688,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT s.id, pr.title as pr_title, pr.author_name, s.detected_tool, s.explicit_tool_detected as explicit, s.explicit_signal_score, s.rapid_commit_score, s.pr_size_score, s.lines_per_minute_score, s.ai_confidence_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s LEFT JOIN pull_requests pr ON pr.id = s.pull_request_id ORDER BY s.ai_confidence_score DESC LIMIT 50",
+          "rawSql": "SELECT s.id, pr.title as pr_title, pr.author_name, s.detected_tool, s.explicit_tool_detected as explicit, s.explicit_signal_score, s.rapid_commit_score, s.pr_size_score, s.lines_per_minute_score, s.ai_confidence_score, DATE(s.detected_at) as detected_date FROM ai_usage_signals s JOIN pull_requests pr ON pr.id = s.pull_request_id JOIN repos r ON pr.base_repo_id = r.id JOIN project_mapping pm ON r.id = pm.row_id AND pm.`table` = 'repos' WHERE pm.project_name in (${project:sqlstring}) ORDER BY s.ai_confidence_score DESC LIMIT 50",
           "refId": "A",
           "format": "table"
         }
@@ -699,12 +699,32 @@
   ],
   "schemaVersion": 38,
   "tags": ["AI", "development", "metrics", "productivity", "cursor", "claude-code"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "datasource": "mysql",
+        "definition": "SELECT DISTINCT pm.project_name FROM project_mapping pm WHERE pm.project_name IS NOT NULL AND pm.project_name != '' ORDER BY pm.project_name",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Project",
+        "multi": true,
+        "name": "project",
+        "options": [],
+        "query": "SELECT DISTINCT pm.project_name FROM project_mapping pm WHERE pm.project_name IS NOT NULL AND pm.project_name != '' ORDER BY pm.project_name",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-30d", "to": "now" },
   "timepicker": {},
   "timezone": "",
   "title": "AI-Assisted Development",
   "uid": "ai-detection-dashboard",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }

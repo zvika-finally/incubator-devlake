@@ -26,7 +26,7 @@
       "id": 2,
       "targets": [
         {
-          "rawSql": "SELECT SUM(total_cost) as total FROM monthly_cost_summaries",
+          "rawSql": "SELECT SUM(total_cost) as total FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -42,7 +42,7 @@
       "id": 3,
       "targets": [
         {
-          "rawSql": "SELECT SUM(capitalizable_cost) as capitalizable FROM monthly_cost_summaries",
+          "rawSql": "SELECT SUM(capitalizable_cost) as capitalizable FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -58,7 +58,7 @@
       "id": 4,
       "targets": [
         {
-          "rawSql": "SELECT SUM(expense_cost) as expense FROM monthly_cost_summaries",
+          "rawSql": "SELECT SUM(expense_cost) as expense FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -80,7 +80,7 @@
       "id": 5,
       "targets": [
         {
-          "rawSql": "SELECT AVG(capitalization_rate) as rate FROM monthly_cost_summaries",
+          "rawSql": "SELECT AVG(capitalization_rate) as rate FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -113,7 +113,7 @@
       "id": 21,
       "targets": [
         {
-          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 7 ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 7 AND project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -135,7 +135,7 @@
       "id": 22,
       "targets": [
         {
-          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 30 ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 30 AND project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -157,7 +157,7 @@
       "id": 23,
       "targets": [
         {
-          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 90 ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT cost_per_deployment FROM deployment_costs WHERE window_days = 90 AND project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -170,7 +170,7 @@
       "id": 24,
       "targets": [
         {
-          "rawSql": "SELECT project_name, window_days, DATE(period_start) as period_start, DATE(period_end) as period_end, total_cost, deployment_count, cost_per_deployment, DATE(calculated_at) as calculated FROM deployment_costs ORDER BY calculated_at DESC, window_days LIMIT 30",
+          "rawSql": "SELECT project_name, window_days, DATE(period_start) as period_start, DATE(period_end) as period_end, total_cost, deployment_count, cost_per_deployment, DATE(calculated_at) as calculated FROM deployment_costs WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC, window_days LIMIT 30",
           "refId": "A", "format": "table"
         }
       ],
@@ -184,7 +184,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT project_phase as phase, SUM(total_cost) as cost FROM cost_allocations GROUP BY project_phase",
+          "rawSql": "SELECT ca.project_phase as phase, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) GROUP BY ca.project_phase",
           "refId": "A", "format": "table"
         }
       ],
@@ -197,7 +197,7 @@
       "id": 7,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, capitalizable_cost, expense_cost FROM monthly_cost_summaries ORDER BY fiscal_month",
+          "rawSql": "SELECT fiscal_month, SUM(capitalizable_cost) as capitalizable_cost, SUM(expense_cost) as expense_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) GROUP BY fiscal_month ORDER BY fiscal_month",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -211,7 +211,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT capitalization_category as category, SUM(total_cost) as cost FROM cost_allocations GROUP BY capitalization_category",
+          "rawSql": "SELECT ca.capitalization_category as category, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) GROUP BY ca.capitalization_category",
           "refId": "A", "format": "table"
         }
       ],
@@ -224,7 +224,7 @@
       "id": 26,
       "targets": [
         {
-          "rawSql": "SELECT window_days, AVG(cost_per_deployment) as avg_cost FROM deployment_costs GROUP BY window_days ORDER BY window_days",
+          "rawSql": "SELECT window_days, AVG(cost_per_deployment) as avg_cost FROM deployment_costs WHERE project_name in (${project:sqlstring}) GROUP BY window_days ORDER BY window_days",
           "refId": "A", "format": "table"
         }
       ],
@@ -237,7 +237,7 @@
       "id": 8,
       "targets": [
         {
-          "rawSql": "SELECT issue_id, issue_type, project_phase, capitalization_category, hours_worked, hourly_rate, total_cost, category_reason FROM cost_allocations ORDER BY total_cost DESC LIMIT 50",
+          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.project_phase, ca.capitalization_category, ca.hours_worked, ca.hourly_rate, ca.total_cost, ca.category_reason FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) ORDER BY ca.total_cost DESC LIMIT 50",
           "refId": "A", "format": "table"
         }
       ],
@@ -281,7 +281,7 @@
       "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "rawSql": "SELECT budget_variance FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -297,7 +297,7 @@
       "id": 103,
       "targets": [
         {
-          "rawSql": "SELECT total_estimated_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT SUM(total_estimated_cost) as total_estimated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -319,7 +319,7 @@
       "id": 104,
       "targets": [
         {
-          "rawSql": "SELECT total_actual_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -335,7 +335,7 @@
       "id": 105,
       "targets": [
         {
-          "rawSql": "SELECT over_budget_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT SUM(over_budget_issue_count) as over_budget_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -348,7 +348,7 @@
       "id": 106,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, total_estimated_cost, total_actual_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, SUM(total_estimated_cost) as total_estimated_cost, SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -361,7 +361,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, budget_variance FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -405,7 +405,7 @@
       "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "rawSql": "SELECT unallocated_percent FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -421,7 +421,7 @@
       "id": 203,
       "targets": [
         {
-          "rawSql": "SELECT unallocated_cost FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT SUM(unallocated_cost) as unallocated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -437,7 +437,7 @@
       "id": 204,
       "targets": [
         {
-          "rawSql": "SELECT orphan_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 1",
+          "rawSql": "SELECT SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A", "format": "table"
         }
       ],
@@ -450,7 +450,7 @@
       "id": 205,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as unallocated_issues FROM cost_allocations WHERE is_unallocated = true",
+          "rawSql": "SELECT COUNT(*) as unallocated_issues FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -463,7 +463,7 @@
       "id": 206,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, unallocated_percent FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -476,7 +476,7 @@
       "id": 207,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, orphan_issue_count FROM monthly_cost_summaries ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -490,7 +490,7 @@
       "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "total_cost" }] },
       "targets": [
         {
-          "rawSql": "SELECT issue_id, issue_type, fiscal_month, hours_worked, total_cost, estimated_minutes, actual_minutes, variance_minutes, variance_percent, over_budget FROM cost_allocations WHERE is_unallocated = true ORDER BY total_cost DESC LIMIT 50",
+          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.fiscal_month, ca.hours_worked, ca.total_cost, ca.estimated_minutes, ca.actual_minutes, ca.variance_minutes, ca.variance_percent, ca.over_budget FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) ORDER BY ca.total_cost DESC LIMIT 50",
           "refId": "A", "format": "table"
         }
       ],
@@ -500,8 +500,75 @@
   ],
   "schemaVersion": 38,
   "tags": ["FinDevOps", "cost", "capitalization", "ASC 350-40", "deployment"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "mysql",
+        "definition": "select distinct name from projects",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Project",
+        "multi": true,
+        "name": "project",
+        "options": [],
+        "query": "select distinct name from projects",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "mysql",
+        "definition": "select distinct issue_type from cost_allocations where issue_type != ''",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Issue Type",
+        "multi": true,
+        "name": "issue_type",
+        "options": [],
+        "query": "select distinct issue_type from cost_allocations where issue_type != ''",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "mysql",
+        "definition": "select distinct capitalization_category from cost_allocations where capitalization_category != ''",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Capitalization Category",
+        "multi": true,
+        "name": "cap_category",
+        "options": [],
+        "query": "select distinct capitalization_category from cost_allocations where capitalization_category != ''",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-90d", "to": "now" },
   "title": "FinDevOps - Cost & Capitalization",
   "uid": "findevops-dashboard",
-  "version": 2
+  "version": 3
 }

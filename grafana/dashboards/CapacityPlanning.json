@@ -22,7 +22,7 @@
       "id": 2,
       "targets": [
         {
-          "rawSql": "SELECT AVG(issues_completed) as avg_throughput FROM team_velocities",
+          "rawSql": "SELECT AVG(issues_completed) as avg_throughput FROM team_velocities WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -35,7 +35,7 @@
       "id": 3,
       "targets": [
         {
-          "rawSql": "SELECT AVG(avg_cycle_time_hours) as avg_cycle FROM team_velocities",
+          "rawSql": "SELECT AVG(avg_cycle_time_hours) as avg_cycle FROM team_velocities WHERE project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -77,7 +77,7 @@
       "id": 5,
       "targets": [
         {
-          "rawSql": "SELECT sprint_name as period_name, issues_completed as throughput FROM team_velocities ORDER BY sprint_end_date DESC LIMIT 10",
+          "rawSql": "SELECT sprint_name as period_name, issues_completed as throughput FROM team_velocities WHERE project_name in (${project:sqlstring}) ORDER BY sprint_end_date DESC LIMIT 10",
           "refId": "A", "format": "table"
         }
       ],
@@ -103,7 +103,7 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 20 },
       "id": 10,
       "options": {
-        "content": "## Monte Carlo Probabilistic Forecasts (Kanban)\nBased on historical throughput variance. **P50** = 50% chance of completion | **P90** = 90% confidence (recommended for commitments)",
+        "content": "## Monte Carlo Probabilistic Forecasts (Kanban)\nBased on historical throughput variance. **P50** = 50% chance of completion | **P90** = 90% confidence (recommended for commitments)\n\n*Note: Initiative forecasts and Monte Carlo data are organization-wide metrics.*",
         "mode": "markdown"
       },
       "title": "Monte Carlo Explanation",
@@ -141,7 +141,7 @@
       "options": { "showHeader": true },
       "targets": [
         {
-          "rawSql": "SELECT project_name, scenario_name, current_team_size, team_size_delta, ramp_up_weeks, current_channels, new_channels, overhead_factor, productivity_factor, projected_deploy_delta, projected_lead_delta, DATE(calculated_at) as calculated FROM capacity_models ORDER BY calculated_at DESC LIMIT 20",
+          "rawSql": "SELECT project_name, scenario_name, current_team_size, team_size_delta, ramp_up_weeks, current_channels, new_channels, overhead_factor, productivity_factor, projected_deploy_delta, projected_lead_delta, DATE(calculated_at) as calculated FROM capacity_models WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 20",
           "refId": "A", "format": "table"
         }
       ],
@@ -153,7 +153,7 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 42 },
       "id": 14,
       "options": {
-        "content": "## Investment ROI Analysis\n**Constants:** Hourly cost = $75 | Bug fix time = 20% | AI hours saved = 2/week/user | AI quality improvement = 5%",
+        "content": "## Investment ROI Analysis\n**Constants:** Hourly cost = $75 | Bug fix time = 20% | AI hours saved = 2/week/user | AI quality improvement = 5%\n\n*Note: ROI metrics are organization-wide.*",
         "mode": "markdown"
       },
       "title": "ROI Calculation Constants",
@@ -269,7 +269,7 @@
       "options": { "orientation": "auto", "reduceOptions": { "calcs": ["mean"] } },
       "targets": [
         {
-          "rawSql": "SELECT avg_flow_efficiency FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT avg_flow_efficiency FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -285,7 +285,7 @@
       "id": 103,
       "targets": [
         {
-          "rawSql": "SELECT avg_total_days FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT avg_total_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -301,7 +301,7 @@
       "id": 104,
       "targets": [
         {
-          "rawSql": "SELECT avg_active_days FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT avg_active_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -317,7 +317,7 @@
       "id": 105,
       "targets": [
         {
-          "rawSql": "SELECT avg_waiting_days FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT avg_waiting_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -331,7 +331,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "donut" },
       "targets": [
         {
-          "rawSql": "SELECT category, value FROM (SELECT 'Excellent' as category, excellent_count as value FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1) t1 UNION ALL SELECT category, value FROM (SELECT 'Good' as category, good_count as value FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1) t2 UNION ALL SELECT category, value FROM (SELECT 'Average' as category, average_count as value FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1) t3 UNION ALL SELECT category, value FROM (SELECT 'Poor' as category, poor_count as value FROM project_flow_summaries ORDER BY period_end DESC LIMIT 1) t4",
+          "rawSql": "SELECT category, value FROM (SELECT 'Excellent' as category, excellent_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1) t1 UNION ALL SELECT category, value FROM (SELECT 'Good' as category, good_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1) t2 UNION ALL SELECT category, value FROM (SELECT 'Average' as category, average_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1) t3 UNION ALL SELECT category, value FROM (SELECT 'Poor' as category, poor_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 1) t4",
           "refId": "A", "format": "table"
         }
       ],
@@ -344,7 +344,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_flow_efficiency, median_flow_efficiency, p90_flow_efficiency FROM project_flow_summaries ORDER BY period_end ASC",
+          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_flow_efficiency, median_flow_efficiency, p90_flow_efficiency FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end ASC",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -358,7 +358,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT issue_type, COUNT(*) as count, AVG(flow_efficiency) as avg_efficiency FROM issue_flow_metrics GROUP BY issue_type",
+          "rawSql": "SELECT issue_type, COUNT(*) as count, AVG(flow_efficiency) as avg_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) GROUP BY issue_type",
           "refId": "A", "format": "table"
         }
       ],
@@ -371,7 +371,7 @@
       "id": 109,
       "targets": [
         {
-          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_active_days, avg_waiting_days FROM project_flow_summaries ORDER BY period_end ASC",
+          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_active_days, avg_waiting_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end ASC",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -385,7 +385,7 @@
       "options": { "showHeader": true },
       "targets": [
         {
-          "rawSql": "SELECT project_name, sprint_name as period_name, DATE(period_start) as period_start, DATE(period_end) as period_end, issue_count, avg_flow_efficiency, median_flow_efficiency, p90_flow_efficiency, avg_total_days, avg_active_days, avg_waiting_days, excellent_count, good_count, average_count, poor_count FROM project_flow_summaries ORDER BY period_end DESC LIMIT 20",
+          "rawSql": "SELECT project_name, sprint_name as period_name, DATE(period_start) as period_start, DATE(period_end) as period_end, issue_count, avg_flow_efficiency, median_flow_efficiency, p90_flow_efficiency, avg_total_days, avg_active_days, avg_waiting_days, excellent_count, good_count, average_count, poor_count FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC LIMIT 20",
           "refId": "A", "format": "table"
         }
       ],
@@ -399,7 +399,7 @@
       "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "flow_efficiency" }] },
       "targets": [
         {
-          "rawSql": "SELECT issue_key, issue_type, project_name, total_days, active_days, waiting_days, flow_efficiency, transition_count, DATE(started_at) as started, DATE(completed_at) as completed FROM issue_flow_metrics WHERE completed_at IS NOT NULL ORDER BY completed_at DESC LIMIT 50",
+          "rawSql": "SELECT issue_key, issue_type, project_name, total_days, active_days, waiting_days, flow_efficiency, transition_count, DATE(started_at) as started, DATE(completed_at) as completed FROM issue_flow_metrics WHERE completed_at IS NOT NULL AND project_name in (${project:sqlstring}) ORDER BY completed_at DESC LIMIT 50",
           "refId": "A", "format": "table"
         }
       ],
@@ -409,8 +409,29 @@
   ],
   "schemaVersion": 38,
   "tags": ["capacity", "kanban", "throughput", "forecasting", "Monte Carlo", "Brooks Law", "ROI", "flow efficiency"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "datasource": "mysql",
+        "definition": "SELECT DISTINCT project_name FROM team_velocities WHERE project_name IS NOT NULL AND project_name != '' UNION SELECT DISTINCT project_name FROM project_flow_summaries WHERE project_name IS NOT NULL AND project_name != '' ORDER BY project_name",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Project",
+        "multi": true,
+        "name": "project",
+        "options": [],
+        "query": "SELECT DISTINCT project_name FROM team_velocities WHERE project_name IS NOT NULL AND project_name != '' UNION SELECT DISTINCT project_name FROM project_flow_summaries WHERE project_name IS NOT NULL AND project_name != '' ORDER BY project_name",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-90d", "to": "now" },
   "title": "Capacity Planning & Forecasting (Kanban)",
   "uid": "capacity-planning-dashboard",
-  "version": 2
+  "version": 4
 }
