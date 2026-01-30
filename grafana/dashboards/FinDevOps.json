@@ -43,7 +43,7 @@
       "id": 2,
       "targets": [
         {
-          "rawSql": "SELECT SUM(total_cost) as total FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month)",
+          "rawSql": "SELECT SUM(total_cost) as total FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at)",
           "refId": "A",
           "format": "table"
         }
@@ -71,7 +71,7 @@
       "id": 3,
       "targets": [
         {
-          "rawSql": "SELECT SUM(capitalizable_cost) as capitalizable FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month)",
+          "rawSql": "SELECT SUM(capitalizable_cost) as capitalizable FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at)",
           "refId": "A",
           "format": "table"
         }
@@ -99,7 +99,7 @@
       "id": 4,
       "targets": [
         {
-          "rawSql": "SELECT SUM(expense_cost) as expense FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month)",
+          "rawSql": "SELECT SUM(expense_cost) as expense FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at)",
           "refId": "A",
           "format": "table"
         }
@@ -143,7 +143,7 @@
       "id": 5,
       "targets": [
         {
-          "rawSql": "SELECT AVG(capitalization_rate) as rate FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month)",
+          "rawSql": "SELECT AVG(capitalization_rate) as rate FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at)",
           "refId": "A",
           "format": "table"
         }
@@ -335,7 +335,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT ca.project_phase as phase, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) AND $__timeFilter(ca.fiscal_month) GROUP BY ca.project_phase",
+          "rawSql": "SELECT ca.project_phase as phase, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) AND $__timeFilter(ca.calculated_at) GROUP BY ca.project_phase",
           "refId": "A",
           "format": "table"
         }
@@ -354,7 +354,7 @@
       "id": 7,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, SUM(capitalizable_cost) as capitalizable_cost, SUM(expense_cost) as expense_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) GROUP BY fiscal_month ORDER BY fiscal_month",
+          "rawSql": "SELECT fiscal_month, SUM(capitalizable_cost) as capitalizable_cost, SUM(expense_cost) as expense_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) GROUP BY fiscal_month ORDER BY fiscal_month",
           "refId": "A",
           "format": "time_series"
         }
@@ -379,7 +379,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT ca.capitalization_category as category, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.fiscal_month) GROUP BY ca.capitalization_category",
+          "rawSql": "SELECT ca.capitalization_category as category, SUM(ca.total_cost) as cost FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.calculated_at) GROUP BY ca.capitalization_category",
           "refId": "A",
           "format": "table"
         }
@@ -417,7 +417,7 @@
       "id": 8,
       "targets": [
         {
-          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.project_phase, ca.capitalization_category, ca.hours_worked, ca.hourly_rate, ca.total_cost, ca.category_reason FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) AND $__timeFilter(ca.fiscal_month) ORDER BY ca.total_cost DESC LIMIT 50",
+          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.project_phase, ca.capitalization_category, ca.hours_worked, ca.hourly_rate, ca.total_cost, ca.category_reason FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND ca.capitalization_category in (${cap_category:sqlstring}) AND $__timeFilter(ca.calculated_at) ORDER BY ca.total_cost DESC LIMIT 50",
           "refId": "A",
           "format": "table"
         }
@@ -498,7 +498,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -526,7 +526,7 @@
       "id": 103,
       "targets": [
         {
-          "rawSql": "SELECT SUM(total_estimated_cost) as total_estimated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT SUM(total_estimated_cost) as total_estimated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -570,7 +570,7 @@
       "id": 104,
       "targets": [
         {
-          "rawSql": "SELECT SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -597,7 +597,7 @@
       "id": 105,
       "targets": [
         {
-          "rawSql": "SELECT SUM(over_budget_issue_count) as over_budget_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT SUM(over_budget_issue_count) as over_budget_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -616,7 +616,7 @@
       "id": 106,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, SUM(total_estimated_cost) as total_estimated_cost, SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, SUM(total_estimated_cost) as total_estimated_cost, SUM(total_actual_cost) as total_actual_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A",
           "format": "time_series"
         }
@@ -635,7 +635,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, AVG(budget_variance) as budget_variance FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A",
           "format": "time_series"
         }
@@ -716,7 +716,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -744,7 +744,7 @@
       "id": 203,
       "targets": [
         {
-          "rawSql": "SELECT SUM(unallocated_cost) as unallocated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT SUM(unallocated_cost) as unallocated_cost FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -771,7 +771,7 @@
       "id": 204,
       "targets": [
         {
-          "rawSql": "SELECT SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
+          "rawSql": "SELECT SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) AND fiscal_month = (SELECT MAX(fiscal_month) FROM monthly_cost_summaries)",
           "refId": "A",
           "format": "table"
         }
@@ -790,7 +790,7 @@
       "id": 205,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as unallocated_issues FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.fiscal_month)",
+          "rawSql": "SELECT COUNT(*) as unallocated_issues FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.calculated_at)",
           "refId": "A",
           "format": "table"
         }
@@ -809,7 +809,7 @@
       "id": 206,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, AVG(unallocated_percent) as unallocated_percent FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A",
           "format": "time_series"
         }
@@ -828,7 +828,7 @@
       "id": 207,
       "targets": [
         {
-          "rawSql": "SELECT fiscal_month, SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(fiscal_month) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
+          "rawSql": "SELECT fiscal_month, SUM(orphan_issue_count) as orphan_issue_count FROM monthly_cost_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) GROUP BY fiscal_month ORDER BY fiscal_month DESC LIMIT 12",
           "refId": "A",
           "format": "time_series"
         }
@@ -856,7 +856,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.fiscal_month, ca.hours_worked, ca.total_cost, ca.estimated_minutes, ca.actual_minutes, ca.variance_minutes, ca.variance_percent, ca.over_budget FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.fiscal_month) ORDER BY ca.total_cost DESC LIMIT 50",
+          "rawSql": "SELECT ca.issue_id, ca.issue_type, ca.fiscal_month, ca.hours_worked, ca.total_cost, ca.estimated_minutes, ca.actual_minutes, ca.variance_minutes, ca.variance_percent, ca.over_budget FROM cost_allocations ca JOIN issues i ON ca.issue_id = i.id JOIN board_issues bi ON i.id = bi.issue_id JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards' WHERE ca.is_unallocated = true AND pm.project_name in (${project:sqlstring}) AND ca.issue_type in (${issue_type:sqlstring}) AND $__timeFilter(ca.calculated_at) ORDER BY ca.total_cost DESC LIMIT 50",
           "refId": "A",
           "format": "table"
         }

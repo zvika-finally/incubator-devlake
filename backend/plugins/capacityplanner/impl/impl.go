@@ -181,6 +181,8 @@ func (p CapacityPlanner) MakeMetricPluginPipelinePlanV200(projectName string, op
 					"forecastCompletionKanban",      // Kanban: issue-based forecasting
 					"monteCarloForecastKanban",      // Kanban: probabilistic forecasts
 					"calculateVelocity",             // Scrum: sprint-based (optional)
+					"forecastCompletion",            // Scrum: story-point forecasting
+					"monteCarloForecast",            // Scrum: Monte Carlo with velocity
 					"brooksLawModel",
 					"calculateROI",
 					"calculateFlowEfficiency",

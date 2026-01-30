@@ -30,5 +30,6 @@ func All() []plugin.MigrationScript {
 		new(addSettings),
 		new(addCodeChurn),
 		new(backfillDetectedAt),
+		new(fixChurnColumns),
 	}
 }
