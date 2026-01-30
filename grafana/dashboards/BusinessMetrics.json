@@ -35,7 +35,7 @@
       "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "rawSql": "SELECT total_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT total_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -51,7 +51,7 @@
       "id": 21,
       "targets": [
         {
-          "rawSql": "SELECT health_level FROM team_health_scores WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT health_level FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -190,7 +190,7 @@
       "id": 23,
       "targets": [
         {
-          "rawSql": "SELECT project_name, period_start, period_end, deploy_frequency, lead_time_hours, change_failure_rate, mttr_hours, deploy_freq_score, lead_time_score, cfr_score, mttr_score, total_score, health_level, calculated_at FROM team_health_scores WHERE project_name in (${project:sqlstring}) ORDER BY calculated_at DESC LIMIT 10",
+          "rawSql": "SELECT project_name, period_start, period_end, deploy_frequency, lead_time_hours, change_failure_rate, mttr_hours, deploy_freq_score, lead_time_score, cfr_score, mttr_score, total_score, health_level, calculated_at FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 10",
           "refId": "A", "format": "table"
         }
       ],
@@ -241,7 +241,7 @@
       "id": 103,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as active_violations FROM agreement_violations WHERE is_resolved = false AND project_name in (${project:sqlstring})",
+          "rawSql": "SELECT COUNT(*) as active_violations FROM agreement_violations WHERE is_resolved = false AND project_name in (${project:sqlstring}) AND $__timeFilter(violated_at)",
           "refId": "A", "format": "table"
         }
       ],
@@ -267,7 +267,7 @@
       "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "rawSql": "SELECT AVG(compliance_rate) as avg_compliance FROM agreement_compliance_summaries WHERE period_end >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND project_name in (${project:sqlstring})",
+          "rawSql": "SELECT AVG(compliance_rate) as avg_compliance FROM agreement_compliance_summaries WHERE $__timeFilter(period_end) AND project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -283,7 +283,7 @@
       "id": 105,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as resolved_today FROM agreement_violations WHERE is_resolved = true AND DATE(resolved_at) = CURDATE() AND project_name in (${project:sqlstring})",
+          "rawSql": "SELECT COUNT(*) as resolved_today FROM agreement_violations WHERE is_resolved = true AND $__timeFilter(resolved_at) AND project_name in (${project:sqlstring})",
           "refId": "A", "format": "table"
         }
       ],
@@ -297,7 +297,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT agreement_type as type, COUNT(*) as count FROM agreement_violations WHERE is_resolved = false AND project_name in (${project:sqlstring}) GROUP BY agreement_type",
+          "rawSql": "SELECT agreement_type as type, COUNT(*) as count FROM agreement_violations WHERE is_resolved = false AND project_name in (${project:sqlstring}) AND $__timeFilter(violated_at) GROUP BY agreement_type",
           "refId": "A", "format": "table"
         }
       ],
@@ -310,7 +310,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT DATE(violated_at) as time, COUNT(*) as violations FROM agreement_violations WHERE violated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND project_name in (${project:sqlstring}) GROUP BY DATE(violated_at) ORDER BY time",
+          "rawSql": "SELECT DATE(violated_at) as time, COUNT(*) as violations FROM agreement_violations WHERE $__timeFilter(violated_at) AND project_name in (${project:sqlstring}) GROUP BY DATE(violated_at) ORDER BY time",
           "refId": "A", "format": "time_series"
         }
       ],
@@ -338,7 +338,7 @@
       "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "violated_at" }] },
       "targets": [
         {
-          "rawSql": "SELECT av.project_name, av.agreement_type, av.entity_type, av.entity_key, av.current_value, av.threshold_value, av.excess_value, av.violated_at, av.is_resolved, av.resolved_at FROM agreement_violations av WHERE av.project_name in (${project:sqlstring}) ORDER BY av.is_resolved ASC, av.violated_at DESC LIMIT 50",
+          "rawSql": "SELECT av.project_name, av.agreement_type, av.entity_type, av.entity_key, av.current_value, av.threshold_value, av.excess_value, av.violated_at, av.is_resolved, av.resolved_at FROM agreement_violations av WHERE av.project_name in (${project:sqlstring}) AND $__timeFilter(av.violated_at) ORDER BY av.is_resolved ASC, av.violated_at DESC LIMIT 50",
           "refId": "A", "format": "table"
         }
       ],
@@ -352,7 +352,7 @@
       "options": { "showHeader": true },
       "targets": [
         {
-          "rawSql": "SELECT project_name, agreement_type, DATE(period_start) as period_start, DATE(period_end) as period_end, total_checked, total_compliant, total_violations, compliance_rate, average_value, p50_value, p90_value FROM agreement_compliance_summaries WHERE project_name in (${project:sqlstring}) ORDER BY period_end DESC, project_name LIMIT 20",
+          "rawSql": "SELECT project_name, agreement_type, DATE(period_start) as period_start, DATE(period_end) as period_end, total_checked, total_compliant, total_violations, compliance_rate, average_value, p50_value, p90_value FROM agreement_compliance_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC, project_name LIMIT 20",
           "refId": "A", "format": "table"
         }
       ],

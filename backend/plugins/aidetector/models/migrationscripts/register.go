@@ -29,5 +29,6 @@ func All() []plugin.MigrationScript {
 		new(addAIImpact),
 		new(addSettings),
 		new(addCodeChurn),
+		new(backfillDetectedAt),
 	}
 }
