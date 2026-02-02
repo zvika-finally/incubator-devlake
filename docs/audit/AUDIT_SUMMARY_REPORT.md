@@ -85,13 +85,14 @@ This audit reviewed **106 metrics across 4 dashboards** to validate data lineage
 |-----------|--------|
 | Metrics | 20 panels |
 | Completeness | 100% (161 initiatives, 4/4 projects) |
-| Accuracy | 100% pass rate |
+| Accuracy | 100% pass rate (5/5 metrics validated) |
 | Freshness | 0 days old |
 
 **Key Findings:**
 - 161 business initiatives created
-- 0 Jira Epics (initiatives from alternative source)
+- 20 ROI calculations with correct formulas
 - Health levels: 76% medium, 24% low (no high/excellent)
+- All DORA component scores validated (deploy_freq + lead_time + cfr + mttr = total)
 
 **Resolved Issue:**
 - Schema mismatch on `team_health_scores` table (GORM column naming) - **RESOLVED**
