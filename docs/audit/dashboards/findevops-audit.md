@@ -345,31 +345,424 @@
 
 ---
 
-*(Continue with remaining 20 metrics following same template)*
+### Metric 11: Monthly Cost Breakdown (Capitalizable vs Expensed)
 
-## Remaining Metrics (To Be Documented)
+**Panel ID:** 7 | **Type:** Time Series
 
-### Cost Breakdown (continued)
-- ☐ Metric 11: Monthly Cost Breakdown (Capitalizable vs Expensed) - Panel 7
-- ☐ Metric 12: Cost by Capitalization Category - Panel 25
-- ☐ Metric 13: Cost Allocations Detail - Panel 8
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Monthly trend showing capitalizable vs expensed costs over time
+- ☐ **Formula:**
+  ```sql
+  SELECT calculated_at as time,
+         capitalizable_cost as "Capitalizable",
+         expense_cost as "Expensed"
+  FROM monthly_cost_summaries
+  WHERE project_name IN (selected_projects)
+  ORDER BY calculated_at
+  ```
 
-### Budget Variance
-- ☐ Metric 14: Current Month Budget Variance - Panel 102
-- ☐ Metric 15: Estimated Cost (This Month) - Panel 103
-- ☐ Metric 16: Actual Cost (This Month) - Panel 104
-- ☐ Metric 17: Over Budget Issues - Panel 105
-- ☐ Metric 18: Estimated vs Actual Cost Trend - Panel 106
-- ☐ Metric 19: Budget Variance % Over Time - Panel 107
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
 
-### Unallocated Costs
-- ☐ Metric 20: Unallocated Cost % - Panel 202
-- ☐ Metric 21: Unallocated Cost ($) - Panel 203
-- ☐ Metric 22: Orphan Issues (No Epic) - Panel 204
-- ☐ Metric 23: Total Unallocated Issues - Panel 205
-- ☐ Metric 24: Unallocated % Trend - Panel 206
-- ☐ Metric 25: Orphan Issue Count Trend - Panel 207
-- ☐ Metric 26: Unallocated Issues Detail - Panel 208
+---
+
+### Metric 12: Cost by Capitalization Category
+
+**Panel ID:** 25 | **Type:** Pie Chart
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Distribution of costs across detailed ASC 350-40 categories
+- ☐ **Formula:**
+  ```sql
+  SELECT capitalization_category, SUM(total_cost)
+  FROM cost_allocations
+  WHERE project_name IN (selected_projects)
+  GROUP BY capitalization_category
+
+  Categories: feature_development, bug_fix, maintenance, research, support
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 13: Cost Allocations Detail
+
+**Panel ID:** 8 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Detailed view of individual cost allocation records
+- ☐ **Formula:**
+  ```sql
+  SELECT issue_key, developer_name, hours_worked,
+         hourly_rate, total_cost, project_phase,
+         capitalization_category, work_date
+  FROM cost_allocations
+  WHERE project_name IN (selected_projects)
+  ORDER BY work_date DESC
+  LIMIT 100
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+## Budget Variance Metrics
+
+### Metric 14: Current Month Budget Variance
+
+**Panel ID:** 102 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Difference between estimated and actual costs for current month
+- ☐ **Formula:**
+  ```
+  Budget Variance = estimated_cost - actual_cost
+  WHERE calculated_at = CURRENT_MONTH
+
+  Positive = under budget (good)
+  Negative = over budget (concern)
+  ```
+- ☐ **Edge cases identified:**
+  - No estimate → variance undefined (NULL)
+  - No actual costs yet → variance = estimated_cost
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 15: Estimated Cost (This Month)
+
+**Panel ID:** 103 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Projected total cost for current month based on velocity
+- ☐ **Formula:**
+  ```
+  Estimated Cost = SUM(issue.story_points × avg_cost_per_point)
+  WHERE issue.sprint = CURRENT_SPRINT
+  AND issue.status != 'Done'
+
+  avg_cost_per_point = rolling 3-month average from historical data
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 16: Actual Cost (This Month)
+
+**Panel ID:** 104 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Sum of actual costs incurred to date in current month
+- ☐ **Formula:**
+  ```
+  Actual Cost = SUM(cost_allocations.total_cost)
+  WHERE work_date >= FIRST_DAY_OF_MONTH
+  AND work_date <= TODAY
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 17: Over Budget Issues
+
+**Panel ID:** 105 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Count of issues where actual cost exceeds estimate
+- ☐ **Formula:**
+  ```
+  Over Budget Issues = COUNT(DISTINCT issue_key)
+  WHERE actual_cost > estimated_cost
+  AND actual_cost > 0
+
+  Shows poor estimation or scope creep
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 18: Estimated vs Actual Cost Trend
+
+**Panel ID:** 106 | **Type:** Time Series
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Monthly comparison of estimated vs actual costs over time
+- ☐ **Formula:**
+  ```sql
+  SELECT calculated_at as time,
+         estimated_cost as "Estimated",
+         actual_cost as "Actual"
+  FROM monthly_budget_variance
+  ORDER BY calculated_at
+
+  Gap between lines shows estimation accuracy
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 19: Budget Variance % Over Time
+
+**Panel ID:** 107 | **Type:** Time Series
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Percentage variance from budget tracked monthly
+- ☐ **Formula:**
+  ```
+  Variance % = ((actual_cost - estimated_cost) / estimated_cost) × 100
+
+  Positive % = over budget
+  Negative % = under budget
+  Target: -5% to +5% (good estimation)
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+## Unallocated Costs Metrics
+
+### Metric 20: Unallocated Cost %
+
+**Panel ID:** 202 | **Type:** Gauge
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Percentage of total costs not allocated to epics or initiatives
+- ☐ **Formula:**
+  ```
+  Unallocated % = (unallocated_cost / total_cost) × 100
+
+  Where unallocated_cost = SUM(cost_allocations.total_cost)
+  WHERE epic_key IS NULL OR initiative_id IS NULL
+
+  Target: <10% (most work should be allocated)
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 21: Unallocated Cost ($)
+
+**Panel ID:** 203 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Dollar amount of costs not allocated to strategic initiatives
+- ☐ **Formula:**
+  ```
+  Unallocated Cost = SUM(cost_allocations.total_cost)
+  WHERE epic_key IS NULL OR initiative_id IS NULL
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 22: Orphan Issues (No Epic)
+
+**Panel ID:** 204 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Count of issues with work logged but no epic assignment
+- ☐ **Formula:**
+  ```
+  Orphan Issues = COUNT(DISTINCT ca.issue_key)
+  FROM cost_allocations ca
+  LEFT JOIN issues i ON ca.issue_key = i.issue_key
+  WHERE i.epic_key IS NULL
+  AND ca.total_cost > 0
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 23: Total Unallocated Issues
+
+**Panel ID:** 205 | **Type:** Stat
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Count of all issues missing initiative or epic assignment
+- ☐ **Formula:**
+  ```
+  Unallocated Issues = COUNT(DISTINCT issue_key)
+  FROM cost_allocations
+  WHERE (epic_key IS NULL OR initiative_id IS NULL)
+  AND total_cost > 0
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 24: Unallocated % Trend
+
+**Panel ID:** 206 | **Type:** Time Series
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Monthly trend of unallocated cost percentage
+- ☐ **Formula:**
+  ```sql
+  SELECT calculated_at as time,
+         (unallocated_cost / total_cost) × 100 as "Unallocated %"
+  FROM monthly_cost_summaries
+  WHERE unallocated_cost IS NOT NULL
+  ORDER BY calculated_at
+
+  Downward trend is good (better allocation)
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 25: Orphan Issue Count Trend
+
+**Panel ID:** 207 | **Type:** Time Series
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Monthly count of orphan issues over time
+- ☐ **Formula:**
+  ```sql
+  SELECT DATE_TRUNC('month', work_date) as time,
+         COUNT(DISTINCT ca.issue_key) as "Orphan Issues"
+  FROM cost_allocations ca
+  LEFT JOIN issues i ON ca.issue_key = i.issue_key
+  WHERE i.epic_key IS NULL
+  GROUP BY DATE_TRUNC('month', work_date)
+  ORDER BY time
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 26: Unallocated Issues Detail
+
+**Panel ID:** 208 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** List of specific issues that lack proper allocation
+- ☐ **Formula:**
+  ```sql
+  SELECT ca.issue_key, i.issue_type, i.summary,
+         SUM(ca.total_cost) as cost,
+         i.epic_key, i.initiative_id
+  FROM cost_allocations ca
+  LEFT JOIN issues i ON ca.issue_key = i.issue_key
+  WHERE i.epic_key IS NULL OR i.initiative_id IS NULL
+  GROUP BY ca.issue_key, i.issue_type, i.summary, i.epic_key, i.initiative_id
+  ORDER BY cost DESC
+  LIMIT 50
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+## Detail Tables
+
+### Metric 27: Cost Allocations Table
+
+**Panel ID:** 9 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Comprehensive table of all cost allocation records with filters
+- ☐ **Formula:**
+  ```sql
+  SELECT project_name, issue_key, developer_name,
+         work_date, hours_worked, hourly_rate,
+         total_cost, project_phase, capitalization_category,
+         epic_key, initiative_name
+  FROM cost_allocations
+  WHERE project_name IN (selected_projects)
+  AND work_date IN (time_range)
+  ORDER BY work_date DESC, total_cost DESC
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 28: Monthly Cost Summary Table
+
+**Panel ID:** 10 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Month-by-month rollup of key cost metrics
+- ☐ **Formula:**
+  ```sql
+  SELECT project_name,
+         calculated_at as month,
+         total_cost,
+         capitalizable_cost,
+         expense_cost,
+         capitalization_rate,
+         developer_count,
+         issue_count
+  FROM monthly_cost_summaries
+  WHERE project_name IN (selected_projects)
+  ORDER BY calculated_at DESC
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 29: Developer Cost Breakdown
+
+**Panel ID:** 11 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Per-developer cost summary with phase breakdown
+- ☐ **Formula:**
+  ```sql
+  SELECT developer_name,
+         COUNT(DISTINCT issue_key) as issues_worked,
+         SUM(hours_worked) as total_hours,
+         AVG(hourly_rate) as avg_rate,
+         SUM(total_cost) as total_cost,
+         SUM(CASE WHEN project_phase = 'development' THEN total_cost ELSE 0 END) as capitalizable,
+         SUM(CASE WHEN project_phase != 'development' THEN total_cost ELSE 0 END) as expense
+  FROM cost_allocations
+  WHERE project_name IN (selected_projects)
+  GROUP BY developer_name
+  ORDER BY total_cost DESC
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
+
+---
+
+### Metric 30: Initiative Cost Breakdown
+
+**Panel ID:** 12 | **Type:** Table
+
+#### 1. Logic Validation
+- ☐ **Outcome defined:** Per-initiative cost rollup with capitalization split
+- ☐ **Formula:**
+  ```sql
+  SELECT initiative_name,
+         epic_key,
+         COUNT(DISTINCT issue_key) as issues,
+         COUNT(DISTINCT developer_name) as developers,
+         SUM(hours_worked) as total_hours,
+         SUM(total_cost) as total_cost,
+         SUM(CASE WHEN project_phase = 'development' THEN total_cost ELSE 0 END) as capitalizable_cost,
+         SUM(CASE WHEN project_phase != 'development' THEN total_cost ELSE 0 END) as expense_cost
+  FROM cost_allocations
+  WHERE project_name IN (selected_projects)
+  AND initiative_name IS NOT NULL
+  GROUP BY initiative_name, epic_key
+  ORDER BY total_cost DESC
+  ```
+
+#### Status: ☐ PASS | ☐ GAPS | ☐ FAIL
 
 ---
 
