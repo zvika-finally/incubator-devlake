@@ -28,5 +28,6 @@ func All() []plugin.MigrationScript {
 		new(addDeploymentCosts),
 		new(addSettings),
 		new(addBudgetVariance),
+		new(addEffortInference),
 	}
 }
