@@ -166,3 +166,7 @@ venv
 /backend/plugins/gitextractor/parser/demo_repo/
 
 __debug_bin*
+
+# AI Tools
+.serena/
+.playwright-mcp/
