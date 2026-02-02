@@ -102,8 +102,19 @@ func (p FinDevOps) Settings() interface{} {
 
 func (p FinDevOps) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
+		// Phase 1: Developer FTE Calculation (Swarmia model)
+		tasks.CollectDeveloperActivityMeta,
+
+		// Phase 2: Git Effort Inference (git2effort)
+		tasks.InferGitEffortMeta,
+
+		// Phase 3: Cost Allocation (enhanced with multi-source fusion)
 		tasks.CalculateCostsMeta,
+
+		// Phase 4: ASC 350-40 Classification
 		tasks.CategorizeCapitalizationMeta,
+
+		// Phase 5: Deployment Costs
 		tasks.CalculateDeploymentCostsMeta,
 	}
 }
@@ -166,6 +177,8 @@ func (p FinDevOps) MakeMetricPluginPipelinePlanV200(projectName string, options 
 					"projectName": projectName,
 				},
 				Subtasks: []string{
+					"collectDeveloperActivity",
+					"inferGitEffort",
 					"calculateCosts",
 					"categorizeCapitalization",
 					"calculateDeploymentCosts",
