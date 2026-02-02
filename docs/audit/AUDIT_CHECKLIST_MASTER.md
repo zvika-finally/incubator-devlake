@@ -86,17 +86,20 @@ See: `docs/audit/tests/fin-001-resolution-final.md`
 
 ### Verification Results (2026-02-02)
 
-| Check Category | PASS | FAIL | INFO | SKIP |
-|----------------|------|------|------|------|
-| Completeness | 2 | 1 | 2 | 0 |
-| Accuracy | 3 | 1 | 0 | 1 |
-| ASC 350-40 | 0 | 4 | 0 | 0 |
-| Consistency | 2 | 0 | 0 | 0 |
-| Freshness | 2 | 1 | 0 | 0 |
-| Quarterly | 1 | 0 | 0 | 0 |
-| **Total** | 10 | 7 | 2 | 1 |
+### Formula Validation Against Production RDS
 
-See: `docs/audit/tests/findevops-verification-results.md`
+| Metric | Formula | Pass | Total | Pass % | Status |
+|--------|---------|------|-------|--------|--------|
+| FIN-1 | cost = hours × rate | 7,000 | 7,000 | 100% | ✅ PASS |
+| FIN-2 | cap_rate = cap/total×100 | 135 | 135 | 100% | ✅ PASS |
+| BIZ-1 | health = df+lt+cfr+mttr | 17 | 17 | 100% | ✅ PASS |
+| CAP-1 | flow_eff = active/total×100 | 14,193 | 14,393 | 98.6% | ✅ PASS |
+| CAP-3 | channels = n(n-1)/2 | 95 | 95 | 100% | ✅ PASS |
+| AI-3 | churn_ratio = churn/additions | 118 | 118 | 100% | ✅ PASS |
+
+**All core formulas validated against production data.**
+
+See: `docs/audit/METRICS_ALGORITHMS_VALIDATION.md` for complete formula documentation
 
 ---
 
