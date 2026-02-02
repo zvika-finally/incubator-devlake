@@ -46,6 +46,38 @@ type FinDevOpsSettings struct {
 	PreliminaryTypes        string `json:"preliminaryTypes" gorm:"type:text"`
 	DevelopmentTypes        string `json:"developmentTypes" gorm:"type:text"`
 	PostImplementationTypes string `json:"postImplementationTypes" gorm:"type:text"`
+
+	// === FTE NORMALIZATION (Swarmia Model) ===
+	FteMaxPerMonth             float64 `json:"fteMaxPerMonth" gorm:"default:1.0"`
+	FteBaselineMultiplier      float64 `json:"fteBaselineMultiplier" gorm:"default:1.2"`
+	FteInactivityThresholdDays int     `json:"fteInactivityThresholdDays" gorm:"default:5"`
+	FteWorkingHoursPerMonth    float64 `json:"fteWorkingHoursPerMonth" gorm:"default:160.0"`
+
+	// === ACTIVITY WEIGHTS (Swarmia Model) ===
+	ActivityWeightPrAuthored     float64 `json:"activityWeightPrAuthored" gorm:"default:1.0"`
+	ActivityWeightPrReviewed     float64 `json:"activityWeightPrReviewed" gorm:"default:0.3"`
+	ActivityWeightCommitAuthored float64 `json:"activityWeightCommitAuthored" gorm:"default:0.2"`
+	ActivityWeightIssueUpdated   float64 `json:"activityWeightIssueUpdated" gorm:"default:0.1"`
+	ActivityWeightCommentAdded   float64 `json:"activityWeightCommentAdded" gorm:"default:0.05"`
+
+	// === GIT INFERENCE (git2effort methodology) ===
+	GitProductiveHoursPerActiveDay float64 `json:"gitProductiveHoursPerActiveDay" gorm:"default:6.0"`
+	GitReviewHoursPerCycle         float64 `json:"gitReviewHoursPerCycle" gorm:"default:1.5"`
+	GitCommentsPerReviewCycle      int     `json:"gitCommentsPerReviewCycle" gorm:"default:3"`
+	GitMinHoursPerIssue            float64 `json:"gitMinHoursPerIssue" gorm:"default:1.0"`
+	GitMaxHoursPerIssue            float64 `json:"gitMaxHoursPerIssue" gorm:"default:80.0"`
+
+	// === VALIDATION ===
+	ValidationJiraGitVarianceThresholdPct float64 `json:"validationJiraGitVarianceThresholdPct" gorm:"default:50.0"`
+
+	// === ASC 350-40 COMMIT KEYWORDS ===
+	PreliminaryCommitKeywords        string `json:"preliminaryCommitKeywords" gorm:"type:text"`
+	DevelopmentCommitKeywords        string `json:"developmentCommitKeywords" gorm:"type:text"`
+	PostImplementationCommitKeywords string `json:"postImplementationCommitKeywords" gorm:"type:text"`
+
+	// === FEATURE FLAGS ===
+	EnableGitEffortInference bool `json:"enableGitEffortInference" gorm:"default:true"`
+	EnableFteNormalization   bool `json:"enableFteNormalization" gorm:"default:true"`
 }
 
 func (FinDevOpsSettings) TableName() string {
@@ -65,13 +97,45 @@ func (s *FinDevOpsSettings) SetProjectName(name string) {
 // NewDefaultSettings creates settings with sensible defaults
 func NewDefaultSettings() *FinDevOpsSettings {
 	return &FinDevOpsSettings{
-		DefaultHourlyRate:       87.0,
-		HoursPerStoryPoint:      4.0,
-		CapitalizationFramework: "asc_350_40_stages",
-		PreliminaryLabels:       `["research","spike","investigation","feasibility","discovery","poc","proof-of-concept","planning"]`,
+		DefaultHourlyRate:        87.0,
+		HoursPerStoryPoint:       4.0,
+		CapitalizationFramework:  "asc_350_40_stages",
+		PreliminaryLabels:        `["research","spike","investigation","feasibility","discovery","poc","proof-of-concept","planning"]`,
 		PostImplementationLabels: `["bug","hotfix","maintenance","ktlo","support","incident","fix","patch","tech-debt"]`,
-		PreliminaryTypes:        `["Spike","Research","Discovery"]`,
-		DevelopmentTypes:        `["Story","Feature","Enhancement","Epic"]`,
-		PostImplementationTypes: `["Bug","Defect","Hotfix","Support"]`,
+		PreliminaryTypes:         `["Spike","Research","Discovery"]`,
+		DevelopmentTypes:         `["Story","Feature","Enhancement","Epic"]`,
+		PostImplementationTypes:  `["Bug","Defect","Hotfix","Support"]`,
+
+		// FTE Normalization (Swarmia Model)
+		FteMaxPerMonth:             1.0,
+		FteBaselineMultiplier:      1.2,
+		FteInactivityThresholdDays: 5,
+		FteWorkingHoursPerMonth:    160.0,
+
+		// Activity Weights (Swarmia Model)
+		ActivityWeightPrAuthored:     1.0,
+		ActivityWeightPrReviewed:     0.3,
+		ActivityWeightCommitAuthored: 0.2,
+		ActivityWeightIssueUpdated:   0.1,
+		ActivityWeightCommentAdded:   0.05,
+
+		// Git Inference (git2effort methodology)
+		GitProductiveHoursPerActiveDay: 6.0,
+		GitReviewHoursPerCycle:         1.5,
+		GitCommentsPerReviewCycle:      3,
+		GitMinHoursPerIssue:            1.0,
+		GitMaxHoursPerIssue:            80.0,
+
+		// Validation
+		ValidationJiraGitVarianceThresholdPct: 50.0,
+
+		// ASC 350-40 Commit Keywords
+		PreliminaryCommitKeywords:        `["spike","research","investigate","explore","feasibility","discovery","planning"]`,
+		DevelopmentCommitKeywords:        `["feat","feature","implement","add","build","create","develop"]`,
+		PostImplementationCommitKeywords: `["fix","bug","hotfix","patch","maintenance","refactor","chore"]`,
+
+		// Feature Flags
+		EnableGitEffortInference: true,
+		EnableFteNormalization:   true,
 	}
 }
