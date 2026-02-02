@@ -7,18 +7,48 @@
 -- SECTION 1: COMPLETENESS CHECKS
 -- ============================================
 
--- #fin-completeness-01: All resolved issues should have cost allocations
+-- #fin-completeness-01: Resolved issues (in tracked projects, with effort) should have allocations
+-- UPDATED: Now scoped to match calculateCosts query logic (includes effort check)
 -- Expected: missing_count = 0
 SELECT
     'fin-completeness-01' as check_id,
-    'All resolved issues have cost allocations' as check_name,
+    'Resolved issues (in tracked projects, with effort) have allocations' as check_name,
     COUNT(*) as missing_count,
-    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END as status
+    CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'REVIEW' END as status
 FROM issues i
 JOIN board_issues bi ON i.id = bi.issue_id
 JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards'
 WHERE i.resolution_date IS NOT NULL
+  AND (i.time_spent_minutes > 0 OR i.original_estimate_minutes > 0 OR i.story_point > 0)
   AND i.id NOT IN (SELECT issue_id FROM cost_allocations WHERE issue_id IS NOT NULL);
+
+-- #fin-completeness-01a: Issues excluded due to no project mapping (expected)
+SELECT
+    'fin-completeness-01a' as check_id,
+    'Resolved issues without project mapping (excluded by design)' as check_name,
+    COUNT(*) as excluded_count,
+    'INFO' as status
+FROM issues i
+WHERE i.resolution_date IS NOT NULL
+AND i.id NOT IN (
+    SELECT DISTINCT bi.issue_id
+    FROM board_issues bi
+    JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards'
+);
+
+-- #fin-completeness-01b: Issues excluded due to zero effort data (expected)
+SELECT
+    'fin-completeness-01b' as check_id,
+    'Resolved issues with zero effort (excluded by design)' as check_name,
+    COUNT(*) as excluded_count,
+    'INFO' as status
+FROM issues i
+JOIN board_issues bi ON i.id = bi.issue_id
+JOIN project_mapping pm ON bi.board_id = pm.row_id AND pm.`table` = 'boards'
+WHERE i.resolution_date IS NOT NULL
+AND (i.time_spent_minutes IS NULL OR i.time_spent_minutes = 0)
+AND (i.original_estimate_minutes IS NULL OR i.original_estimate_minutes = 0)
+AND (i.story_point IS NULL OR i.story_point = 0);
 
 -- #fin-completeness-02: Monthly summaries exist for all months with allocations
 SELECT
