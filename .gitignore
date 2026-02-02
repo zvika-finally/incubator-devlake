@@ -170,3 +170,6 @@ __debug_bin*
 # AI Tools
 .serena/
 .playwright-mcp/
+
+# Git worktrees
+.worktrees/
