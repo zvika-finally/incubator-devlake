@@ -313,25 +313,6 @@ func getHourlyRate(developerId string, rateMap map[string]float64, defaultRate f
 	return defaultRate
 }
 
-func getHoursWorked(issue ticket.Issue) float64 {
-	// First try actual time spent (from worklogs)
-	if issue.TimeSpentMinutes != nil && *issue.TimeSpentMinutes > 0 {
-		return float64(*issue.TimeSpentMinutes) / 60.0
-	}
-
-	// Fall back to original estimate
-	if issue.OriginalEstimateMinutes != nil && *issue.OriginalEstimateMinutes > 0 {
-		return float64(*issue.OriginalEstimateMinutes) / 60.0
-	}
-
-	// Fall back to story points (estimate 4 hours per story point)
-	if issue.StoryPoint != nil && *issue.StoryPoint > 0 {
-		return *issue.StoryPoint * 4.0
-	}
-
-	return 0
-}
-
 func getHoursWorkedMultiSource(issue ticket.Issue, settings *models.FinDevOpsSettings) *EffortResult {
 	result := &EffortResult{}
 

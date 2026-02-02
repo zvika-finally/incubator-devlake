@@ -130,13 +130,85 @@ The FinDevOps dashboard calculates development costs and categorizes them for US
 | deployment_count | int | cicd_deployment_commits | `COUNT WHERE result = 'SUCCESS'` |
 | cost_per_deployment | decimal(14,2) | Calculated | `total_cost / deployment_count` |
 
+## Effort Inference Data Flow (NEW)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     EFFORT INFERENCE PIPELINE                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  1. collectDeveloperActivity (Swarmia Model)            │    │
+│  │     Input: commits, pull_requests, issues               │    │
+│  │     Output: developer_monthly_fte                       │    │
+│  │     Logic: weighted activity → normalized FTE           │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              ↓                                   │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  2. inferGitEffort (git2effort methodology)             │    │
+│  │     Input: issue_commits, pull_request_issues           │    │
+│  │     Output: cached git_effort per issue                 │    │
+│  │     Logic: active_days × productive_hours + reviews     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              ↓                                   │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  3. calculateCosts (multi-source fusion)                │    │
+│  │     Input: issues + git_effort + FTE                    │    │
+│  │     Output: cost_allocations with effort_source         │    │
+│  │     Logic: Jira time > estimate > points > git > FTE    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Effort Source Priority
+
+| Priority | Source | Confidence | When Used |
+|----------|--------|------------|-----------|
+| 1 | jira_time | HIGH | time_spent_minutes > 0 |
+| 2 | jira_estimate | MEDIUM | original_estimate_minutes > 0 |
+| 3 | story_points | MEDIUM | story_point > 0 |
+| 4 | git_inferred | INFERRED | linked commits/PRs exist |
+| 5 | fte_distributed | LOW | FTE allocation fallback |
+
+## Developer Monthly FTE Table
+
+| Column | Type | Source | Transformation |
+|--------|------|--------|----------------|
+| id | varchar(255) | Generated | `{developer_id}:{fiscal_month}` |
+| developer_id | varchar(255) | commits.author_id | Aggregated |
+| fiscal_month | varchar(10) | commits.authored_date | `YYYY-MM` format |
+| prs_authored | int | pull_requests | COUNT per month |
+| prs_reviewed | int | pull_request_comments | COUNT per month |
+| commits_authored | int | commits | COUNT per month |
+| raw_activity_score | decimal(10,2) | Calculated | Weighted sum of activities |
+| baseline_score | decimal(10,2) | Calculated | Team median × multiplier |
+| adjusted_fte | decimal(3,2) | Calculated | Normalized FTE (0-1.0) |
+
+## Cost Allocation Effort Source Fields
+
+| Column | Type | Source | Description |
+|--------|------|--------|-------------|
+| effort_source | varchar(50) | getHoursWorkedMultiSource | jira_time, jira_estimate, story_points, git_inferred, fte_distributed |
+| confidence_level | varchar(20) | getHoursWorkedMultiSource | high, medium, inferred, low |
+| git_coding_hours | decimal(10,2) | inferGitEffort | Hours from coding activity |
+| git_review_hours | decimal(10,2) | inferGitEffort | Hours from review activity |
+| git_complexity_factor | decimal(5,2) | inferGitEffort | Complexity multiplier |
+| git_active_days | int | inferGitEffort | Days with commits |
+| effort_validated | bool | getHoursWorkedMultiSource | Jira vs Git cross-validated |
+| validation_variance_pct | decimal(8,2) | getHoursWorkedMultiSource | Variance between Jira and Git |
+| linked_commit_shas | text | inferGitEffort | JSON array of commit SHAs (R&D audit) |
+| linked_pr_ids | text | inferGitEffort | JSON array of PR IDs (R&D audit) |
+
 ## Plugin Task Execution Order
 
 ```
 findevops plugin subtasks:
-  1. calculateCosts         (creates cost_allocations, monthly_cost_summaries)
-  2. categorizeCapitalization (updates cost_allocations with ASC 350-40 phase)
-  3. calculateDeploymentCosts (creates deployment_costs)
+  1. collectDeveloperActivity (creates developer_monthly_fte - Swarmia FTE model)
+  2. inferGitEffort           (caches git effort per issue - git2effort)
+  3. calculateCosts           (creates cost_allocations with multi-source effort)
+  4. categorizeCapitalization (updates cost_allocations with ASC 350-40 phase)
+  5. calculateDeploymentCosts (creates deployment_costs)
 ```
 
 ## Dependencies
