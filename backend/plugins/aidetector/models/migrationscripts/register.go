@@ -31,5 +31,6 @@ func All() []plugin.MigrationScript {
 		new(addCodeChurn),
 		new(backfillDetectedAt),
 		new(fixChurnColumns),
+		new(addExcludePatterns),
 	}
 }

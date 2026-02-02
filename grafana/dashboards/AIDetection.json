@@ -189,7 +189,7 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 18 },
       "id": 50,
       "options": {
-        "content": "**Code Churn** measures how much code is modified after initial merge. Research (GitClear) shows AI-generated code has ~41% higher churn rate. Lower churn = more stable code.",
+        "content": "**Code Churn** measures how much code is modified after initial merge. Research (GitClear) shows AI-generated code has ~41% higher churn rate. Lower churn = more stable code.\n\n**Note:** Infrastructure files (.github/, package.json, config files) are excluded from churn analysis to prevent skewing metrics.",
         "mode": "markdown"
       },
       "title": "",

@@ -40,6 +40,11 @@ type AIDetectorSettings struct {
 	// Format: [{"tool": "my_tool", "patterns": ["pattern1", "pattern2"]}]
 	CustomToolPatterns string `json:"customToolPatterns" gorm:"type:text"`
 
+	// File exclusion patterns for churn analysis (JSON array of glob patterns)
+	// Infrastructure files like .github/, package.json often have high churn but aren't application code
+	// Format: [".github/", "package.json", "*.lock", "Dockerfile"]
+	ExcludeFilePatterns string `json:"excludeFilePatterns" gorm:"type:text;default:'[\".github/\",\"package.json\",\"package-lock.json\",\"yarn.lock\",\"pnpm-lock.yaml\",\"Dockerfile\",\"docker-compose.yml\",\".gitignore\",\".eslintrc\",\"tsconfig.json\"]'"`
+
 	// Whether to analyze historical PRs (before plugin was installed)
 	AnalyzeHistorical bool `json:"analyzeHistorical" gorm:"default:true"`
 }
@@ -70,5 +75,6 @@ func NewDefaultSettings() *AIDetectorSettings {
 		BehavioralSignalWeight: 30,
 		PRPatternWeight:        20,
 		AnalyzeHistorical:      true,
+		ExcludeFilePatterns:    `[".github/","package.json","package-lock.json","yarn.lock","pnpm-lock.yaml","Dockerfile","docker-compose.yml",".gitignore",".eslintrc","tsconfig.json"]`,
 	}
 }

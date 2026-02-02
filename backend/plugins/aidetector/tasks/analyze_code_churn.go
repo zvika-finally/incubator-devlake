@@ -78,8 +78,9 @@ func AnalyzeCodeChurn(taskCtx plugin.SubTaskContext) errors.Error {
 			continue
 		}
 
-		// Get files changed in this PR
+		// Get files changed in this PR (excluding infrastructure files)
 		files := getPRFiles(db, pr.Id)
+		files = filterInfrastructureFiles(files, data.Settings, logger)
 		if len(files) == 0 {
 			continue
 		}
@@ -256,4 +257,70 @@ func generateChurnSummary(db dal.Dal, projectName string, metrics []models.AIChu
 
 	logger.Info("Churn analysis: AI PRs=%d (avg 30d ratio: %.2f), Non-AI PRs=%d (avg 30d ratio: %.2f), Diff=%.1f%%",
 		aiCount, aiAvg30, nonAICount, nonAIAvg30, churnDiff)
+}
+
+// filterInfrastructureFiles removes infrastructure/config files from analysis
+// Infrastructure files (.github/, package.json, etc.) often have high churn but aren't application code
+func filterInfrastructureFiles(files []string, settings *models.AIDetectorSettings, logger log.Logger) []string {
+	if settings == nil || settings.ExcludeFilePatterns == "" {
+		return files
+	}
+
+	// Parse exclusion patterns from JSON
+	var excludePatterns []string
+	if err := json.Unmarshal([]byte(settings.ExcludeFilePatterns), &excludePatterns); err != nil {
+		logger.Warn(err, "Failed to parse exclude file patterns, using all files")
+		return files
+	}
+
+	if len(excludePatterns) == 0 {
+		return files
+	}
+
+	// Filter files
+	filtered := make([]string, 0, len(files))
+	excludedCount := 0
+
+	for _, file := range files {
+		if shouldExcludeFile(file, excludePatterns) {
+			excludedCount++
+			continue
+		}
+		filtered = append(filtered, file)
+	}
+
+	if excludedCount > 0 {
+		logger.Debug("Excluded %d infrastructure files from churn analysis", excludedCount)
+	}
+
+	return filtered
+}
+
+// shouldExcludeFile checks if a file path matches any exclusion pattern
+func shouldExcludeFile(filePath string, patterns []string) bool {
+	for _, pattern := range patterns {
+		// Simple substring matching for now (can be enhanced with glob patterns)
+		if len(pattern) > 0 {
+			// Exact match
+			if filePath == pattern {
+				return true
+			}
+			// Directory prefix match (e.g., ".github/" matches ".github/workflows/ci.yml")
+			if len(pattern) > 0 && pattern[len(pattern)-1] == '/' {
+				if len(filePath) >= len(pattern) && filePath[:len(pattern)] == pattern {
+					return true
+				}
+			}
+			// Contains match for files anywhere in path
+			if len(filePath) >= len(pattern) {
+				// Check if pattern appears as a path component
+				if filePath == pattern ||
+					(len(filePath) > len(pattern) && filePath[len(filePath)-len(pattern):] == pattern) ||
+					(len(filePath) > len(pattern)+1 && filePath[len(filePath)-len(pattern)-1:] == "/"+pattern) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
