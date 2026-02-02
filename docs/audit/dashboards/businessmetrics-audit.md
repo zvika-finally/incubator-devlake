@@ -326,13 +326,37 @@
 
 | Section | Metrics | Logic | Data Trust | Testing | Status |
 |---------|---------|-------|------------|---------|--------|
-| Team Health Overview | 8 | ☐ 8/8 | ☐ 8/8 | ☐ 8/8 | ☐ Pending |
-| Working Agreement Compliance | 7 | ☐ 7/7 | ☐ 7/7 | ☐ 7/7 | ☐ Pending |
-| Business Initiatives | 5 | ☐ 5/5 | ☐ 5/5 | ☐ 5/5 | ☐ Pending |
-| **TOTAL** | **20** | **☐ 20/20** | **☐ 20/20** | **☐ 20/20** | **☐ Pending** |
+| Team Health Overview | 8 | ✅ 8/8 | ⚠️ Schema | ✅ 3/3 | ⚠️ Partial |
+| Working Agreement Compliance | 7 | ✅ 7/7 | ⏭️ N/A | ⏭️ N/A | ⏭️ Not Tested |
+| Business Initiatives | 5 | ✅ 5/5 | ✅ 1/1 | ✅ 1/1 | ✅ PASS |
+| **TOTAL** | **20** | **✅ 20/20** | **⚠️ Partial** | **✅ 4/4** | **⚠️ Partial** |
 
 **Verification Date:** 2026-02-02
-**Overall Status:** ⏳ AWAITING VERIFICATION
+**Overall Status:** ⚠️ PARTIAL PASS - Schema verification pending
+
+### Verification Results Summary
+
+| Check | Result | Status |
+|-------|--------|--------|
+| Completeness (Initiatives) | 161 initiatives (0 Epics) | ✅ PASS |
+| Completeness (Health Scores) | 4/4 projects | ✅ PASS |
+| Freshness (Health Scores) | 0 days old | ✅ PASS |
+| Health Level Distribution | medium(13), low(4) | ℹ️ INFO |
+| Accuracy (DORA Scores) | Schema mismatch | ⚠️ PENDING |
+
+### Key Metrics
+
+| Metric | Value |
+|--------|-------|
+| Business Initiatives | 161 |
+| Jira Epics | 0 |
+| Projects with Health Scores | 4 |
+| Health Level (Medium) | 13 records |
+| Health Level (Low) | 4 records |
+
+### Schema Issue
+
+The `team_health_scores` table has different column names than documented. Need to run `DESCRIBE team_health_scores;` to determine actual column names for accuracy checks.
 
 ---
 
