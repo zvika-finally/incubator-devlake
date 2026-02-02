@@ -29,6 +29,21 @@ import (
 	"github.com/apache/incubator-devlake/plugins/findevops/models"
 )
 
+// EffortResult holds the result of effort calculation with source tracking
+type EffortResult struct {
+	Hours          float64
+	Source         string
+	Confidence     string
+	GitCodingHours float64
+	GitReviewHours float64
+	GitComplexity  float64
+	GitActiveDays  int
+	Validated      bool
+	VariancePct    float64
+	CommitShas     string
+	PrIds          string
+}
+
 var CalculateCostsMeta = plugin.SubTaskMeta{
 	Name:             "calculateCosts",
 	EntryPoint:       CalculateCosts,
@@ -64,8 +79,8 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 
 	for _, issue := range issues {
 		// Get hours worked (from worklogs or estimate from story points)
-		hoursWorked := getHoursWorked(issue)
-		if hoursWorked == 0 {
+		effortResult := getHoursWorkedMultiSource(issue, data.Settings)
+		if effortResult.Hours == 0 {
 			continue // Skip issues with no time data
 		}
 
@@ -109,25 +124,35 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 		// Note: ProjectPhase, CapitalizationCategory, and CategoryReason
 		// are set by the categorizeCapitalization subtask which runs after this
 		allocation := &models.CostAllocation{
-			Id:               fmt.Sprintf("%s:%s", issue.Id, fiscalMonth),
-			InitiativeId:    initiativeId,
-			IssueId:         issue.Id,
-			FiscalMonth:     fiscalMonth,
-			DeveloperId:     issue.AssigneeId,
-			HoursWorked:     hoursWorked,
-			HourlyRate:      hourlyRate,
-			DeveloperCost:   hoursWorked * hourlyRate,
-			TotalCost:       hoursWorked * hourlyRate,
-			IssueType:       issue.Type,
-			IssueLabels:     labels,
-			EstimatedMinutes: estimatedMinutes,
-			ActualMinutes:   actualMinutes,
-			VarianceMinutes: varianceMinutes,
-			VariancePercent: variancePercent,
-			OverBudget:      overBudget,
-			IsUnallocated:   isUnallocated,
-			CalculatedAt:    time.Now(),
-			CreatedAt:       time.Now(),
+			Id:                    fmt.Sprintf("%s:%s", issue.Id, fiscalMonth),
+			InitiativeId:          initiativeId,
+			IssueId:               issue.Id,
+			FiscalMonth:           fiscalMonth,
+			DeveloperId:           issue.AssigneeId,
+			HoursWorked:           effortResult.Hours,
+			HourlyRate:            hourlyRate,
+			DeveloperCost:         effortResult.Hours * hourlyRate,
+			TotalCost:             effortResult.Hours * hourlyRate,
+			IssueType:             issue.Type,
+			IssueLabels:           labels,
+			EstimatedMinutes:      estimatedMinutes,
+			ActualMinutes:         actualMinutes,
+			VarianceMinutes:       varianceMinutes,
+			VariancePercent:       variancePercent,
+			OverBudget:            overBudget,
+			IsUnallocated:         isUnallocated,
+			EffortSource:          effortResult.Source,
+			ConfidenceLevel:       effortResult.Confidence,
+			GitCodingHours:        effortResult.GitCodingHours,
+			GitReviewHours:        effortResult.GitReviewHours,
+			GitComplexityFactor:   effortResult.GitComplexity,
+			GitActiveDays:         effortResult.GitActiveDays,
+			EffortValidated:       effortResult.Validated,
+			ValidationVariancePct: effortResult.VariancePct,
+			LinkedCommitShas:      effortResult.CommitShas,
+			LinkedPrIds:           effortResult.PrIds,
+			CalculatedAt:          time.Now(),
+			CreatedAt:             time.Now(),
 		}
 
 		if err := db.CreateOrUpdate(allocation); err != nil {
@@ -307,6 +332,51 @@ func getHoursWorked(issue ticket.Issue) float64 {
 	return 0
 }
 
+func getHoursWorkedMultiSource(issue ticket.Issue, settings *models.FinDevOpsSettings) *EffortResult {
+	result := &EffortResult{}
+
+	// Priority 1: Actual time spent (from Jira worklogs) - HIGH confidence
+	if issue.TimeSpentMinutes != nil && *issue.TimeSpentMinutes > 0 {
+		result.Hours = float64(*issue.TimeSpentMinutes) / 60.0
+		result.Source = "jira_time"
+		result.Confidence = "high"
+	} else if issue.OriginalEstimateMinutes != nil && *issue.OriginalEstimateMinutes > 0 {
+		// Priority 2: Original estimate - MEDIUM confidence
+		result.Hours = float64(*issue.OriginalEstimateMinutes) / 60.0
+		result.Source = "jira_estimate"
+		result.Confidence = "medium"
+	} else if issue.StoryPoint != nil && *issue.StoryPoint > 0 {
+		// Priority 3: Story points - MEDIUM confidence
+		result.Hours = *issue.StoryPoint * settings.HoursPerStoryPoint
+		result.Source = "story_points"
+		result.Confidence = "medium"
+	}
+
+	// Try to get Git-inferred effort for validation or as primary source
+	gitResult := GetGitEffortForIssue(issue.Id)
+	if gitResult != nil && gitResult.TotalHours > 0 {
+		result.GitCodingHours = gitResult.CodingHours
+		result.GitReviewHours = gitResult.ReviewHours
+		result.GitComplexity = gitResult.ComplexityFactor
+		result.GitActiveDays = gitResult.ActiveDays
+		result.CommitShas, result.PrIds = GetGitEffortAuditTrail(gitResult)
+
+		if result.Hours > 0 {
+			// Validate Jira vs Git
+			variance := (result.Hours - gitResult.TotalHours) / result.Hours * 100
+			result.VariancePct = variance
+			result.Validated = true
+		} else {
+			// Priority 4: Git-inferred - INFERRED confidence
+			result.Hours = gitResult.TotalHours
+			result.Source = "git_inferred"
+			result.Confidence = "inferred"
+		}
+	}
+
+	return result
+}
+
 func getFiscalMonth(issue ticket.Issue) string {
 	// Use resolution date if available, otherwise use updated date
 	var refDate time.Time
@@ -342,4 +412,3 @@ func getInitiativeId(db dal.Dal, issue ticket.Issue) string {
 
 	return ""
 }
-
