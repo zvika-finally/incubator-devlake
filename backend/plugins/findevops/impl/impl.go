@@ -80,6 +80,7 @@ func (p FinDevOps) GetTablesInfo() []dal.Tabler {
 		&models.DeveloperHourlyRate{},
 		&models.DeploymentCost{},
 		&models.FinDevOpsSettings{},
+		&models.DeveloperMonthlyFte{},
 	}
 }
 
