@@ -53,7 +53,13 @@ func AnalyzePRCharacteristics(taskCtx plugin.SubTaskContext) errors.Error {
 
 	// Now analyze each PR against its author's baseline
 	var signals []models.AIUsageSignal
-	err = db.All(&signals, dal.From(&models.AIUsageSignal{}))
+	err = db.All(&signals,
+		dal.Select("ai_usage_signals.*"),
+		dal.From(&models.AIUsageSignal{}),
+		dal.Join("LEFT JOIN pull_requests pr ON pr.id = ai_usage_signals.pull_request_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = pr.base_repo_id"),
+		dal.Where("pm.project_name = ?", data.Options.ProjectName),
+	)
 	if err != nil {
 		return errors.Default.Wrap(err, "failed to query existing signals")
 	}

@@ -38,9 +38,9 @@ var ScoreAIConfidenceMeta = plugin.SubTaskMeta{
 // PatternSignature stores detailed breakdown of AI detection patterns
 type PatternSignature struct {
 	// Explicit signals (HIGH confidence)
-	ExplicitDetection  string `json:"explicit_detection"`
-	ExplicitTools      string `json:"explicit_tools,omitempty"`
-	ExplicitPatterns   string `json:"explicit_patterns,omitempty"`
+	ExplicitDetection string `json:"explicit_detection"`
+	ExplicitTools     string `json:"explicit_tools,omitempty"`
+	ExplicitPatterns  string `json:"explicit_patterns,omitempty"`
 	// Behavioral signals
 	RapidCommits       string `json:"rapid_commits"`
 	PRSizeAnomaly      string `json:"pr_size_anomaly"`
@@ -56,9 +56,17 @@ func ScoreAIConfidence(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting scoreAIConfidence for project: %s", data.Options.ProjectName)
 
-	// Get all signals
+	confidenceThreshold := GetEffectiveConfidenceThreshold(data)
+
+	// Get signals scoped to the requested project
 	var signals []models.AIUsageSignal
-	err := db.All(&signals, dal.From(&models.AIUsageSignal{}))
+	err := db.All(&signals,
+		dal.Select("ai_usage_signals.*"),
+		dal.From(&models.AIUsageSignal{}),
+		dal.Join("LEFT JOIN pull_requests pr ON pr.id = ai_usage_signals.pull_request_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = pr.base_repo_id"),
+		dal.Where("pm.project_name = ?", data.Options.ProjectName),
+	)
 	if err != nil {
 		return errors.Default.Wrap(err, "failed to query signals")
 	}
@@ -109,7 +117,7 @@ func ScoreAIConfidence(taskCtx plugin.SubTaskContext) errors.Error {
 			continue
 		}
 
-		if totalScore >= data.Options.ConfidenceThreshold {
+		if totalScore >= confidenceThreshold {
 			aiAssistedCount++
 		}
 	}
@@ -118,7 +126,7 @@ func ScoreAIConfidence(taskCtx plugin.SubTaskContext) errors.Error {
 	if len(signals) > 0 {
 		aiPercent := float64(aiAssistedCount) * 100.0 / float64(len(signals))
 		logger.Info("AI Detection Summary: %d/%d PRs (%.1f%%) flagged as AI-assisted (threshold: %d%%)",
-			aiAssistedCount, len(signals), aiPercent, data.Options.ConfidenceThreshold)
+			aiAssistedCount, len(signals), aiPercent, confidenceThreshold)
 	}
 
 	logger.Info("Completed scoreAIConfidence")

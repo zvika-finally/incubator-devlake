@@ -279,7 +279,7 @@ func generateComplianceSummaries(db dal.Dal, projectName string, agreements []mo
 		)
 
 		// Get all checked entities (this would need to be calculated based on type)
-		totalChecked := getTotalChecked(db, agreement, projectName)
+		totalChecked := getTotalChecked(db, agreement, projectName, periodStart, periodEnd)
 		totalViolations := len(violations)
 		totalCompliant := totalChecked - totalViolations
 		if totalCompliant < 0 {
@@ -292,7 +292,7 @@ func generateComplianceSummaries(db dal.Dal, projectName string, agreements []mo
 		}
 
 		// Calculate value statistics
-		values := getValuesForAgreement(db, agreement, projectName)
+		values := getValuesForAgreement(db, agreement, projectName, periodStart, periodEnd)
 		avgValue, p50, p90 := calculateStats(values)
 
 		summary := &models.AgreementComplianceSummary{
@@ -317,14 +317,24 @@ func generateComplianceSummaries(db dal.Dal, projectName string, agreements []mo
 	}
 }
 
-func getTotalChecked(db dal.Dal, agreement models.WorkingAgreement, projectName string) int {
+func getTotalChecked(db dal.Dal, agreement models.WorkingAgreement, projectName string, periodStart, periodEnd time.Time) int {
 	switch agreement.AgreementType {
-	case models.AgreementPRMergeTime, models.AgreementReviewTurnaround:
-		// Count PRs linked to this project via repos
+	case models.AgreementPRMergeTime:
+		// Count merged PRs in the summary period.
 		count, _ := db.Count(
 			dal.From(&code.PullRequest{}),
 			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
-			dal.Where("pm.project_name = ?", projectName),
+			dal.Where("pm.project_name = ? AND pull_requests.merged_date >= ? AND pull_requests.merged_date <= ? AND pull_requests.merged_date IS NOT NULL",
+				projectName, periodStart, periodEnd),
+		)
+		return int(count)
+	case models.AgreementReviewTurnaround:
+		// Count PRs opened in the summary period.
+		count, _ := db.Count(
+			dal.From(&code.PullRequest{}),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+			dal.Where("pm.project_name = ? AND pull_requests.created_date >= ? AND pull_requests.created_date <= ?",
+				projectName, periodStart, periodEnd),
 		)
 		return int(count)
 	case models.AgreementWIPLimit:
@@ -356,10 +366,83 @@ func getTotalChecked(db dal.Dal, agreement models.WorkingAgreement, projectName 
 	return 0
 }
 
-func getValuesForAgreement(_ dal.Dal, _ models.WorkingAgreement, _ string) []float64 {
-	// This would query actual values based on agreement type
-	// Simplified for now - would need proper implementation per agreement type
-	return []float64{}
+func getValuesForAgreement(db dal.Dal, agreement models.WorkingAgreement, projectName string, periodStart, periodEnd time.Time) []float64 {
+	values := []float64{}
+
+	switch agreement.AgreementType {
+	case models.AgreementPRMergeTime:
+		var results []struct {
+			Hours float64 `gorm:"column:hours"`
+		}
+		_ = db.All(&results,
+			dal.Select("(UNIX_TIMESTAMP(pull_requests.merged_date) - UNIX_TIMESTAMP(pull_requests.created_date)) / 3600 as hours"),
+			dal.From(&code.PullRequest{}),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+			dal.Where("pm.project_name = ? AND pull_requests.merged_date >= ? AND pull_requests.merged_date <= ? AND pull_requests.merged_date IS NOT NULL",
+				projectName, periodStart, periodEnd),
+		)
+		for _, r := range results {
+			value := r.Hours
+			if agreement.ThresholdUnit == models.UnitDays {
+				value = value / 24
+			}
+			values = append(values, value)
+		}
+
+	case models.AgreementReviewTurnaround:
+		var results []struct {
+			Hours float64 `gorm:"column:hours"`
+		}
+		_ = db.All(&results,
+			dal.Select("COALESCE((UNIX_TIMESTAMP(MIN(pull_request_comments.created_date)) - UNIX_TIMESTAMP(pull_requests.created_date)) / 3600, 0) as hours"),
+			dal.From(&code.PullRequest{}),
+			dal.Join("LEFT JOIN pull_request_comments ON pull_request_comments.pull_request_id = pull_requests.id"),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+			dal.Where("pm.project_name = ? AND pull_requests.created_date >= ? AND pull_requests.created_date <= ?",
+				projectName, periodStart, periodEnd),
+			dal.Groupby("pull_requests.id"),
+		)
+		for _, r := range results {
+			value := r.Hours
+			if agreement.ThresholdUnit == models.UnitDays {
+				value = value / 24
+			}
+			values = append(values, value)
+		}
+
+	case models.AgreementWIPLimit:
+		var results []struct {
+			OpenCount int `gorm:"column:open_count"`
+		}
+		_ = db.All(&results,
+			dal.Select("COUNT(*) as open_count"),
+			dal.From(&code.PullRequest{}),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+			dal.Where("pm.project_name = ? AND pull_requests.status = 'OPEN'", projectName),
+			dal.Groupby("pull_requests.author_id"),
+		)
+		for _, r := range results {
+			values = append(values, float64(r.OpenCount))
+		}
+
+	case models.AgreementIssuesInProgress:
+		var results []struct {
+			InProgress int `gorm:"column:in_progress"`
+		}
+		_ = db.All(&results,
+			dal.Select("COUNT(*) as in_progress"),
+			dal.From(&ticket.Issue{}),
+			dal.Join("JOIN board_issues bi ON bi.issue_id = issues.id"),
+			dal.Join("JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bi.board_id"),
+			dal.Where("pm.project_name = ? AND issues.status = 'IN_PROGRESS'", projectName),
+			dal.Groupby("issues.assignee_id"),
+		)
+		for _, r := range results {
+			values = append(values, float64(r.InProgress))
+		}
+	}
+
+	return values
 }
 
 func calculateStats(values []float64) (avg float64, p50 float64, p90 float64) {

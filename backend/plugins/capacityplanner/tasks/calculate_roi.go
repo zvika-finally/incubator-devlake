@@ -38,13 +38,13 @@ var CalculateROIMeta = plugin.SubTaskMeta{
 
 // Constants from eng-product-metrics
 const (
-	DefaultHourlyCost       = 75.0  // USD per hour
+	DefaultHourlyCost       = 75.0 // USD per hour
 	WeeksPerYear            = 52
 	HoursPerWeek            = 40
-	BugFixTimePercent       = 0.20  // 20% of time spent on bugs
-	AIProductivityGainPer10 = 0.03  // 3% productivity gain per 10% AI adoption
-	AIHoursSavedPerUser     = 2.0   // Hours saved per week per AI tool user
-	AIQualityImprovement    = 5.0   // 5% quality improvement from AI
+	BugFixTimePercent       = 0.20 // 20% of time spent on bugs
+	AIProductivityGainPer10 = 0.03 // 3% productivity gain per 10% AI adoption
+	AIHoursSavedPerUser     = 2.0  // Hours saved per week per AI tool user
+	AIQualityImprovement    = 5.0  // 5% quality improvement from AI
 )
 
 // ROIParameters holds input parameters for ROI calculation
@@ -78,8 +78,16 @@ func CalculateROI(taskCtx plugin.SubTaskContext) errors.Error {
 		teamSize = velocity.TeamSize
 	}
 
+	hourlyCost := DefaultHourlyCost
+	if data.Settings != nil && data.Settings.DefaultDeveloperCost > 0 {
+		hourlyCost = data.Settings.DefaultDeveloperCost / float64(WeeksPerYear*HoursPerWeek)
+	}
+	if hourlyCost <= 0 {
+		hourlyCost = DefaultHourlyCost
+	}
+
 	// Calculate ROI for AI tools investment scenario
-	aiToolsROI := calculateAIToolsROI(teamSize, DefaultHourlyCost, data.Options.ProjectName)
+	aiToolsROI := calculateAIToolsROI(teamSize, hourlyCost, data.Options.ProjectName)
 	if err := db.CreateOrUpdate(&aiToolsROI); err != nil {
 		logger.Error(err, "failed to save AI tools ROI")
 	} else {
@@ -105,7 +113,7 @@ func calculateAIToolsROI(teamSize int, hourlyCost float64, projectName string) m
 	params := ROIParameters{
 		TeamSize:           teamSize,
 		HourlyCost:         hourlyCost,
-		AIAdoptionPercent:  80.0, // Assume 80% adoption
+		AIAdoptionPercent:  80.0,                                        // Assume 80% adoption
 		ProductivityGain:   AIProductivityGainPer10 * (80.0 / 10) * 100, // Scale to 80% adoption
 		QualityImprovement: AIQualityImprovement,
 		HoursSavedPerWeek:  AIHoursSavedPerUser,

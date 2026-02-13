@@ -20,7 +20,6 @@ package tasks
 import (
 	"time"
 
-	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/plugin"
 	"github.com/apache/incubator-devlake/plugins/businessmetrics/models"
@@ -36,17 +35,17 @@ var CalculateBusinessValueMeta = plugin.SubTaskMeta{
 
 // Revenue impact weights from eng-product-metrics
 const (
-	BaseScore                 = 50
-	RevenueImpactDirect       = 30
-	RevenueImpactEnabling     = 20
-	RevenueImpactSupporting   = 10
-	RevenueImpactCostCenter   = 0
+	BaseScore               = 50
+	RevenueImpactDirect     = 30
+	RevenueImpactEnabling   = 20
+	RevenueImpactSupporting = 10
+	RevenueImpactCostCenter = 0
 
 	// Revenue-to-cost efficiency bonuses
-	EfficiencyRatioExcellent  = 20 // ratio >= 5
-	EfficiencyRatioGood       = 15 // ratio >= 2
-	EfficiencyRatioFair       = 10 // ratio >= 1
-	EfficiencyRatioPositive   = 5  // ratio > 0
+	EfficiencyRatioExcellent = 20 // ratio >= 5
+	EfficiencyRatioGood      = 15 // ratio >= 2
+	EfficiencyRatioFair      = 10 // ratio >= 1
+	EfficiencyRatioPositive  = 5  // ratio > 0
 )
 
 func CalculateBusinessValue(taskCtx plugin.SubTaskContext) errors.Error {
@@ -56,17 +55,10 @@ func CalculateBusinessValue(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting calculateBusinessValue for project: %s", data.Options.ProjectName)
 
-	// Get all initiatives for this project
-	var initiatives []models.BusinessInitiative
-	clauses := []dal.Clause{
-		dal.From(&models.BusinessInitiative{}),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'issues' AND pm.row_id = business_initiatives.jira_epic_key"),
-		dal.Where("pm.project_name = ?", data.Options.ProjectName),
-	}
-
-	err := db.All(&initiatives, clauses...)
+	// Get project-scoped initiatives
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
 	if err != nil {
-		return errors.Default.Wrap(err, "failed to query business initiatives")
+		return err
 	}
 
 	logger.Info("Calculating business value for %d initiatives", len(initiatives))

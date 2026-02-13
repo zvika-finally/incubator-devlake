@@ -126,6 +126,14 @@ func (p BusinessMetrics) PrepareTaskData(taskCtx plugin.TaskContext, options map
 		taskCtx.GetLogger().Warn(settingsErr, "Failed to load settings for project %s, using defaults", op.ProjectName)
 		settings = models.NewDefaultSettings()
 	}
+
+	// Let project settings override hardcoded option defaults when caller didn't provide explicit values.
+	if (op.InvestmentLabelPrefix == "" || op.InvestmentLabelPrefix == "investment:") && settings.InvestmentLabelPrefix != "" {
+		op.InvestmentLabelPrefix = settings.InvestmentLabelPrefix
+	}
+	if (op.StageLabelPrefix == "" || op.StageLabelPrefix == "stage:") && settings.StageLabelPrefix != "" {
+		op.StageLabelPrefix = settings.StageLabelPrefix
+	}
 	taskCtx.GetLogger().Info("Loaded business metrics settings for project: %s", op.ProjectName)
 
 	return &tasks.BusinessMetricsTaskData{

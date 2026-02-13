@@ -39,15 +39,15 @@ var ForecastCompletionMeta = plugin.SubTaskMeta{
 }
 
 type ScenarioData struct {
-	BestCase  ForecastScenario `json:"best_case"`
-	WorstCase ForecastScenario `json:"worst_case"`
+	BestCase   ForecastScenario `json:"best_case"`
+	WorstCase  ForecastScenario `json:"worst_case"`
 	MostLikely ForecastScenario `json:"most_likely"`
 }
 
 type ForecastScenario struct {
-	Sprints        int       `json:"sprints"`
-	CompletionDate string    `json:"completion_date"`
-	Velocity       float64   `json:"velocity"`
+	Sprints        int     `json:"sprints"`
+	CompletionDate string  `json:"completion_date"`
+	Velocity       float64 `json:"velocity"`
 }
 
 func ForecastCompletion(taskCtx plugin.SubTaskContext) errors.Error {
@@ -67,9 +67,9 @@ func ForecastCompletion(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	// Get all initiatives
-	var initiatives []bmModels.BusinessInitiative
-	if err := db.All(&initiatives, dal.From(&bmModels.BusinessInitiative{})); err != nil {
-		return errors.Default.Wrap(err, "failed to query initiatives")
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
+	if err != nil {
+		return err
 	}
 
 	logger.Info("Forecasting completion for %d initiatives", len(initiatives))
@@ -168,16 +168,16 @@ func forecastInitiative(db dal.Dal, initiative bmModels.BusinessInitiative, avgV
 
 	scenarios := ScenarioData{
 		BestCase: ForecastScenario{
-			Sprints:        int(math.Ceil(float64(remaining) / bestCaseVelocity)),
-			Velocity:       bestCaseVelocity,
+			Sprints:  int(math.Ceil(float64(remaining) / bestCaseVelocity)),
+			Velocity: bestCaseVelocity,
 		},
 		WorstCase: ForecastScenario{
-			Sprints:        int(math.Ceil(float64(remaining) / worstCaseVelocity)),
-			Velocity:       worstCaseVelocity,
+			Sprints:  int(math.Ceil(float64(remaining) / worstCaseVelocity)),
+			Velocity: worstCaseVelocity,
 		},
 		MostLikely: ForecastScenario{
-			Sprints:        estimatedSprints,
-			Velocity:       avgVelocity,
+			Sprints:  estimatedSprints,
+			Velocity: avgVelocity,
 		},
 	}
 

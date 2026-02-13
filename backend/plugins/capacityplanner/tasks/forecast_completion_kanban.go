@@ -20,6 +20,7 @@ package tasks
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/apache/incubator-devlake/core/dal"
@@ -55,19 +56,16 @@ func ForecastCompletionKanban(taskCtx plugin.SubTaskContext) errors.Error {
 		return nil
 	}
 
-	// Get all active business initiatives (epics)
-	var initiatives []bmModels.BusinessInitiative
-	if err := db.All(&initiatives,
-		dal.From(&bmModels.BusinessInitiative{}),
-		dal.Where("status IN ('active', 'planned')"),
-	); err != nil {
-		return errors.Default.Wrap(err, "failed to query initiatives")
+	// Get project-scoped initiatives
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
+	if err != nil {
+		return err
 	}
 
 	logger.Info("Forecasting completion for %d initiatives using Kanban metrics", len(initiatives))
 
 	for _, initiative := range initiatives {
-		forecast := forecastInitiativeKanban(db, initiative, avgThroughput, stdDev, data.Options.SprintDurationWeeks, logger)
+		forecast := forecastInitiativeKanban(db, data.Options.ProjectName, initiative, avgThroughput, stdDev, data.Options.SprintDurationWeeks, logger)
 		if forecast == nil {
 			continue
 		}
@@ -113,21 +111,23 @@ func calculateAverageThroughput(db dal.Dal, projectName string, logger log.Logge
 	variance := (sumSquares / count) - (avg * avg)
 	stdDev := 0.0
 	if variance > 0 {
-		stdDev = variance // Simplified - would use math.Sqrt in production
+		stdDev = math.Sqrt(variance)
 	}
 
 	return avg, stdDev
 }
 
-func forecastInitiativeKanban(db dal.Dal, initiative bmModels.BusinessInitiative, avgThroughput, stdDev float64, weeksPerPeriod int, logger log.Logger) *models.InitiativeForecast {
+func forecastInitiativeKanban(db dal.Dal, projectName string, initiative bmModels.BusinessInitiative, avgThroughput, stdDev float64, weeksPerPeriod int, logger log.Logger) *models.InitiativeForecast {
 	// Count total and completed issues for this initiative (epic)
 	var totalIssues, completedIssues int64
 
 	// Total issues linked to this epic
 	err := db.First(&totalIssues,
-		dal.Select("COUNT(DISTINCT i.id)"),
+		dal.Select("COUNT(DISTINCT issues.id)"),
 		dal.From(&ticket.Issue{}),
-		dal.Where("parent_issue_id = ? OR epic_key = ?", initiative.Id, initiative.JiraEpicKey),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND (issues.parent_issue_id = ? OR issues.epic_key = ?)", projectName, initiative.Id, initiative.JiraEpicKey),
 	)
 	if err != nil {
 		logger.Debug("Could not count total issues for initiative %s: %v", initiative.Name, err)
@@ -136,9 +136,12 @@ func forecastInitiativeKanban(db dal.Dal, initiative bmModels.BusinessInitiative
 
 	// Completed issues
 	err = db.First(&completedIssues,
-		dal.Select("COUNT(DISTINCT i.id)"),
+		dal.Select("COUNT(DISTINCT issues.id)"),
 		dal.From(&ticket.Issue{}),
-		dal.Where("(parent_issue_id = ? OR epic_key = ?) AND status = 'DONE'", initiative.Id, initiative.JiraEpicKey),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND (issues.parent_issue_id = ? OR issues.epic_key = ?) AND issues.status = 'DONE'",
+			projectName, initiative.Id, initiative.JiraEpicKey),
 	)
 	if err != nil {
 		completedIssues = 0
@@ -163,7 +166,10 @@ func forecastInitiativeKanban(db dal.Dal, initiative bmModels.BusinessInitiative
 	}
 
 	// Calculate periods (treating each week as a "period")
-	periodsToComplete := int(weeksToComplete / float64(weeksPerPeriod))
+	if weeksPerPeriod <= 0 {
+		weeksPerPeriod = 1
+	}
+	periodsToComplete := int(math.Ceil(weeksToComplete / float64(weeksPerPeriod)))
 	if periodsToComplete < 1 && remainingIssues > 0 {
 		periodsToComplete = 1
 	}
@@ -179,15 +185,24 @@ func forecastInitiativeKanban(db dal.Dal, initiative bmModels.BusinessInitiative
 		confidenceLevel = "low"
 	}
 
+	bestCasePeriods := int(math.Ceil(float64(periodsToComplete) * 0.8))
+	if bestCasePeriods < 1 && remainingIssues > 0 {
+		bestCasePeriods = 1
+	}
+	worstCasePeriods := int(math.Ceil(float64(periodsToComplete) * 1.3))
+	if worstCasePeriods < 1 && remainingIssues > 0 {
+		worstCasePeriods = 1
+	}
+
 	// Create scenario data (best/worst/likely)
 	scenarioData := ScenarioData{
 		BestCase: ForecastScenario{
-			Sprints:        int(float64(periodsToComplete) * 0.8),
+			Sprints:        bestCasePeriods,
 			CompletionDate: time.Now().AddDate(0, 0, int(weeksToComplete*0.8*7)).Format("2006-01-02"),
 			Velocity:       avgThroughput * 1.2,
 		},
 		WorstCase: ForecastScenario{
-			Sprints:        int(float64(periodsToComplete) * 1.3),
+			Sprints:        worstCasePeriods,
 			CompletionDate: time.Now().AddDate(0, 0, int(weeksToComplete*1.3*7)).Format("2006-01-02"),
 			Velocity:       avgThroughput * 0.7,
 		},

@@ -27,7 +27,6 @@ import (
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/log"
-	"github.com/apache/incubator-devlake/core/models/domainlayer/ticket"
 	"github.com/apache/incubator-devlake/core/plugin"
 	bmModels "github.com/apache/incubator-devlake/plugins/businessmetrics/models"
 	"github.com/apache/incubator-devlake/plugins/capacityplanner/models"
@@ -56,24 +55,44 @@ func MonteCarloForecastKanban(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	avgThroughput := calculateMean(throughputHistory)
+	if avgThroughput <= 0 {
+		logger.Warn(nil, "Average throughput is zero, skipping Monte Carlo")
+		return nil
+	}
 	stdDev := calculateStdDev(throughputHistory, avgThroughput)
 	variance := stdDev / avgThroughput // Coefficient of variation
 
 	logger.Info("Throughput stats: avg=%.1f, stdDev=%.1f, variance=%.1f%%", avgThroughput, stdDev, variance*100)
 
-	// Get active initiatives
-	var initiatives []bmModels.BusinessInitiative
-	if err := db.All(&initiatives,
-		dal.From(&bmModels.BusinessInitiative{}),
-		dal.Where("status IN ('active', 'planned')"),
-	); err != nil {
-		return errors.Default.Wrap(err, "failed to query initiatives")
+	// Use configured Monte Carlo variance when provided.
+	if data.Settings != nil && data.Settings.VelocityVariance > 0 {
+		variance = data.Settings.VelocityVariance
+	}
+
+	// Get project-scoped initiatives
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
+	if err != nil {
+		return err
 	}
 
 	logger.Info("Running Monte Carlo simulation for %d initiatives", len(initiatives))
 
+	simulationCount := 1000
+	if data.Settings != nil && data.Settings.MonteCarloIterations > 0 {
+		simulationCount = data.Settings.MonteCarloIterations
+	}
+
 	for _, initiative := range initiatives {
-		forecast := runMonteCarloSimulationKanban(db, initiative, avgThroughput, variance, data.Options.SprintDurationWeeks, logger)
+		forecast := runMonteCarloSimulationKanban(
+			db,
+			data.Options.ProjectName,
+			initiative,
+			avgThroughput,
+			variance,
+			simulationCount,
+			data.Options.SprintDurationWeeks,
+			logger,
+		)
 		if forecast == nil {
 			continue
 		}
@@ -131,23 +150,29 @@ func calculateStdDev(data []float64, mean float64) float64 {
 	return math.Sqrt(variance)
 }
 
-func runMonteCarloSimulationKanban(db dal.Dal, initiative bmModels.BusinessInitiative, avgThroughput, variance float64, weeksPerPeriod int, logger log.Logger) *models.MonteCarloForecast {
+func runMonteCarloSimulationKanban(db dal.Dal, projectName string, initiative bmModels.BusinessInitiative, avgThroughput, variance float64, simulationCount int, weeksPerPeriod int, logger log.Logger) *models.MonteCarloForecast {
 	// Count remaining issues for this initiative
 	var totalIssues, completedIssues int64
 
 	err := db.First(&totalIssues,
-		dal.Select("COUNT(DISTINCT i.id)"),
-		dal.From(&ticket.Issue{}),
-		dal.Where("parent_issue_id = ? OR epic_key = ?", initiative.Id, initiative.JiraEpicKey),
+		dal.Select("COUNT(DISTINCT issues.id)"),
+		dal.From("issues"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND (issues.parent_issue_id = ? OR issues.epic_key = ?)",
+			projectName, initiative.Id, initiative.JiraEpicKey),
 	)
 	if err != nil || totalIssues == 0 {
 		return nil
 	}
 
 	err = db.First(&completedIssues,
-		dal.Select("COUNT(DISTINCT i.id)"),
-		dal.From(&ticket.Issue{}),
-		dal.Where("(parent_issue_id = ? OR epic_key = ?) AND status = 'DONE'", initiative.Id, initiative.JiraEpicKey),
+		dal.Select("COUNT(DISTINCT issues.id)"),
+		dal.From("issues"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND (issues.parent_issue_id = ? OR issues.epic_key = ?) AND issues.status = 'DONE'",
+			projectName, initiative.Id, initiative.JiraEpicKey),
 	)
 	if err != nil {
 		completedIssues = 0
@@ -158,11 +183,14 @@ func runMonteCarloSimulationKanban(db dal.Dal, initiative bmModels.BusinessIniti
 		return nil // Already complete
 	}
 
-	// Run 1000 Monte Carlo simulations
-	simulationCount := 1000
+	if simulationCount <= 0 {
+		simulationCount = 1000
+	}
+	if weeksPerPeriod <= 0 {
+		weeksPerPeriod = 1
+	}
 	completionWeeks := make([]int, simulationCount)
-
-	rand.Seed(time.Now().UnixNano())
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0; i < simulationCount; i++ {
 		remaining := float64(remainingIssues)
@@ -171,7 +199,7 @@ func runMonteCarloSimulationKanban(db dal.Dal, initiative bmModels.BusinessIniti
 		for remaining > 0 && weeks < 520 { // Max 10 years
 			// Generate random throughput using normal distribution
 			// Simple approximation: throughput = avg ± (random * stdDev)
-			randomFactor := (rand.Float64() - 0.5) * 2 * variance // Range: -variance to +variance
+			randomFactor := (rng.Float64() - 0.5) * 2 * variance // Range: -variance to +variance
 			weeklyThroughput := avgThroughput * (1 + randomFactor)
 
 			// Ensure positive throughput
@@ -195,11 +223,11 @@ func runMonteCarloSimulationKanban(db dal.Dal, initiative bmModels.BusinessIniti
 	p90Weeks := completionWeeks[simulationCount*90/100]
 	p95Weeks := completionWeeks[simulationCount*95/100]
 
-	// Convert weeks to periods
-	p50Periods := p50Weeks / weeksPerPeriod
-	p75Periods := p75Weeks / weeksPerPeriod
-	p90Periods := p90Weeks / weeksPerPeriod
-	p95Periods := p95Weeks / weeksPerPeriod
+	// Convert weeks to periods using ceiling so partial periods are counted.
+	p50Periods := (p50Weeks + weeksPerPeriod - 1) / weeksPerPeriod
+	p75Periods := (p75Weeks + weeksPerPeriod - 1) / weeksPerPeriod
+	p90Periods := (p90Weeks + weeksPerPeriod - 1) / weeksPerPeriod
+	p95Periods := (p95Weeks + weeksPerPeriod - 1) / weeksPerPeriod
 
 	// Calculate completion dates
 	p50Date := time.Now().AddDate(0, 0, p50Weeks*7)
@@ -211,21 +239,21 @@ func runMonteCarloSimulationKanban(db dal.Dal, initiative bmModels.BusinessIniti
 	latestDays := completionWeeks[simulationCount-1] * 7
 
 	forecast := &models.MonteCarloForecast{
-		Id:              fmt.Sprintf("%s:mc:%s", initiative.Id, time.Now().Format("20060102")),
-		InitiativeId:    initiative.Id,
-		SimulationCount: int(simulationCount),
-		VelocityVariance: variance * 100, // Convert to percentage
-		P50Sprints:      int(p50Periods),
-		P75Sprints:      int(p75Periods),
-		P90Sprints:      int(p90Periods),
-		P95Sprints:      int(p95Periods),
-		P50Date:         &p50Date,
-		P75Date:         &p75Date,
-		P90Date:         &p90Date,
-		P95Date:         &p95Date,
-		EarliestDays:    int(earliestDays),
-		LatestDays:      int(latestDays),
-		CalculatedAt:    time.Now(),
+		Id:               fmt.Sprintf("%s:mc:%s", initiative.Id, time.Now().Format("20060102")),
+		InitiativeId:     initiative.Id,
+		SimulationCount:  simulationCount,
+		VelocityVariance: variance,
+		P50Sprints:       int(p50Periods),
+		P75Sprints:       int(p75Periods),
+		P90Sprints:       int(p90Periods),
+		P95Sprints:       int(p95Periods),
+		P50Date:          &p50Date,
+		P75Date:          &p75Date,
+		P90Date:          &p90Date,
+		P95Date:          &p95Date,
+		EarliestDays:     int(earliestDays),
+		LatestDays:       int(latestDays),
+		CalculatedAt:     time.Now(),
 	}
 
 	logger.Info("Monte Carlo for '%s': P50=%d weeks, P90=%d weeks (%.0f remaining issues, %.1f/week)",

@@ -19,6 +19,7 @@ package tasks
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/apache/incubator-devlake/core/dal"
@@ -38,8 +39,8 @@ var BrooksLawModelMeta = plugin.SubTaskMeta{
 // Constants from eng-product-metrics
 const (
 	DefaultRampUpWeeks    = 8
-	NewHireProductivity   = 0.5  // 50% productivity during ramp-up
-	ChannelOverheadFactor = 0.1  // 10% overhead per additional channel
+	NewHireProductivity   = 0.5 // 50% productivity during ramp-up
+	ChannelOverheadFactor = 0.1 // 10% overhead per additional channel
 )
 
 func BrooksLawModel(taskCtx plugin.SubTaskContext) errors.Error {
@@ -73,6 +74,24 @@ func BrooksLawModel(taskCtx plugin.SubTaskContext) errors.Error {
 		currentTeamSize = 5
 	}
 
+	rampUpWeeks := DefaultRampUpWeeks
+	newHireProductivity := NewHireProductivity
+	channelOverhead := ChannelOverheadFactor
+	if data.Settings != nil {
+		if data.Settings.RampUpWeeks > 0 {
+			rampUpWeeks = int(math.Round(data.Settings.RampUpWeeks))
+			if rampUpWeeks <= 0 {
+				rampUpWeeks = 1
+			}
+		}
+		if data.Settings.NewHireProductivity > 0 {
+			newHireProductivity = data.Settings.NewHireProductivity
+		}
+		if data.Settings.ChannelOverhead > 0 {
+			channelOverhead = data.Settings.ChannelOverhead
+		}
+	}
+
 	// Model scenarios: +1, +2, +3, -1, -2
 	scenarios := []struct {
 		name  string
@@ -96,11 +115,13 @@ func BrooksLawModel(taskCtx plugin.SubTaskContext) errors.Error {
 		newChannels := CalculateCommunicationChannels(newTeamSize)
 
 		// Calculate productivity factor and overhead
-		productivityFactor, overheadFactor := CalculateBrooksLawImpact(
+		productivityFactor, overheadFactor := calculateBrooksLawImpactWithConfig(
 			currentTeamSize,
 			scenario.delta,
 			currentChannels,
 			newChannels,
+			newHireProductivity,
+			channelOverhead,
 		)
 
 		// Projected impact on metrics
@@ -111,13 +132,13 @@ func BrooksLawModel(taskCtx plugin.SubTaskContext) errors.Error {
 		projectedLeadDelta := (1/(productivityFactor*overheadFactor) - 1) * 100
 
 		capacityModel := models.CapacityModel{
-			Id:              fmt.Sprintf("%s:%s:%d", data.Options.ProjectName, scenario.name, time.Now().Unix()),
-			ProjectName:     data.Options.ProjectName,
-			ScenarioName:    scenario.name,
+			Id:           fmt.Sprintf("%s:%s:%d", data.Options.ProjectName, scenario.name, time.Now().Unix()),
+			ProjectName:  data.Options.ProjectName,
+			ScenarioName: scenario.name,
 
 			CurrentTeamSize: currentTeamSize,
 			TeamSizeDelta:   scenario.delta,
-			RampUpWeeks:     DefaultRampUpWeeks,
+			RampUpWeeks:     rampUpWeeks,
 
 			CurrentChannels: currentChannels,
 			NewChannels:     newChannels,
@@ -157,11 +178,22 @@ func CalculateCommunicationChannels(teamSize int) int {
 // based on team size changes using Brooks's Law principles
 // Exported for testing
 func CalculateBrooksLawImpact(currentSize, delta, currentChannels, newChannels int) (productivityFactor, overheadFactor float64) {
+	return calculateBrooksLawImpactWithConfig(
+		currentSize,
+		delta,
+		currentChannels,
+		newChannels,
+		NewHireProductivity,
+		ChannelOverheadFactor,
+	)
+}
+
+func calculateBrooksLawImpactWithConfig(currentSize, delta, currentChannels, newChannels int, newHireProductivity, channelOverheadFactor float64) (productivityFactor, overheadFactor float64) {
 	newSize := currentSize + delta
 
 	if delta > 0 {
 		// Adding team members - new hires have reduced productivity during ramp-up
-		effectiveNewCapacity := float64(delta) * NewHireProductivity
+		effectiveNewCapacity := float64(delta) * newHireProductivity
 		productivityFactor = (float64(currentSize) + effectiveNewCapacity) / float64(currentSize)
 	} else if delta < 0 {
 		// Reducing team members - linear capacity reduction
@@ -174,7 +206,7 @@ func CalculateBrooksLawImpact(currentSize, delta, currentChannels, newChannels i
 	// Formula: 1 - (channel_delta / (current_channels + 1)) * overhead_factor
 	channelDelta := newChannels - currentChannels
 	if currentChannels > 0 || channelDelta != 0 {
-		overheadFactor = 1 - (float64(channelDelta)/float64(currentChannels+1))*ChannelOverheadFactor
+		overheadFactor = 1 - (float64(channelDelta)/float64(currentChannels+1))*channelOverheadFactor
 	} else {
 		overheadFactor = 1.0
 	}

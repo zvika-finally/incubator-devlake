@@ -37,11 +37,11 @@ var CalculateHealthScoreMeta = plugin.SubTaskMeta{
 
 // DORA Elite Benchmarks from eng-product-metrics
 const (
-	EliteDeployFreq    = 1.0   // 1 deploy per day (7 per week)
-	EliteLeadTimeHours = 24.0  // 1 day
-	EliteCFR           = 5.0   // 5% change failure rate
-	EliteMTTRHours     = 1.0   // 1 hour
-	MaxScore           = 25    // Max score per metric
+	EliteDeployFreq    = 1.0  // 1 deploy per day (7 per week)
+	EliteLeadTimeHours = 24.0 // 1 day
+	EliteCFR           = 5.0  // 5% change failure rate
+	EliteMTTRHours     = 1.0  // 1 hour
+	MaxScore           = 25   // Max score per metric
 )
 
 func CalculateHealthScore(taskCtx plugin.SubTaskContext) errors.Error {
@@ -63,16 +63,18 @@ func CalculateHealthScore(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	// Calculate individual scores
-	deployFreqScore := CalculateDeployFreqScore(doraMetrics.deployFrequency)
-	leadTimeScore := CalculateLeadTimeScore(doraMetrics.leadTimeHours)
-	cfrScore := CalculateCFRScore(doraMetrics.changeFailureRate)
-	mttrScore := CalculateMTTRScore(doraMetrics.mttrHours)
+	eliteDeployFreq, eliteLeadTimeHours, eliteCFR, eliteMTTRHours := getEffectiveEliteBenchmarks(data.Settings)
+	deployFreqScore := calculateDeployFreqScore(doraMetrics.deployFrequency, eliteDeployFreq)
+	leadTimeScore := calculateLeadTimeScore(doraMetrics.leadTimeHours, eliteLeadTimeHours)
+	cfrScore := calculateCFRScore(doraMetrics.changeFailureRate, eliteCFR)
+	mttrScore := calculateMTTRScore(doraMetrics.mttrHours, eliteMTTRHours)
 
 	// Total score
 	totalScore := deployFreqScore + leadTimeScore + cfrScore + mttrScore
 
 	// Determine health level
-	healthLevel := DetermineHealthLevel(totalScore)
+	eliteThreshold, highThreshold, mediumThreshold := getEffectiveHealthThresholds(data.Settings)
+	healthLevel := determineHealthLevel(totalScore, eliteThreshold, highThreshold, mediumThreshold)
 
 	// Create health score record
 	healthScore := models.TeamHealthScore{
@@ -173,23 +175,107 @@ func queryDORAMetrics(db dal.Dal, projectName string, start, end time.Time) (*do
 		metrics.changeFailureRate = (float64(failedCount) / float64(totalDeploys)) * 100
 	}
 
-	// MTTR: average recovery time from incidents
-	// This would ideally come from incident data; for now, use a heuristic based on deployment patterns
-	// A more sophisticated implementation would integrate with incident management tools
-	metrics.mttrHours = 4.0 // Placeholder - should be calculated from incident data if available
+	// MTTR/FDRT: use DORA's incident-to-deployment relationship first.
+	type mttrResult struct {
+		AvgMTTRHours *float64 `gorm:"column:avg_mttr_hours"`
+	}
+	var mttrResults []mttrResult
+	mttrClauses := []dal.Clause{
+		dal.Select("AVG(TIMESTAMPDIFF(MINUTE, d.deployment_finished_date, i.resolution_date)) / 60 as avg_mttr_hours"),
+		dal.From("project_incident_deployment_relationships pidr"),
+		dal.Join("JOIN incidents i ON i.id = pidr.id"),
+		dal.Join(`JOIN (
+			SELECT
+				cdc.cicd_deployment_id,
+				MAX(cdc.finished_date) AS deployment_finished_date
+			FROM cicd_deployment_commits cdc
+			JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = cdc.cicd_scope_id
+			WHERE
+				pm.project_name = ? AND
+				cdc.result = 'SUCCESS' AND
+				cdc.environment = 'PRODUCTION'
+			GROUP BY cdc.cicd_deployment_id
+		) d ON d.cicd_deployment_id = pidr.deployment_id`, projectName),
+		dal.Where("pidr.project_name = ? AND i.resolution_date >= ? AND i.resolution_date < ? AND i.resolution_date IS NOT NULL",
+			projectName, start, end),
+	}
+	if err := db.All(&mttrResults, mttrClauses...); err == nil && len(mttrResults) > 0 && mttrResults[0].AvgMTTRHours != nil {
+		metrics.mttrHours = *mttrResults[0].AvgMTTRHours
+	} else {
+		// Fallback: use incident lead_time_minutes / created->resolved if relationship data is absent.
+		mttrFallbackClauses := []dal.Clause{
+			dal.Select("AVG(COALESCE(incidents.lead_time_minutes, TIMESTAMPDIFF(MINUTE, incidents.created_date, incidents.resolution_date))) / 60 as avg_mttr_hours"),
+			dal.From("incidents"),
+			dal.Join("LEFT JOIN project_mapping pm ON pm.table = incidents.`table` AND pm.row_id = incidents.scope_id"),
+			dal.Where("pm.project_name = ? AND incidents.resolution_date >= ? AND incidents.resolution_date < ? AND incidents.resolution_date IS NOT NULL",
+				projectName, start, end),
+		}
+		if err := db.All(&mttrResults, mttrFallbackClauses...); err == nil && len(mttrResults) > 0 && mttrResults[0].AvgMTTRHours != nil {
+			metrics.mttrHours = *mttrResults[0].AvgMTTRHours
+		} else {
+			metrics.mttrHours = 4.0
+		}
+	}
 
 	return metrics, nil
+}
+
+func getEffectiveEliteBenchmarks(settings *models.BusinessMetricsSettings) (deployFreq, leadTimeHours, cfr, mttrHours float64) {
+	deployFreq = EliteDeployFreq
+	leadTimeHours = EliteLeadTimeHours
+	cfr = EliteCFR
+	mttrHours = EliteMTTRHours
+
+	if settings == nil {
+		return
+	}
+	if settings.EliteDeployFreq > 0 {
+		deployFreq = settings.EliteDeployFreq
+	}
+	if settings.EliteLeadTimeHours > 0 {
+		leadTimeHours = settings.EliteLeadTimeHours
+	}
+	if settings.EliteCFR > 0 {
+		cfr = settings.EliteCFR
+	}
+	if settings.EliteMTTRHours > 0 {
+		mttrHours = settings.EliteMTTRHours
+	}
+	return
+}
+
+func getEffectiveHealthThresholds(settings *models.BusinessMetricsSettings) (elite, high, medium int) {
+	elite = 80
+	high = 60
+	medium = 40
+	if settings == nil {
+		return
+	}
+	if settings.EliteThreshold > 0 {
+		elite = settings.EliteThreshold
+	}
+	if settings.HighThreshold > 0 {
+		high = settings.HighThreshold
+	}
+	if settings.MediumThreshold > 0 {
+		medium = settings.MediumThreshold
+	}
+	return
 }
 
 // CalculateDeployFreqScore calculates score for deploy frequency (0-25)
 // Higher frequency = better score
 // Exported for testing
 func CalculateDeployFreqScore(deployFreq float64) int {
+	return calculateDeployFreqScore(deployFreq, EliteDeployFreq)
+}
+
+func calculateDeployFreqScore(deployFreq float64, eliteBenchmark float64) int {
 	if deployFreq <= 0 {
 		return 0
 	}
 	// Score = min(25, (deployFreq / eliteBenchmark) * 25)
-	score := int((deployFreq / EliteDeployFreq) * float64(MaxScore))
+	score := int((deployFreq / eliteBenchmark) * float64(MaxScore))
 	if score > MaxScore {
 		return MaxScore
 	}
@@ -200,11 +286,15 @@ func CalculateDeployFreqScore(deployFreq float64) int {
 // Lower lead time = better score (inverted)
 // Exported for testing
 func CalculateLeadTimeScore(leadTimeHours float64) int {
+	return calculateLeadTimeScore(leadTimeHours, EliteLeadTimeHours)
+}
+
+func calculateLeadTimeScore(leadTimeHours float64, eliteBenchmark float64) int {
 	if leadTimeHours <= 0 {
 		return MaxScore // Best possible if lead time is 0 or negative (shouldn't happen)
 	}
 	// Score = min(25, (eliteBenchmark / leadTime) * 25)
-	score := int((EliteLeadTimeHours / leadTimeHours) * float64(MaxScore))
+	score := int((eliteBenchmark / leadTimeHours) * float64(MaxScore))
 	if score > MaxScore {
 		return MaxScore
 	}
@@ -218,11 +308,15 @@ func CalculateLeadTimeScore(leadTimeHours float64) int {
 // Lower CFR = better score (inverted)
 // Exported for testing
 func CalculateCFRScore(cfr float64) int {
+	return calculateCFRScore(cfr, EliteCFR)
+}
+
+func calculateCFRScore(cfr float64, eliteBenchmark float64) int {
 	if cfr <= 0 {
 		return MaxScore // Perfect if no failures
 	}
 	// Score = min(25, (eliteBenchmark / cfr) * 25)
-	score := int((EliteCFR / cfr) * float64(MaxScore))
+	score := int((eliteBenchmark / cfr) * float64(MaxScore))
 	if score > MaxScore {
 		return MaxScore
 	}
@@ -236,11 +330,15 @@ func CalculateCFRScore(cfr float64) int {
 // Lower MTTR = better score (inverted)
 // Exported for testing
 func CalculateMTTRScore(mttrHours float64) int {
+	return calculateMTTRScore(mttrHours, EliteMTTRHours)
+}
+
+func calculateMTTRScore(mttrHours float64, eliteBenchmark float64) int {
 	if mttrHours <= 0 {
 		return MaxScore // Best possible if MTTR is 0
 	}
 	// Score = min(25, (eliteBenchmark / mttr) * 25)
-	score := int((EliteMTTRHours / mttrHours) * float64(MaxScore))
+	score := int((eliteBenchmark / mttrHours) * float64(MaxScore))
 	if score > MaxScore {
 		return MaxScore
 	}
@@ -253,13 +351,17 @@ func CalculateMTTRScore(mttrHours float64) int {
 // DetermineHealthLevel returns the health level based on total score
 // Exported for testing
 func DetermineHealthLevel(totalScore int) string {
-	if totalScore >= 80 {
+	return determineHealthLevel(totalScore, 80, 60, 40)
+}
+
+func determineHealthLevel(totalScore, eliteThreshold, highThreshold, mediumThreshold int) string {
+	if totalScore >= eliteThreshold {
 		return models.HealthLevelElite
 	}
-	if totalScore >= 60 {
+	if totalScore >= highThreshold {
 		return models.HealthLevelHigh
 	}
-	if totalScore >= 40 {
+	if totalScore >= mediumThreshold {
 		return models.HealthLevelMedium
 	}
 	return models.HealthLevelLow

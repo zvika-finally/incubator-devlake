@@ -90,14 +90,14 @@ func CalculateAIImpact(taskCtx plugin.SubTaskContext) errors.Error {
 	// For throughput: higher is better, positive change = improvement
 	// For time metrics: lower is better, so we invert the sign (faster = positive)
 	prThroughputChange := CalculatePercentChange(baselineMetrics.prThroughput, currentMetrics.prThroughput)
-	reviewTimeChange := -CalculatePercentChange(baselineMetrics.reviewTime, currentMetrics.reviewTime)   // Inverted
-	leadTimeChange := -CalculatePercentChange(baselineMetrics.leadTime, currentMetrics.leadTime)         // Inverted
+	reviewTimeChange := -CalculatePercentChange(baselineMetrics.reviewTime, currentMetrics.reviewTime) // Inverted
+	leadTimeChange := -CalculatePercentChange(baselineMetrics.leadTime, currentMetrics.leadTime)       // Inverted
 
 	// Create or update impact metric
 	impactMetric := models.AIImpactMetric{
-		Id:              fmt.Sprintf("%s:%s", data.Options.ProjectName, adoptionDate.Format("20060102")),
-		ProjectName:     data.Options.ProjectName,
-		AIAdoptionDate:  adoptionDate,
+		Id:             fmt.Sprintf("%s:%s", data.Options.ProjectName, adoptionDate.Format("20060102")),
+		ProjectName:    data.Options.ProjectName,
+		AIAdoptionDate: adoptionDate,
 
 		BaselinePRThroughput: baselineMetrics.prThroughput,
 		BaselineReviewTime:   baselineMetrics.reviewTime,
@@ -131,33 +131,32 @@ type periodMetrics struct {
 	leadTime     float64 // Average hours from first commit to deploy
 }
 
-// findAIAdoptionDate finds the earliest explicit AI signal detection for a project
+// findAIAdoptionDate finds the earliest project PR event with explicit AI detection.
+// We use PR event time (merged_date fallback created_date) to avoid task-run-time bias.
 func findAIAdoptionDate(db dal.Dal, projectName string) (*time.Time, errors.Error) {
-	// Query for the earliest PR with explicit AI tool detection
-	var signal models.AIUsageSignal
+	var rows []struct {
+		EventDate *time.Time `gorm:"column:event_date"`
+	}
 	clauses := []dal.Clause{
+		dal.Select("COALESCE(pr.merged_date, pr.created_date) AS event_date"),
 		dal.From(&models.AIUsageSignal{}),
-		dal.Join("LEFT JOIN pull_requests pr ON pr.id = ai_usage_signals.pull_request_id"),
+		dal.Join("JOIN pull_requests pr ON pr.id = ai_usage_signals.pull_request_id"),
 		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = pr.base_repo_id"),
-		dal.Where("pm.project_name = ? AND ai_usage_signals.explicit_tool_detected = ?", projectName, true),
-		dal.Orderby("ai_usage_signals.detected_at ASC"),
+		dal.Where("pm.project_name = ? AND ai_usage_signals.explicit_tool_detected = ? AND COALESCE(pr.merged_date, pr.created_date) IS NOT NULL", projectName, true),
+		dal.Orderby("COALESCE(pr.merged_date, pr.created_date) ASC"),
 		dal.Limit(1),
 	}
 
-	err := db.First(&signal, clauses...)
+	err := db.All(&rows, clauses...)
 	if err != nil {
-		// No explicit AI detection found
-		if db.IsErrorNotFound(err) {
-			return nil, nil
-		}
 		return nil, errors.Default.Wrap(err, "failed to query AI signals")
 	}
 
-	if signal.DetectedAt.IsZero() {
+	if len(rows) == 0 || rows[0].EventDate == nil || rows[0].EventDate.IsZero() {
 		return nil, nil
 	}
 
-	return &signal.DetectedAt, nil
+	return rows[0].EventDate, nil
 }
 
 // calculatePeriodMetrics calculates productivity metrics for a given time period

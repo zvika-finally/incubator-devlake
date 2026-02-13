@@ -53,33 +53,60 @@ func MonteCarloForecast(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting monteCarloForecast for project: %s", data.Options.ProjectName)
 
-	// Get all initiatives with forecasts
-	var forecasts []models.InitiativeForecast
-	clauses := []dal.Clause{
-		dal.From(&models.InitiativeForecast{}),
-		dal.Where("remaining_story_points > 0"),
+	// Resolve simulation configuration from settings with safe defaults.
+	iterations := MonteCarloIterations
+	defaultVelocity := DefaultVelocity
+	varianceFactor := DefaultVelocityVariance
+	if data.Settings != nil {
+		if data.Settings.MonteCarloIterations > 0 {
+			iterations = data.Settings.MonteCarloIterations
+		}
+		if data.Settings.DefaultVelocity > 0 {
+			defaultVelocity = data.Settings.DefaultVelocity
+		}
+		if data.Settings.VelocityVariance > 0 {
+			varianceFactor = data.Settings.VelocityVariance
+		}
 	}
 
-	err := db.All(&forecasts, clauses...)
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
 	if err != nil {
-		return errors.Default.Wrap(err, "failed to query initiative forecasts")
+		return err
 	}
 
-	logger.Info("Running Monte Carlo simulation for %d initiatives", len(forecasts))
+	logger.Info("Running Monte Carlo simulation for %d initiatives", len(initiatives))
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	for _, forecast := range forecasts {
+	for _, initiative := range initiatives {
+		var forecast models.InitiativeForecast
+		err := db.First(&forecast,
+			dal.From(&models.InitiativeForecast{}),
+			dal.Where("initiative_id = ? AND remaining_story_points > 0", initiative.Id),
+			dal.Orderby("calculated_at DESC"),
+			dal.Limit(1),
+		)
+		if err != nil {
+			if db.IsErrorNotFound(err) {
+				continue
+			}
+			logger.Error(err, "failed to query forecast for initiative %s", initiative.Id)
+			continue
+		}
+
 		// Get historical velocity for this initiative (avg and stddev)
 		avgVelocity := forecast.AvgVelocity
 		velocityStdDev := forecast.VelocityStdDev
 
 		// Use defaults if no historical data
 		if avgVelocity <= 0 {
-			avgVelocity = DefaultVelocity
+			avgVelocity = defaultVelocity
 		}
 		if velocityStdDev <= 0 {
-			velocityStdDev = avgVelocity * DefaultVelocityVariance
+			velocityStdDev = avgVelocity * varianceFactor
+			if velocityStdDev <= 0 {
+				velocityStdDev = avgVelocity * DefaultVelocityVariance
+			}
 		}
 
 		// Run Monte Carlo simulation
@@ -88,8 +115,8 @@ func MonteCarloForecast(taskCtx plugin.SubTaskContext) errors.Error {
 			float64(forecast.RemainingStoryPoints),
 			avgVelocity,
 			velocityStdDev,
-			DefaultVelocityVariance,
-			MonteCarloIterations,
+			varianceFactor,
+			iterations,
 		)
 
 		// Calculate percentiles
@@ -119,8 +146,8 @@ func MonteCarloForecast(taskCtx plugin.SubTaskContext) errors.Error {
 		mcForecast := models.MonteCarloForecast{
 			Id:               fmt.Sprintf("%s:mc:%d", forecast.InitiativeId, time.Now().Unix()),
 			InitiativeId:     forecast.InitiativeId,
-			SimulationCount:  MonteCarloIterations,
-			VelocityVariance: DefaultVelocityVariance,
+			SimulationCount:  iterations,
+			VelocityVariance: varianceFactor,
 
 			P50Sprints: (p50Days + sprintDays - 1) / sprintDays,
 			P75Sprints: (p75Days + sprintDays - 1) / sprintDays,
@@ -147,7 +174,7 @@ func MonteCarloForecast(taskCtx plugin.SubTaskContext) errors.Error {
 			forecast.InitiativeId, p50Days, p90Days, p95Days)
 	}
 
-	logger.Info("Completed Monte Carlo forecasting for %d initiatives", len(forecasts))
+	logger.Info("Completed Monte Carlo forecasting for %d initiatives", len(initiatives))
 	return nil
 }
 

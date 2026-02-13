@@ -42,9 +42,15 @@ func DecodeAndValidateTaskOptions(options map[string]interface{}) (*AIDetectorOp
 	if err != nil {
 		return nil, errors.Default.Wrap(err, "error decoding aidetector task options")
 	}
-	// Set defaults
-	if op.ConfidenceThreshold == 0 {
-		op.ConfidenceThreshold = 65 // Default: 65% confidence to flag as AI-assisted
-	}
 	return &op, nil
+}
+
+func GetEffectiveConfidenceThreshold(data *AIDetectorTaskData) int {
+	if data != nil && data.Options != nil && data.Options.ConfidenceThreshold > 0 {
+		return data.Options.ConfidenceThreshold
+	}
+	if data != nil && data.Settings != nil && data.Settings.DetectionThreshold > 0 {
+		return data.Settings.DetectionThreshold
+	}
+	return 65
 }

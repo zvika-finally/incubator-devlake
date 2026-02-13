@@ -156,10 +156,12 @@ func collectMonthlyActivities(db dal.Dal, projectName string, fiscalMonth string
 	}
 	var commits []commitCount
 	_ = db.All(&commits,
-		dal.Select("author_id, COUNT(*) as count"),
+		dal.Select("commits.author_id, COUNT(DISTINCT commits.sha) as count"),
 		dal.From("commits"),
-		dal.Where("DATE_FORMAT(authored_date, '%Y-%m') = ?", fiscalMonth),
-		dal.Groupby("author_id"),
+		dal.Join("LEFT JOIN repo_commits rc ON rc.commit_sha = commits.sha"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = rc.repo_id"),
+		dal.Where("pm.project_name = ? AND DATE_FORMAT(commits.authored_date, '%Y-%m') = ?", projectName, fiscalMonth),
+		dal.Groupby("commits.author_id"),
 	)
 
 	type prCount struct {
@@ -168,10 +170,11 @@ func collectMonthlyActivities(db dal.Dal, projectName string, fiscalMonth string
 	}
 	var prsAuthored []prCount
 	_ = db.All(&prsAuthored,
-		dal.Select("author_id, COUNT(*) as count"),
+		dal.Select("pull_requests.author_id, COUNT(*) as count"),
 		dal.From("pull_requests"),
-		dal.Where("DATE_FORMAT(created_date, '%Y-%m') = ?", fiscalMonth),
-		dal.Groupby("author_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = pull_requests.base_repo_id"),
+		dal.Where("pm.project_name = ? AND DATE_FORMAT(pull_requests.created_date, '%Y-%m') = ?", projectName, fiscalMonth),
+		dal.Groupby("pull_requests.author_id"),
 	)
 
 	activityMap := make(map[string]*DeveloperActivity)

@@ -185,9 +185,10 @@ func calculatePeriodThroughput(db dal.Dal, projectName string, startDate, endDat
 	// Count commits in this period
 	var commitCount int64
 	err = db.First(&commitCount,
-		dal.Select("COUNT(*)"),
+		dal.Select("COUNT(DISTINCT c.sha)"),
 		dal.From("commits c"),
-		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = c.repo_id"),
+		dal.Join("LEFT JOIN repo_commits rc ON rc.commit_sha = c.sha"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'repos' AND pm.row_id = rc.repo_id"),
 		dal.Where("pm.project_name = ? AND c.authored_date >= ? AND c.authored_date < ?",
 			projectName, startDate, endDate),
 	)

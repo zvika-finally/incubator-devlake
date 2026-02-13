@@ -121,7 +121,7 @@ func calculateSprintVelocity(db dal.Dal, projectName string, sprint ticket.Sprin
 	// Calculate average cycle time for issues in this sprint
 	var avgCycleTime float64
 	err = db.First(&avgCycleTime,
-		dal.Select("AVG(EXTRACT(EPOCH FROM (i.resolution_date - i.created_date)) / 3600)"),
+		dal.Select("AVG((UNIX_TIMESTAMP(i.resolution_date) - UNIX_TIMESTAMP(i.created_date)) / 3600)"),
 		dal.From("sprint_issues si"),
 		dal.Join("LEFT JOIN issues i ON i.id = si.issue_id"),
 		dal.Where("si.sprint_id = ? AND i.resolution_date IS NOT NULL", sprint.Id),

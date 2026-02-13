@@ -31,17 +31,19 @@ import (
 
 // EffortResult holds the result of effort calculation with source tracking
 type EffortResult struct {
-	Hours          float64
-	Source         string
-	Confidence     string
-	GitCodingHours float64
-	GitReviewHours float64
-	GitComplexity  float64
-	GitActiveDays  int
-	Validated      bool
-	VariancePct    float64
-	CommitShas     string
-	PrIds          string
+	Hours               float64
+	Source              string
+	Confidence          string
+	GitCodingHours      float64
+	GitReviewHours      float64
+	GitComplexity       float64
+	GitActiveDays       int
+	Validated           bool
+	VariancePct         float64
+	CommitShas          string
+	PrIds               string
+	DeveloperMonthlyFte float64
+	FteAllocationPct    float64
 }
 
 var CalculateCostsMeta = plugin.SubTaskMeta{
@@ -59,8 +61,10 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting calculateCosts for project: %s", data.Options.ProjectName)
 
+	defaultHourlyRate := getEffectiveDefaultHourlyRate(data)
+
 	// Load developer hourly rates
-	rateMap := loadHourlyRates(db, data.Options.DefaultHourlyRate, logger)
+	rateMap := loadHourlyRates(db, defaultHourlyRate, logger)
 
 	// Get all issues for this project
 	var issues []ticket.Issue
@@ -79,13 +83,13 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 
 	for _, issue := range issues {
 		// Get hours worked (from worklogs or estimate from story points)
-		effortResult := getHoursWorkedMultiSource(issue, data.Settings)
+		effortResult := getHoursWorkedMultiSource(db, issue, data.Settings, data.Options.ProjectName)
 		if effortResult.Hours == 0 {
 			continue // Skip issues with no time data
 		}
 
 		// Get hourly rate for assignee
-		hourlyRate := getHourlyRate(issue.AssigneeId, rateMap, data.Options.DefaultHourlyRate)
+		hourlyRate := getHourlyRate(issue.AssigneeId, rateMap, defaultHourlyRate)
 
 		// Calculate fiscal month from issue resolution or update date
 		fiscalMonth := getFiscalMonth(issue)
@@ -151,6 +155,8 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 			ValidationVariancePct: effortResult.VariancePct,
 			LinkedCommitShas:      effortResult.CommitShas,
 			LinkedPrIds:           effortResult.PrIds,
+			DeveloperMonthlyFte:   effortResult.DeveloperMonthlyFte,
+			FteAllocationPct:      effortResult.FteAllocationPct,
 			CalculatedAt:          time.Now(),
 			CreatedAt:             time.Now(),
 		}
@@ -161,7 +167,7 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 
 	// Generate monthly cost summaries
-	if err := generateMonthlySummaries(db, data.Options.ProjectName, logger); err != nil {
+	if err := generateMonthlySummaries(db, data.Options.ProjectName, defaultHourlyRate, logger); err != nil {
 		return errors.Default.Wrap(err, "failed to generate monthly summaries")
 	}
 
@@ -192,7 +198,7 @@ func checkIsUnallocated(db dal.Dal, issue ticket.Issue) bool {
 }
 
 // generateMonthlySummaries aggregates cost allocations into monthly summaries
-func generateMonthlySummaries(db dal.Dal, projectName string, logger log.Logger) errors.Error {
+func generateMonthlySummaries(db dal.Dal, projectName string, defaultHourlyRate float64, logger log.Logger) errors.Error {
 	logger.Info("Generating monthly cost summaries for project: %s", projectName)
 
 	// Get distinct fiscal months with allocations
@@ -210,7 +216,7 @@ func generateMonthlySummaries(db dal.Dal, projectName string, logger log.Logger)
 	}
 
 	for _, month := range months {
-		summary := calculateMonthlySummary(db, projectName, month, logger)
+		summary := calculateMonthlySummary(db, projectName, month, defaultHourlyRate, logger)
 		if err := db.CreateOrUpdate(summary); err != nil {
 			logger.Error(err, "failed to save monthly summary for %s", month)
 		}
@@ -220,7 +226,7 @@ func generateMonthlySummaries(db dal.Dal, projectName string, logger log.Logger)
 }
 
 // calculateMonthlySummary generates aggregated metrics for a fiscal month
-func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string, _ log.Logger) *models.MonthlyCostSummary {
+func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string, defaultHourlyRate float64, _ log.Logger) *models.MonthlyCostSummary {
 	var allocations []models.CostAllocation
 	_ = db.All(&allocations,
 		dal.From(&models.CostAllocation{}),
@@ -278,9 +284,7 @@ func calculateMonthlySummary(db dal.Dal, projectName string, fiscalMonth string,
 		summary.UnallocatedPercent = summary.UnallocatedCost / summary.TotalCost * 100
 	}
 
-	// Calculate budget variance at monthly level
-	// Use default hourly rate for converting minutes to cost (simplified)
-	defaultHourlyRate := 87.0 // TODO: get from settings
+	// Calculate budget variance at monthly level.
 	summary.TotalEstimatedCost = float64(totalEstimatedMinutes) / 60.0 * defaultHourlyRate
 	summary.TotalActualCost = float64(totalActualMinutes) / 60.0 * defaultHourlyRate
 	if summary.TotalEstimatedCost > 0 {
@@ -313,8 +317,12 @@ func getHourlyRate(developerId string, rateMap map[string]float64, defaultRate f
 	return defaultRate
 }
 
-func getHoursWorkedMultiSource(issue ticket.Issue, settings *models.FinDevOpsSettings) *EffortResult {
+func getHoursWorkedMultiSource(db dal.Dal, issue ticket.Issue, settings *models.FinDevOpsSettings, projectName string) *EffortResult {
 	result := &EffortResult{}
+	hoursPerStoryPoint := 4.0
+	if settings != nil && settings.HoursPerStoryPoint > 0 {
+		hoursPerStoryPoint = settings.HoursPerStoryPoint
+	}
 
 	// Priority 1: Actual time spent (from Jira worklogs) - HIGH confidence
 	if issue.TimeSpentMinutes != nil && *issue.TimeSpentMinutes > 0 {
@@ -328,7 +336,7 @@ func getHoursWorkedMultiSource(issue ticket.Issue, settings *models.FinDevOpsSet
 		result.Confidence = "medium"
 	} else if issue.StoryPoint != nil && *issue.StoryPoint > 0 {
 		// Priority 3: Story points - MEDIUM confidence
-		result.Hours = *issue.StoryPoint * settings.HoursPerStoryPoint
+		result.Hours = *issue.StoryPoint * hoursPerStoryPoint
 		result.Source = "story_points"
 		result.Confidence = "medium"
 	}
@@ -355,7 +363,74 @@ func getHoursWorkedMultiSource(issue ticket.Issue, settings *models.FinDevOpsSet
 		}
 	}
 
+	if result.Hours <= 0 {
+		hours, monthlyFte, allocationPct := inferFteDistributedHours(db, issue, settings, projectName)
+		if hours > 0 {
+			result.Hours = hours
+			result.Source = models.EffortSourceFteDistributed
+			result.Confidence = models.ConfidenceLow
+			result.DeveloperMonthlyFte = monthlyFte
+			result.FteAllocationPct = allocationPct
+		}
+	}
+
 	return result
+}
+
+func inferFteDistributedHours(db dal.Dal, issue ticket.Issue, settings *models.FinDevOpsSettings, projectName string) (hours, monthlyFte, allocationPct float64) {
+	if issue.AssigneeId == "" || settings == nil {
+		return 0, 0, 0
+	}
+
+	fiscalMonth := getFiscalMonth(issue)
+
+	var fte models.DeveloperMonthlyFte
+	err := db.First(&fte,
+		dal.From(&models.DeveloperMonthlyFte{}),
+		dal.Where("developer_id = ? AND fiscal_month = ? AND project_name = ?", issue.AssigneeId, fiscalMonth, projectName),
+	)
+	if err != nil || fte.AdjustedFte <= 0 {
+		return 0, 0, 0
+	}
+
+	workingHoursPerMonth := settings.FteWorkingHoursPerMonth
+	if workingHoursPerMonth <= 0 {
+		workingHoursPerMonth = 160
+	}
+	monthlyHours := fte.AdjustedFte * workingHoursPerMonth
+	if monthlyHours <= 0 {
+		return 0, 0, 0
+	}
+
+	var issueCount int64
+	err = db.First(&issueCount,
+		dal.Select("COUNT(DISTINCT issues.id)"),
+		dal.From("issues"),
+		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+		dal.Where("pm.project_name = ? AND issues.assignee_id = ? AND DATE_FORMAT(COALESCE(issues.resolution_date, issues.updated_date), '%Y-%m') = ?",
+			projectName, issue.AssigneeId, fiscalMonth),
+	)
+	if err != nil || issueCount <= 0 {
+		return 0, 0, 0
+	}
+
+	allocationPct = 100.0 / float64(issueCount)
+	hours = monthlyHours / float64(issueCount)
+	return hours, fte.AdjustedFte, allocationPct
+}
+
+func getEffectiveDefaultHourlyRate(data *FinDevOpsTaskData) float64 {
+	if data != nil && data.Options != nil && data.Options.DefaultHourlyRate > 0 {
+		if data.Settings != nil && data.Settings.DefaultHourlyRate > 0 && data.Options.DefaultHourlyRate == 87.0 {
+			return data.Settings.DefaultHourlyRate
+		}
+		return data.Options.DefaultHourlyRate
+	}
+	if data != nil && data.Settings != nil && data.Settings.DefaultHourlyRate > 0 {
+		return data.Settings.DefaultHourlyRate
+	}
+	return 87.0
 }
 
 func getFiscalMonth(issue ticket.Issue) string {

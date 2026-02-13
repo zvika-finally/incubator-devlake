@@ -44,11 +44,10 @@ func CalculateAlignment(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Starting calculateAlignment for project: %s", data.Options.ProjectName)
 
-	// Get all initiatives for this project
-	var initiatives []models.BusinessInitiative
-	err := db.All(&initiatives, dal.From(&models.BusinessInitiative{}))
+	// Get project-scoped initiatives
+	initiatives, err := getProjectInitiatives(db, data.Options.ProjectName)
 	if err != nil {
-		return errors.Default.Wrap(err, "failed to query initiatives")
+		return err
 	}
 
 	logger.Info("Processing %d initiatives", len(initiatives))
@@ -59,7 +58,9 @@ func CalculateAlignment(taskCtx plugin.SubTaskContext) errors.Error {
 		var issues []ticket.Issue
 		clauses := []dal.Clause{
 			dal.From(&ticket.Issue{}),
-			dal.Where("epic_key = ?", initiative.JiraEpicKey),
+			dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
+			dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
+			dal.Where("issues.epic_key = ? AND pm.project_name = ?", initiative.JiraEpicKey, data.Options.ProjectName),
 		}
 
 		err := db.All(&issues, clauses...)

@@ -66,10 +66,7 @@ func AnalyzeCodeChurn(taskCtx plugin.SubTaskContext) errors.Error {
 
 	logger.Info("Analyzing code churn for %d merged PRs", len(prs))
 
-	confidenceThreshold := data.Options.ConfidenceThreshold
-	if confidenceThreshold == 0 {
-		confidenceThreshold = 65
-	}
+	confidenceThreshold := GetEffectiveConfidenceThreshold(data)
 
 	var allMetrics []models.AIChurnMetric
 
