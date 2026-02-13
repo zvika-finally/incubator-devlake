@@ -213,6 +213,9 @@ func runSimulation(rng *rand.Rand, remainingPoints, avgVelocity, velocityStdDev,
 func GaussianRandom(rng *rand.Rand, mean, stddev float64) float64 {
 	u1 := rng.Float64()
 	u2 := rng.Float64()
+	if u1 <= 0 {
+		u1 = math.SmallestNonzeroFloat64
+	}
 
 	// Box-Muller transform
 	z := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)

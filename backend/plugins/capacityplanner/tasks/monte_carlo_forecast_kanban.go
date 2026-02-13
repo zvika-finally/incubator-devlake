@@ -141,12 +141,15 @@ func calculateMean(data []float64) float64 {
 }
 
 func calculateStdDev(data []float64, mean float64) float64 {
+	if len(data) < 2 {
+		return 0
+	}
 	sumSquares := 0.0
 	for _, v := range data {
 		diff := v - mean
 		sumSquares += diff * diff
 	}
-	variance := sumSquares / float64(len(data))
+	variance := sumSquares / float64(len(data)-1)
 	return math.Sqrt(variance)
 }
 
@@ -197,10 +200,8 @@ func runMonteCarloSimulationKanban(db dal.Dal, projectName string, initiative bm
 		weeks := 0
 
 		for remaining > 0 && weeks < 520 { // Max 10 years
-			// Generate random throughput using normal distribution
-			// Simple approximation: throughput = avg ± (random * stdDev)
-			randomFactor := (rng.Float64() - 0.5) * 2 * variance // Range: -variance to +variance
-			weeklyThroughput := avgThroughput * (1 + randomFactor)
+			// Generate random throughput with Gaussian sampling, centered on historical average.
+			weeklyThroughput := GaussianRandom(rng, avgThroughput, avgThroughput*variance)
 
 			// Ensure positive throughput
 			if weeklyThroughput < 1 {
@@ -217,11 +218,11 @@ func runMonteCarloSimulationKanban(db dal.Dal, projectName string, initiative bm
 	// Sort results to calculate percentiles
 	sort.Ints(completionWeeks)
 
-	// Calculate percentiles (nearest-rank method)
-	p50Weeks := completionWeeks[simulationCount*50/100]
-	p75Weeks := completionWeeks[simulationCount*75/100]
-	p90Weeks := completionWeeks[simulationCount*90/100]
-	p95Weeks := completionWeeks[simulationCount*95/100]
+	// Calculate percentiles using shared nearest-rank helper for consistency.
+	p50Weeks := NearestRankPercentile(completionWeeks, 50)
+	p75Weeks := NearestRankPercentile(completionWeeks, 75)
+	p90Weeks := NearestRankPercentile(completionWeeks, 90)
+	p95Weeks := NearestRankPercentile(completionWeeks, 95)
 
 	// Convert weeks to periods using ceiling so partial periods are counted.
 	p50Periods := (p50Weeks + weeksPerPeriod - 1) / weeksPerPeriod

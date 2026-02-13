@@ -44,10 +44,10 @@ var CollectMetricsMeta = plugin.SubTaskMeta{
 
 type cursorAgentEditsResponse struct {
 	Data []struct {
-		Date           string `json:"date"`
-		AcceptedEdits  int    `json:"acceptedEdits"`
-		RejectedEdits  int    `json:"rejectedEdits"`
-		TotalEdits     int    `json:"totalEdits"`
+		Date           string  `json:"date"`
+		AcceptedEdits  int     `json:"acceptedEdits"`
+		RejectedEdits  int     `json:"rejectedEdits"`
+		TotalEdits     int     `json:"totalEdits"`
 		AcceptanceRate float64 `json:"acceptanceRate"`
 	} `json:"data"`
 	Params cursorParams `json:"params"`
@@ -55,38 +55,38 @@ type cursorAgentEditsResponse struct {
 
 type cursorTabsResponse struct {
 	Data []struct {
-		Date              string `json:"date"`
-		Suggestions       int    `json:"suggestions"`
-		Acceptances       int    `json:"acceptances"`
+		Date              string  `json:"date"`
+		Suggestions       int     `json:"suggestions"`
+		Acceptances       int     `json:"acceptances"`
 		AcceptanceRate    float64 `json:"acceptanceRate"`
-		CharactersAdded   int    `json:"charactersAdded"`
-		CharactersDeleted int    `json:"charactersDeleted"`
+		CharactersAdded   int     `json:"charactersAdded"`
+		CharactersDeleted int     `json:"charactersDeleted"`
 	} `json:"data"`
 	Params cursorParams `json:"params"`
 }
 
 type cursorDAUResponse struct {
 	Data []struct {
-		Date       string `json:"date"`
-		TotalUsers int    `json:"totalUsers"`
-		CliUsers   int    `json:"cliUsers"`
-		AgentUsers int    `json:"agentUsers"`
-		BugBotUsers int   `json:"bugBotUsers"`
+		Date        string `json:"date"`
+		TotalUsers  int    `json:"totalUsers"`
+		CliUsers    int    `json:"cliUsers"`
+		AgentUsers  int    `json:"agentUsers"`
+		BugBotUsers int    `json:"bugBotUsers"`
 	} `json:"data"`
 	Params cursorParams `json:"params"`
 }
 
 type cursorLeaderboardResponse struct {
 	Data []struct {
-		Email             string  `json:"email"`
-		UserId            string  `json:"userId"`
-		AcceptedEdits     int     `json:"acceptedEdits"`
-		TabAcceptances    int     `json:"tabAcceptances"`
-		TotalSuggestions  int     `json:"totalSuggestions"`
-		AcceptanceRate    float64 `json:"acceptanceRate"`
-		CharactersAdded   int     `json:"charactersAdded"`
+		Email            string  `json:"email"`
+		UserId           string  `json:"userId"`
+		AcceptedEdits    int     `json:"acceptedEdits"`
+		TabAcceptances   int     `json:"tabAcceptances"`
+		TotalSuggestions int     `json:"totalSuggestions"`
+		AcceptanceRate   float64 `json:"acceptanceRate"`
+		CharactersAdded  int     `json:"charactersAdded"`
 	} `json:"data"`
-	Params cursorParams `json:"params"`
+	Params     cursorParams `json:"params"`
 	Pagination struct {
 		Page     int `json:"page"`
 		PageSize int `json:"pageSize"`
@@ -145,6 +145,10 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 	if agentEdits != nil {
 		for _, ae := range agentEdits.Data {
 			metric := getOrCreateMetric(metricsMap, conn.ID, ae.Date)
+			if metric == nil {
+				logger.Warn(nil, "Skipping agent-edits record with invalid date: %s", ae.Date)
+				continue
+			}
 			metric.TotalSuggestions = ae.TotalEdits
 			metric.TotalAcceptances = ae.AcceptedEdits
 			metric.AcceptanceRate = ae.AcceptanceRate
@@ -155,6 +159,10 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 	if tabs != nil {
 		for _, tab := range tabs.Data {
 			metric := getOrCreateMetric(metricsMap, conn.ID, tab.Date)
+			if metric == nil {
+				logger.Warn(nil, "Skipping tabs record with invalid date: %s", tab.Date)
+				continue
+			}
 			metric.TabSuggestions = tab.Suggestions
 			metric.TabAcceptances = tab.Acceptances
 			metric.TabAcceptanceRate = tab.AcceptanceRate
@@ -167,6 +175,10 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 	if dau != nil {
 		for _, d := range dau.Data {
 			metric := getOrCreateMetric(metricsMap, conn.ID, d.Date)
+			if metric == nil {
+				logger.Warn(nil, "Skipping DAU record with invalid date: %s", d.Date)
+				continue
+			}
 			metric.DailyActiveUsers = d.TotalUsers
 		}
 	}
@@ -186,15 +198,15 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 	} else {
 		for _, user := range leaderboard.Data {
 			userMetric := &models.CursorUserMetric{
-				Id:              fmt.Sprintf("%d:%s:%s", conn.ID, user.UserId, startDateStr),
-				ConnectionId:    conn.ID,
-				UserId:          user.UserId,
-				UserEmail:       user.Email,
-				Date:            startDate,
-				TabAcceptances:  user.TabAcceptances,
-				LinesAccepted:   user.CharactersAdded,
-				AcceptanceRate:  user.AcceptanceRate,
-				CollectedAt:     time.Now(),
+				Id:             fmt.Sprintf("%d:%s:%s", conn.ID, user.UserId, startDateStr),
+				ConnectionId:   conn.ID,
+				UserId:         user.UserId,
+				UserEmail:      user.Email,
+				Date:           startDate,
+				TabAcceptances: user.TabAcceptances,
+				LinesAccepted:  user.CharactersAdded,
+				AcceptanceRate: user.AcceptanceRate,
+				CollectedAt:    time.Now(),
 			}
 			if err := db.CreateOrUpdate(userMetric); err != nil {
 				logger.Error(err, "Failed to save user metric for %s", user.Email)
@@ -211,7 +223,10 @@ func getOrCreateMetric(metricsMap map[string]*models.CursorUsageMetric, connecti
 		return metric
 	}
 
-	date, _ := time.Parse("2006-01-02", dateStr)
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return nil
+	}
 	metric := &models.CursorUsageMetric{
 		Id:           fmt.Sprintf("%d:%s", connectionId, dateStr),
 		ConnectionId: connectionId,
@@ -224,7 +239,10 @@ func getOrCreateMetric(metricsMap map[string]*models.CursorUsageMetric, connecti
 func cursorRequest(conn *models.CursorConnection, endpoint string) (*http.Response, errors.Error) {
 	url := fmt.Sprintf("https://cursor.com%s", endpoint)
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, reqErr := http.NewRequest("GET", url, nil)
+	if reqErr != nil {
+		return nil, errors.Default.Wrap(reqErr, "failed to create Cursor API request")
+	}
 	// Basic Auth: username is API key, password is empty
 	auth := base64.StdEncoding.EncodeToString([]byte(conn.ApiKey + ":"))
 	req.Header.Set("Authorization", "Basic "+auth)
@@ -249,7 +267,7 @@ func fetchAgentEdits(conn *models.CursorConnection, startDate, endDate string) (
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return nil, errors.Default.New(fmt.Sprintf("Cursor API returned %d: %s", resp.StatusCode, string(body)))
 	}
 
@@ -269,7 +287,7 @@ func fetchTabs(conn *models.CursorConnection, startDate, endDate string) (*curso
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return nil, errors.Default.New(fmt.Sprintf("Cursor API returned %d: %s", resp.StatusCode, string(body)))
 	}
 
@@ -289,7 +307,7 @@ func fetchDAU(conn *models.CursorConnection, startDate, endDate string) (*cursor
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return nil, errors.Default.New(fmt.Sprintf("Cursor API returned %d: %s", resp.StatusCode, string(body)))
 	}
 
@@ -301,21 +319,39 @@ func fetchDAU(conn *models.CursorConnection, startDate, endDate string) (*cursor
 }
 
 func fetchLeaderboard(conn *models.CursorConnection, startDate, endDate string) (*cursorLeaderboardResponse, errors.Error) {
-	endpoint := fmt.Sprintf("/analytics/team/leaderboard?startDate=%s&endDate=%s&pageSize=100", startDate, endDate)
-	resp, err := cursorRequest(conn, endpoint)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	page := 1
+	merged := &cursorLeaderboardResponse{}
+	for {
+		endpoint := fmt.Sprintf("/analytics/team/leaderboard?startDate=%s&endDate=%s&pageSize=100&page=%d", startDate, endDate, page)
+		resp, err := cursorRequest(conn, endpoint)
+		if err != nil {
+			return nil, err
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, errors.Default.New(fmt.Sprintf("Cursor API returned %d: %s", resp.StatusCode, string(body)))
-	}
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+			resp.Body.Close()
+			return nil, errors.Default.New(fmt.Sprintf("Cursor API returned %d: %s", resp.StatusCode, string(body)))
+		}
 
-	var data cursorLeaderboardResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return nil, errors.Default.Wrap(err, "failed to decode Cursor API response")
+		var pageData cursorLeaderboardResponse
+		decodeErr := json.NewDecoder(resp.Body).Decode(&pageData)
+		resp.Body.Close()
+		if decodeErr != nil {
+			return nil, errors.Default.Wrap(decodeErr, "failed to decode Cursor API response")
+		}
+
+		merged.Params = pageData.Params
+		merged.Data = append(merged.Data, pageData.Data...)
+		merged.Pagination = pageData.Pagination
+
+		pageSize := pageData.Pagination.PageSize
+		currentPage := pageData.Pagination.Page
+		total := pageData.Pagination.Total
+		if len(pageData.Data) == 0 || pageSize <= 0 || currentPage <= 0 || currentPage*pageSize >= total {
+			break
+		}
+		page++
 	}
-	return &data, nil
+	return merged, nil
 }

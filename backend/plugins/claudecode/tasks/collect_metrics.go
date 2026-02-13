@@ -41,9 +41,9 @@ var CollectMetricsMeta = plugin.SubTaskMeta{
 // API: GET https://api.anthropic.com/v1/organizations/usage_report/claude_code?starting_at=YYYY-MM-DD
 // Docs: https://docs.anthropic.com/en/api/claude-code-analytics-api
 type claudeCodeUsageResponse struct {
-	Data    []claudeCodeUserDayRecord `json:"data"`
-	HasMore bool                      `json:"has_more"`
-	NextPage *string                  `json:"next_page"`
+	Data     []claudeCodeUserDayRecord `json:"data"`
+	HasMore  bool                      `json:"has_more"`
+	NextPage *string                   `json:"next_page"`
 }
 
 type claudeCodeUserDayRecord struct {
@@ -64,10 +64,10 @@ type claudeCodeActor struct {
 }
 
 type claudeCodeCore struct {
-	NumSessions                int                  `json:"num_sessions"`
-	LinesOfCode                claudeCodeLines      `json:"lines_of_code"`
-	CommitsByClaudeCode        int                  `json:"commits_by_claude_code"`
-	PullRequestsByClaudeCode   int                  `json:"pull_requests_by_claude_code"`
+	NumSessions              int             `json:"num_sessions"`
+	LinesOfCode              claudeCodeLines `json:"lines_of_code"`
+	CommitsByClaudeCode      int             `json:"commits_by_claude_code"`
+	PullRequestsByClaudeCode int             `json:"pull_requests_by_claude_code"`
 }
 
 type claudeCodeLines struct {
@@ -76,10 +76,10 @@ type claudeCodeLines struct {
 }
 
 type claudeCodeTools struct {
-	EditTool       claudeCodeToolAction `json:"edit_tool"`
-	MultiEditTool  claudeCodeToolAction `json:"multi_edit_tool"`
-	WriteTool      claudeCodeToolAction `json:"write_tool"`
-	NotebookEdit   claudeCodeToolAction `json:"notebook_edit_tool"`
+	EditTool      claudeCodeToolAction `json:"edit_tool"`
+	MultiEditTool claudeCodeToolAction `json:"multi_edit_tool"`
+	WriteTool     claudeCodeToolAction `json:"write_tool"`
+	NotebookEdit  claudeCodeToolAction `json:"notebook_edit_tool"`
 }
 
 type claudeCodeToolAction struct {
@@ -88,9 +88,9 @@ type claudeCodeToolAction struct {
 }
 
 type claudeCodeModel struct {
-	Model         string              `json:"model"`
-	Tokens        claudeCodeTokens    `json:"tokens"`
-	EstimatedCost claudeCodeCost      `json:"estimated_cost"`
+	Model         string           `json:"model"`
+	Tokens        claudeCodeTokens `json:"tokens"`
+	EstimatedCost claudeCodeCost   `json:"estimated_cost"`
 }
 
 type claudeCodeTokens struct {
@@ -115,9 +115,15 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 
 	// Calculate start date
 	startDate := time.Now().AddDate(0, 0, -data.Options.DaysBack)
+	endDate := time.Now().AddDate(0, 0, -1) // skip current incomplete day
+	if endDate.Before(startDate) {
+		logger.Info("No complete days to collect for Claude Code (start=%s end=%s)",
+			startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+		return nil
+	}
 
 	// Collect metrics for each day
-	for date := startDate; !date.After(time.Now()); date = date.AddDate(0, 0, 1) {
+	for date := startDate; !date.After(endDate); date = date.AddDate(0, 0, 1) {
 		logger.Info("Fetching Claude Code metrics for %s", date.Format("2006-01-02"))
 
 		var nextPage *string
@@ -130,7 +136,11 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 
 			// Process user-level daily metrics
 			for _, record := range usageData.Data {
-				metric := convertToMetric(conn.ID, record)
+				metric, convErr := convertToMetric(conn.ID, record)
+				if convErr != nil {
+					logger.Warn(errors.Default.Wrap(convErr, "failed to convert usage record"), "Skipping record")
+					continue
+				}
 				if err := db.CreateOrUpdate(metric); err != nil {
 					logger.Error(err, "Failed to save metric for actor %s on %s", getActorId(record.Actor), record.Date)
 				}
@@ -147,18 +157,27 @@ func CollectMetrics(taskCtx plugin.SubTaskContext) errors.Error {
 	return nil
 }
 
-func convertToMetric(connectionId uint64, record claudeCodeUserDayRecord) *models.ClaudeCodeUsageMetric {
-	date, _ := time.Parse(time.RFC3339, record.Date)
+func convertToMetric(connectionId uint64, record claudeCodeUserDayRecord) (*models.ClaudeCodeUsageMetric, error) {
+	date, err := parseUsageDate(record.Date)
+	if err != nil {
+		return nil, err
+	}
 	actorId := getActorId(record.Actor)
 
 	// Aggregate tokens and costs across all models
 	var inputTokens, outputTokens, cacheRead, cacheCreation, totalCostCents int64
+	currency := "USD"
+	currencySet := false
 	for _, model := range record.ModelBreakdown {
 		inputTokens += model.Tokens.Input
 		outputTokens += model.Tokens.Output
 		cacheRead += model.Tokens.CacheRead
 		cacheCreation += model.Tokens.CacheCreation
 		totalCostCents += model.EstimatedCost.Amount
+		if !currencySet && model.EstimatedCost.Currency != "" {
+			currency = model.EstimatedCost.Currency
+			currencySet = true
+		}
 	}
 
 	// Calculate acceptance rates
@@ -219,10 +238,10 @@ func convertToMetric(connectionId uint64, record claudeCodeUserDayRecord) *model
 		CacheCreationTokens: cacheCreation,
 
 		EstimatedCostCents: totalCostCents,
-		CostCurrency:       "USD",
+		CostCurrency:       currency,
 
 		CollectedAt: time.Now(),
-	}
+	}, nil
 }
 
 func getActorId(actor claudeCodeActor) string {
@@ -241,7 +260,10 @@ func fetchUsageReport(conn *models.ClaudeCodeConnection, date time.Time, nextPag
 			date.Format("2006-01-02"), *nextPage)
 	}
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, reqErr := http.NewRequest("GET", url, nil)
+	if reqErr != nil {
+		return nil, errors.Default.Wrap(reqErr, "failed to create Claude Code API request")
+	}
 	req.Header.Set("x-api-key", conn.AdminApiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
 	req.Header.Set("Content-Type", "application/json")
@@ -255,7 +277,7 @@ func fetchUsageReport(conn *models.ClaudeCodeConnection, date time.Time, nextPag
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return nil, errors.Default.New(fmt.Sprintf("Claude Code API returned %d: %s", resp.StatusCode, string(body)))
 	}
 
@@ -265,4 +287,14 @@ func fetchUsageReport(conn *models.ClaudeCodeConnection, date time.Time, nextPag
 	}
 
 	return &usageData, nil
+}
+
+func parseUsageDate(dateStr string) (time.Time, error) {
+	formats := []string{time.RFC3339, "2006-01-02"}
+	for _, format := range formats {
+		if parsed, err := time.Parse(format, dateStr); err == nil {
+			return parsed, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("invalid date format: %s", dateStr)
 }

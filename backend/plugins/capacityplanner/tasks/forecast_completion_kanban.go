@@ -108,7 +108,10 @@ func calculateAverageThroughput(db dal.Dal, projectName string, logger log.Logge
 
 	count := float64(len(velocities))
 	avg := sum / count
-	variance := (sumSquares / count) - (avg * avg)
+	variance := 0.0
+	if len(velocities) > 1 {
+		variance = (sumSquares - (sum*sum)/count) / (count - 1)
+	}
 	stdDev := 0.0
 	if variance > 0 {
 		stdDev = math.Sqrt(variance)

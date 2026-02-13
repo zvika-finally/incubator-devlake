@@ -20,6 +20,8 @@ package tasks
 import (
 	"encoding/json"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/apache/incubator-devlake/core/dal"
@@ -295,28 +297,47 @@ func filterInfrastructureFiles(files []string, settings *models.AIDetectorSettin
 
 // shouldExcludeFile checks if a file path matches any exclusion pattern
 func shouldExcludeFile(filePath string, patterns []string) bool {
+	filePath = strings.ReplaceAll(strings.TrimSpace(filePath), "\\", "/")
+	base := path.Base(filePath)
 	for _, pattern := range patterns {
-		// Simple substring matching for now (can be enhanced with glob patterns)
-		if len(pattern) > 0 {
-			// Exact match
+		pattern = strings.ReplaceAll(strings.TrimSpace(pattern), "\\", "/")
+		if pattern == "" {
+			continue
+		}
+
+		// Directory prefix match (e.g., ".github/" matches ".github/workflows/ci.yml")
+		if strings.HasSuffix(pattern, "/") {
+			if strings.HasPrefix(filePath, pattern) {
+				return true
+			}
+			continue
+		}
+
+		// Glob support (e.g., "*.lock", "**/*.md" style path globs supported by path.Match semantics).
+		if strings.ContainsAny(pattern, "*?[") {
+			if matched, _ := path.Match(pattern, filePath); matched {
+				return true
+			}
+			// For basename-only globs like "*.lock", match against filename too.
+			if !strings.Contains(pattern, "/") {
+				if matched, _ := path.Match(pattern, base); matched {
+					return true
+				}
+			}
+			continue
+		}
+
+		// Exact full path match for path-based patterns.
+		if strings.Contains(pattern, "/") {
 			if filePath == pattern {
 				return true
 			}
-			// Directory prefix match (e.g., ".github/" matches ".github/workflows/ci.yml")
-			if len(pattern) > 0 && pattern[len(pattern)-1] == '/' {
-				if len(filePath) >= len(pattern) && filePath[:len(pattern)] == pattern {
-					return true
-				}
-			}
-			// Contains match for files anywhere in path
-			if len(filePath) >= len(pattern) {
-				// Check if pattern appears as a path component
-				if filePath == pattern ||
-					(len(filePath) > len(pattern) && filePath[len(filePath)-len(pattern):] == pattern) ||
-					(len(filePath) > len(pattern)+1 && filePath[len(filePath)-len(pattern)-1:] == "/"+pattern) {
-					return true
-				}
-			}
+			continue
+		}
+
+		// Basename match for filename-only patterns (e.g., "Dockerfile", "package.json").
+		if base == pattern {
+			return true
 		}
 	}
 	return false

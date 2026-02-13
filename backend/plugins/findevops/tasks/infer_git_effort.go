@@ -155,7 +155,11 @@ func inferEffortForIssue(db dal.Dal, issueId string, config *GitInferenceConfig)
 	result.ActiveDays = activeDays
 	result.ComplexityFactor = calculateComplexityFactor(linesChanged, filesChanged)
 	result.CodingHours = float64(activeDays) * config.ProductiveHoursPerActiveDay
-	result.ReviewHours = float64(reviewComments/config.CommentsPerReviewCycle) * config.ReviewHoursPerCycle
+	commentsPerCycle := config.CommentsPerReviewCycle
+	if commentsPerCycle <= 0 {
+		commentsPerCycle = 1
+	}
+	result.ReviewHours = (float64(reviewComments) / float64(commentsPerCycle)) * config.ReviewHoursPerCycle
 	result.TotalHours = calculateGitInferredHours(activeDays, reviewComments, linesChanged, filesChanged, config)
 
 	return result
@@ -214,7 +218,11 @@ func sumChanges(commits []commitInfo, prs []prInfo, db dal.Dal) (int, int) {
 func calculateGitInferredHours(activeDays, reviewComments, linesChanged, filesChanged int, config *GitInferenceConfig) float64 {
 	codingHours := float64(activeDays) * config.ProductiveHoursPerActiveDay
 
-	reviewCycles := float64(reviewComments) / float64(config.CommentsPerReviewCycle)
+	commentsPerCycle := config.CommentsPerReviewCycle
+	if commentsPerCycle <= 0 {
+		commentsPerCycle = 1
+	}
+	reviewCycles := float64(reviewComments) / float64(commentsPerCycle)
 	reviewHours := reviewCycles * config.ReviewHoursPerCycle
 
 	complexity := calculateComplexityFactor(linesChanged, filesChanged)

@@ -116,13 +116,22 @@ func topologicalSort(dependencyMap map[string][]string) ([]string, error) {
 
 			// Decrease in-degree for nodes that depend on this node
 			for remainingNode, deps := range dependencyMap {
-				for i, dep := range deps {
+				if len(deps) == 0 {
+					continue
+				}
+
+				removed := 0
+				filtered := make([]string, 0, len(deps))
+				for _, dep := range deps {
 					if dep == node {
-						// Remove this dependency
-						dependencyMap[remainingNode] = append(deps[:i], deps[i+1:]...)
-						inDegree[remainingNode]--
-						break
+						removed++
+						continue
 					}
+					filtered = append(filtered, dep)
+				}
+				if removed > 0 {
+					dependencyMap[remainingNode] = filtered
+					inDegree[remainingNode] -= removed
 				}
 			}
 

@@ -274,6 +274,9 @@ func calculateDeployFreqScore(deployFreq float64, eliteBenchmark float64) int {
 	if deployFreq <= 0 {
 		return 0
 	}
+	if eliteBenchmark <= 0 {
+		eliteBenchmark = EliteDeployFreq
+	}
 	// Score = min(25, (deployFreq / eliteBenchmark) * 25)
 	score := int((deployFreq / eliteBenchmark) * float64(MaxScore))
 	if score > MaxScore {
@@ -292,6 +295,9 @@ func CalculateLeadTimeScore(leadTimeHours float64) int {
 func calculateLeadTimeScore(leadTimeHours float64, eliteBenchmark float64) int {
 	if leadTimeHours <= 0 {
 		return MaxScore // Best possible if lead time is 0 or negative (shouldn't happen)
+	}
+	if eliteBenchmark <= 0 {
+		eliteBenchmark = EliteLeadTimeHours
 	}
 	// Score = min(25, (eliteBenchmark / leadTime) * 25)
 	score := int((eliteBenchmark / leadTimeHours) * float64(MaxScore))
@@ -315,6 +321,9 @@ func calculateCFRScore(cfr float64, eliteBenchmark float64) int {
 	if cfr <= 0 {
 		return MaxScore // Perfect if no failures
 	}
+	if eliteBenchmark <= 0 {
+		eliteBenchmark = EliteCFR
+	}
 	// Score = min(25, (eliteBenchmark / cfr) * 25)
 	score := int((eliteBenchmark / cfr) * float64(MaxScore))
 	if score > MaxScore {
@@ -336,6 +345,9 @@ func CalculateMTTRScore(mttrHours float64) int {
 func calculateMTTRScore(mttrHours float64, eliteBenchmark float64) int {
 	if mttrHours <= 0 {
 		return MaxScore // Best possible if MTTR is 0
+	}
+	if eliteBenchmark <= 0 {
+		eliteBenchmark = EliteMTTRHours
 	}
 	// Score = min(25, (eliteBenchmark / mttr) * 25)
 	score := int((eliteBenchmark / mttrHours) * float64(MaxScore))
