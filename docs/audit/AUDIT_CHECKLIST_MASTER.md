@@ -6,13 +6,31 @@
 
 ## Rollup by Dashboard
 
-| Dashboard | Metrics | Logic | Data Trust | Testing | Status |
-|-----------|---------|-------|------------|---------|--------|
-| FinDevOps | 30 | ✅ 30/30 | ✅ 30/30 | ✅ 20/20 | ✅ PASS |
-| AI Detection | 31 | ✅ 21/21 | ✅ 21/21 | ✅ 21/21 | ✅ PASS |
-| Business Metrics | 20 | ✅ 20/20 | ✅ 20/20 | ✅ 7/7 | ✅ PASS |
-| Capacity Planning | 25 | ✅ 25/25 | ✅ 19/21 | ✅ 9/9 | ✅ PASS |
-| **TOTAL** | **106** | **✅ 96/96** | **✅ 90/92** | **✅ 57/57** | **✅ 4/4 PASS** |
+### P1 Dashboards (Primary Focus)
+
+| Dashboard | Metrics | Logic | Data Trust | JSON Sync | Visualization | Status |
+|-----------|---------|-------|------------|-----------|---------------|--------|
+| FinDevOps | 30 | ✅ 30/30 | ✅ 30/30 | ✅ 30/30 | ✅ GOOD | ✅ PASS |
+| AI Detection | 31 | ✅ 21/21 | ✅ 21/21 | ✅ 31/31 | ✅ GOOD | ✅ PASS |
+| Business Metrics | 20 | ✅ 20/20 | ✅ 20/20 | ✅ 20/20 | ✅ GOOD | ✅ PASS |
+| Capacity Planning | 25 | ✅ 25/25 | ✅ 19/21 | ✅ 25/25 | ✅ GOOD | ✅ PASS |
+| **P1 TOTAL** | **106** | **✅ 96/96** | **✅ 90/92** | **✅ 106/106** | **✅ All Good** | **✅ 4/4 PASS** |
+
+### P2 Dashboards (Secondary - Lighter Touch)
+
+| Suite | Dashboards | Formulas | Visualization | Status |
+|-------|------------|----------|---------------|--------|
+| DORA | 8 | ✅ 8/8 | ✅ Good | ✅ PASS |
+| Engineering | 3 | ✅ 3/3 | ✅ Good | ✅ PASS |
+| **P2 TOTAL** | **11** | **✅ 11/11** | **✅ Good** | **✅ 11/11 PASS** |
+
+### Grand Total
+
+| Category | Dashboards | Status |
+|----------|------------|--------|
+| P1 (Custom Dashboards) | 4 | ✅ ALL PASS |
+| P2 (DORA + Engineering) | 11 | ✅ ALL PASS |
+| **TOTAL** | **15** | **✅ 15/15 PASS** |
 
 ## Trust Dimensions Summary
 
