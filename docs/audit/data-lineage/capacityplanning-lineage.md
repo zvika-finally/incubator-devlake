@@ -162,7 +162,7 @@ The Capacity Planning plugin provides forecasting and planning capabilities usin
 | scenario_name | varchar(255) | Settings | Scenario description |
 | current_team_size | int | Settings/Inferred | Current team count |
 | team_size_delta | int | Settings | Change (+N or -N) |
-| ramp_up_weeks | int | Settings | Default: 8 weeks |
+| ramp_up_weeks | int | Settings | Default: 4 weeks from project settings (fallback 8 if settings absent) |
 | current_channels | int | Calculated | n×(n-1)/2 |
 | new_channels | int | Calculated | (n+delta)×(n+delta-1)/2 |
 | overhead_factor | decimal(5,2) | Calculated | Communication overhead |
@@ -262,7 +262,7 @@ channels = n × (n-1) / 2
 channel_delta = new_channels - current_channels
 overhead_factor = 1 - (channel_delta / (current_channels + 1)) × 0.1
 
-// New hire productivity during ramp-up (default 8 weeks)
+// New hire productivity during ramp-up (settings default 4 weeks)
 new_hire_productivity = 0.5  // 50% during ramp-up
 ```
 
@@ -341,10 +341,12 @@ The plugin supports per-project settings via the `/plugins/capacityplanner/setti
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| simulation_count | 1000 | Monte Carlo iterations |
-| velocity_variance | 0.25 | Throughput variance (25%) |
-| ramp_up_weeks | 8 | New hire ramp-up period |
-| hourly_cost | 75.00 | USD hourly cost for ROI |
-| ai_hours_saved | 2.0 | Hours saved per week per user |
-| ai_quality_improvement | 5.0 | % quality improvement |
-| sprint_length_days | 7 | Days per sprint/week |
+| monteCarloIterations | 1000 | Monte Carlo iterations |
+| velocityVariance | 0.25 | Throughput variance factor |
+| defaultVelocity | 20.0 | Default story points per week |
+| sprintDurationWeeks | 2 | Sprint duration in weeks |
+| velocitySprintCount | 6 | Number of sprints used for velocity baseline |
+| rampUpWeeks | 4.0 | New hire ramp-up period (settings default) |
+| newHireProductivity | 0.5 | New hire productivity during ramp-up |
+| channelOverhead | 0.1 | Communication overhead factor |
+| defaultDeveloperCost | 150000.0 | Annual developer cost used for ROI |

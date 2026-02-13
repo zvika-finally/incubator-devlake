@@ -34,7 +34,7 @@ type AIChurnMetric struct {
 
 	// AI detection linkage
 	AIConfidenceScore int       `gorm:"type:int"`      // From AIUsageSignal
-	IsAIAssisted      bool      `gorm:"type:bool;index"` // Confidence >= threshold (default 70)
+	IsAIAssisted      bool      `gorm:"type:bool;index"` // Confidence >= effective threshold (options/settings fallback 65)
 
 	// Original PR metrics
 	InitialAdditions  int       `gorm:"type:int"`      // Lines added in original PR

@@ -48,8 +48,8 @@ The FinDevOps dashboard calculates development costs and categorizes them for US
 │  1. calculateCosts                                               │
 │     Input: issues, board_issues, project_mapping, _tool_jira_*  │
 │     Logic:                                                       │
-│       hours = time_spent_minutes/60 OR original_estimate/60     │
-│              OR story_point * 4                                  │
+│       hours = jira_time OR jira_estimate OR story_points         │
+│               OR git_inferred OR fte_distributed                 │
 │       cost = hours × hourly_rate                                │
 │       variance = (estimated - actual) / estimated × 100         │
 │     Output: cost_allocations                                    │
@@ -97,8 +97,8 @@ The FinDevOps dashboard calculates development costs and categorizes them for US
 | issue_id | varchar(255) | issues.id | Direct mapping |
 | fiscal_month | varchar(10) | issues.resolution_date | `YYYY-MM` format |
 | developer_id | varchar(255) | issues.assignee_id | Direct mapping |
-| hours_worked | decimal(10,2) | issues.time_spent_minutes | `minutes / 60` OR `story_point * 4` |
-| hourly_rate | decimal(10,2) | developer_hourly_rates | Lookup or default ($87) |
+| hours_worked | decimal(10,2) | multi-source effort | `jira_time OR jira_estimate OR story_points OR git_inferred OR fte_distributed` |
+| hourly_rate | decimal(10,2) | developer_hourly_rates + settings/options | Lookup or effective default rate |
 | total_cost | decimal(12,2) | Calculated | `hours_worked × hourly_rate` |
 | project_phase | varchar(50) | categorizeCapitalization | preliminary/development/post_implementation |
 | capitalization_category | varchar(50) | categorizeCapitalization | capitalizable/expense |
@@ -139,9 +139,11 @@ The FinDevOps dashboard calculates development costs and categorizes them for US
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │  1. collectDeveloperActivity (Swarmia Model)            │    │
-│  │     Input: commits, pull_requests, issues               │    │
+│  │     Input: commits, pull_requests                       │    │
 │  │     Output: developer_monthly_fte                       │    │
-│  │     Logic: weighted activity → normalized FTE           │    │
+│  │     Logic: weighted activity → normalized FTE            │    │
+│  │            (current implementation aggregates commits +  │    │
+│  │             authored PRs, other signals default to 0)    │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                              ↓                                   │
 │  ┌─────────────────────────────────────────────────────────┐    │
@@ -179,7 +181,7 @@ The FinDevOps dashboard calculates development costs and categorizes them for US
 | developer_id | varchar(255) | commits.author_id | Aggregated |
 | fiscal_month | varchar(10) | commits.authored_date | `YYYY-MM` format |
 | prs_authored | int | pull_requests | COUNT per month |
-| prs_reviewed | int | pull_request_comments | COUNT per month |
+| prs_reviewed | int | pull_request_comments | Reserved field (currently default 0) |
 | commits_authored | int | commits | COUNT per month |
 | raw_activity_score | decimal(10,2) | Calculated | Weighted sum of activities |
 | baseline_score | decimal(10,2) | Calculated | Team median × multiplier |

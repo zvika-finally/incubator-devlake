@@ -38,8 +38,8 @@ The AI Detection dashboard identifies AI-assisted code contributions and measure
 ├─────────────────────────────────────────────────────────────────┤
 │  2. analyzeCommitPatterns                                        │
 │     Input: commits, pull_request_commits                         │
-│     Logic: Detect rapid commits, lines per minute                │
-│     Output: rapid_commit_score, lines_per_minute_score           │
+│     Logic: Detect rapid commits and generic commit-message patterns│
+│     Output: rapid_commit_score, generic_message_score            │
 ├─────────────────────────────────────────────────────────────────┤
 │  3. analyzePRCharacteristics                                     │
 │     Input: pull_requests, developer_baselines                    │
@@ -91,12 +91,12 @@ The AI Detection dashboard identifies AI-assisted code contributions and measure
 | ai_confidence_score | int | scoreAIConfidence | Weighted 0-100 |
 | detected_tool | varchar(50) | detectExplicitSignals | Copilot/Cursor/Claude/etc |
 | explicit_tool_detected | bool | detectExplicitSignals | True if explicit marker found |
-| explicit_tools | text | detectExplicitSignals | JSON array of detected tools |
-| explicit_signal_score | int | detectExplicitSignals | 0-30 points |
-| rapid_commit_score | int | analyzeCommitPatterns | 0-25 points |
+| explicit_tools | text | detectExplicitSignals | Comma-separated detected tools |
+| explicit_signal_score | int | detectExplicitSignals | 0-70 points |
+| rapid_commit_score | int | analyzeCommitPatterns | 0-30 points |
 | pr_size_score | int | analyzePRCharacteristics | 0-20 points |
-| lines_per_minute_score | int | analyzeCommitPatterns | 0-15 points |
-| duplication_score | int | Future | 0-10 points |
+| lines_per_minute_score | int | analyzePRCharacteristics | 0-25 points |
+| duplication_score | int | scoreAIConfidence | 0-15 points (reserved, currently 0) |
 | generic_message_score | int | analyzeCommitPatterns | 0-10 points |
 | velocity_multiplier | decimal(3,2) | analyzePRCharacteristics | PR cycle vs baseline |
 | detected_at | timestamp | Generated | Detection timestamp |
@@ -105,13 +105,13 @@ The AI Detection dashboard identifies AI-assisted code contributions and measure
 
 | Column | Type | Source | Transformation |
 |--------|------|--------|----------------|
-| developer_id | varchar(255) | commits.author_id | Direct |
-| project_name | varchar(255) | project_mapping | Via commit → repo → project |
-| avg_commits_per_pr | float | Historical PRs | Average over baseline period |
-| avg_lines_per_commit | float | Historical commits | Average additions per commit |
-| avg_pr_cycle_time_hours | float | Historical PRs | Created → merged time |
-| baseline_period_start | timestamp | Calculated | Start of baseline window |
-| baseline_period_end | timestamp | Calculated | End of baseline window |
+| developer_id | varchar(255) | pull_requests.author_id | Direct |
+| avg_pr_additions | float | Historical PRs | AVG PR additions |
+| avg_pr_deletions | float | Historical PRs | AVG PR deletions |
+| avg_cycle_time_hours | float | Historical PRs | AVG(created → merged hours) |
+| avg_commits_per_pr | float | Historical PRs | Reserved field (currently not populated) |
+| avg_time_between_commits | float | Historical PRs | Reserved field (currently not populated) |
+| pr_count | int | Historical PRs | Baseline sample size |
 
 ### ai_churn_metrics
 
@@ -120,7 +120,7 @@ The AI Detection dashboard identifies AI-assisted code contributions and measure
 | id | varchar(255) | Generated | `{pull_request_id}` |
 | pull_request_id | varchar(255) | pull_requests.id | Direct |
 | project_name | varchar(255) | project_mapping | Via PR → repo → project |
-| is_ai_assisted | bool | ai_usage_signals | confidence >= 70 |
+| is_ai_assisted | bool | ai_usage_signals | confidence >= effective threshold |
 | initial_additions | int | pull_requests | Lines added at merge |
 | initial_deletions | int | pull_requests | Lines deleted at merge |
 | churn_within_7_days | int | commit_files | Modifications within 7 days |
@@ -147,22 +147,28 @@ The AI Detection dashboard identifies AI-assisted code contributions and measure
 | Column | Type | Source | Transformation |
 |--------|------|--------|----------------|
 | project_name | varchar(255) | project_mapping | Aggregation key |
-| period_type | varchar(20) | Calculated | 'before' or 'after' |
-| avg_pr_cycle_time | float | pull_requests | AVG(merged - created) |
-| avg_lines_per_pr | float | pull_requests | AVG(additions + deletions) |
-| avg_commits_per_pr | float | pull_request_commits | AVG(commit count) |
-| pr_count | int | pull_requests | Total PRs in period |
+| id | varchar(255) | Generated | `{project}:{adoption_date}` |
+| ai_adoption_date | timestamp | ai_usage_signals + pull_requests | Earliest explicit detection PR event |
+| baseline_pr_throughput | float | pull_requests | 90-day pre-adoption PRs/week |
+| baseline_review_time | float | pull_requests | 90-day pre-adoption avg hours |
+| baseline_lead_time | float | project_pr_metrics | 90-day pre-adoption avg hours |
+| current_pr_throughput | float | pull_requests | 30-day post-adoption PRs/week |
+| current_review_time | float | pull_requests | 30-day post-adoption avg hours |
+| current_lead_time | float | project_pr_metrics | 30-day post-adoption avg hours |
+| pr_throughput_change | float | Calculated | % change vs baseline |
+| review_time_change | float | Calculated | Inverted % change (lower is better) |
+| lead_time_change | float | Calculated | Inverted % change (lower is better) |
 | calculated_at | timestamp | Generated | Calculation timestamp |
 
 ## Confidence Score Calculation
 
 ```
 ai_confidence_score = MIN(100,
-    explicit_signal_score    (0-30, highest weight if present)
-  + rapid_commit_score       (0-25)
+    explicit_signal_score    (0-70, highest weight if present)
+  + rapid_commit_score       (0-30)
   + pr_size_score            (0-20)
-  + lines_per_minute_score   (0-15)
-  + duplication_score        (0-10)
+  + lines_per_minute_score   (0-25)
+  + duplication_score        (0-15)
   + generic_message_score    (0-10)
 )
 
@@ -185,6 +191,11 @@ Searches PR titles, bodies, and commit messages for:
 | Low | < 40 | Red | Likely human-only |
 | Explicit | Any + explicit_tool_detected | Blue badge | Confirmed AI tool |
 
+Effective detection threshold for classification tasks:
+- `options.confidenceThreshold` if provided
+- else `settings.detectionThreshold` if provided
+- else fallback `65`
+
 ## Infrastructure File Exclusions (Churn Analysis)
 
 The churn analysis excludes these patterns from calculations to avoid noise:
@@ -200,7 +211,7 @@ The churn analysis excludes these patterns from calculations to avoid noise:
 ```
 aidetector plugin subtasks (from impl.go):
   1. detectExplicitSignals      → Scan PR/commit text for AI markers
-  2. analyzeCommitPatterns      → Detect rapid commits, velocity
+  2. analyzeCommitPatterns      → Detect rapid commits, generic message patterns
   3. analyzePRCharacteristics   → Calculate PR metrics vs baseline
   4. scoreAIConfidence          → Combine scores → ai_usage_signals
   5. calculateAIImpact          → Before/after comparison

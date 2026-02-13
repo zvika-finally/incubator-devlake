@@ -117,12 +117,12 @@ The Business Metrics dashboard provides visibility into business alignment, team
 | project_name | varchar(255) | project_mapping | Aggregation key |
 | period_start | timestamp | Calculated | Period start date |
 | period_end | timestamp | Calculated | Period end date |
-| health_score | int | Calculated | Sum of 4 DORA scores (0-100) |
-| health_level | varchar(20) | Calculated | excellent/good/fair/poor |
-| deployment_frequency_score | int | project_pr_metrics | 0-25 points |
+| total_score | int | Calculated | Sum of 4 DORA scores (0-100) |
+| health_level | varchar(20) | Calculated | elite/high/medium/low |
+| deploy_freq_score | int | project_pr_metrics + cicd_deployment_commits | 0-25 points |
 | lead_time_score | int | project_pr_metrics | 0-25 points |
-| change_failure_rate_score | int | project_pr_metrics | 0-25 points |
-| time_to_restore_score | int | project_pr_metrics | 0-25 points |
+| cfr_score | int | cicd_deployment_commits | 0-25 points |
+| mttr_score | int | incidents + incident-deployment mapping | 0-25 points |
 | calculated_at | timestamp | Generated | Calculation timestamp |
 
 ### working_agreements
@@ -131,10 +131,10 @@ The Business Metrics dashboard provides visibility into business alignment, team
 |--------|------|--------|----------------|
 | id | varchar(255) | Generated | `{project}:{agreement_type}` |
 | project_name | varchar(255) | API input | User-configured |
-| agreement_type | varchar(100) | API input | pr_size, review_time, etc. |
+| agreement_type | varchar(100) | API input | pr_merge_time, review_turnaround, wip_limit, issues_in_progress |
 | threshold_value | decimal(10,2) | API input | Configured threshold |
-| threshold_unit | varchar(50) | API input | lines, hours, count, etc. |
-| enabled | bool | API input | Active/inactive |
+| threshold_unit | varchar(50) | API input | days, hours, count |
+| alert_enabled | bool | API input | Active/inactive |
 | created_at | timestamp | Generated | Creation timestamp |
 | updated_at | timestamp | Generated | Last update |
 
@@ -147,10 +147,10 @@ The Business Metrics dashboard provides visibility into business alignment, team
 | agreement_type | varchar(100) | working_agreements | From agreement |
 | entity_type | varchar(50) | Detected | 'pull_request' or 'issue' |
 | entity_id | varchar(255) | Detected | PR or issue ID |
-| actual_value | decimal(10,2) | Measured | Actual measurement |
+| current_value | decimal(10,2) | Measured | Actual measurement |
 | threshold_value | decimal(10,2) | working_agreements | Configured threshold |
-| violation_percent | decimal(5,2) | Calculated | (actual-threshold)/threshold*100 |
-| detected_at | timestamp | Generated | Detection timestamp |
+| excess_value | decimal(10,2) | Calculated | current_value - threshold_value |
+| violated_at | timestamp | Generated | Detection timestamp |
 | resolved_at | timestamp | Updated | Resolution timestamp (nullable) |
 
 ### agreement_compliance_summaries
@@ -161,9 +161,13 @@ The Business Metrics dashboard provides visibility into business alignment, team
 | project_name | varchar(255) | Aggregation | Aggregation key |
 | period_start | timestamp | Calculated | Period start |
 | period_end | timestamp | Calculated | Period end |
-| total_checks | int | Counted | Total items checked |
-| violations_count | int | Counted | Items with violations |
-| compliance_rate | decimal(5,2) | Calculated | (total-violations)/total*100 |
+| total_checked | int | Counted | Total items checked |
+| total_compliant | int | Counted | Total compliant items |
+| total_violations | int | Counted | Items with violations |
+| compliance_rate | decimal(5,2) | Calculated | (total_compliant/total_checked)*100 |
+| average_value | decimal(10,2) | Calculated | Mean measured value |
+| p50_value | decimal(10,2) | Calculated | Median measured value |
+| p90_value | decimal(10,2) | Calculated | P90 measured value |
 | calculated_at | timestamp | Generated | Calculation timestamp |
 
 ## Health Score Calculation
@@ -171,10 +175,10 @@ The Business Metrics dashboard provides visibility into business alignment, team
 The team health score is based on DORA metrics, with each metric contributing up to 25 points:
 
 ```
-health_score = deployment_frequency_score    (0-25)
-             + lead_time_score               (0-25)
-             + change_failure_rate_score     (0-25)
-             + time_to_restore_score         (0-25)
+total_score = deploy_freq_score    (0-25)
+            + lead_time_score      (0-25)
+            + cfr_score            (0-25)
+            + mttr_score           (0-25)
 
 Maximum: 100 points
 ```
@@ -192,23 +196,21 @@ Maximum: 100 points
 
 | Level | Score Range | Color |
 |-------|-------------|-------|
-| Excellent | 80-100 | Green |
-| Good | 60-79 | Blue |
-| Fair | 40-59 | Yellow |
-| Poor | 0-39 | Red |
+| Elite | 80-100 | Green |
+| High | 60-79 | Blue |
+| Medium | 40-59 | Yellow |
+| Low | 0-39 | Red |
 
 ## Working Agreement Types
 
-Supported agreement types (Swarmia-style):
+Supported agreement types:
 
 | Agreement Type | Description | Default Threshold |
 |----------------|-------------|-------------------|
-| pr_size | Maximum lines changed per PR | 400 lines |
-| review_time | Maximum time to first review | 24 hours |
-| merge_time | Maximum time from open to merge | 72 hours |
-| code_review_coverage | Minimum % of PRs with reviews | 80% |
-| pr_open_limit | Maximum concurrent open PRs | 5 per developer |
-| stale_pr_threshold | Days before PR considered stale | 7 days |
+| pr_merge_time | Time from PR opened to merged | 7 days |
+| review_turnaround | Time to first review | 24 hours |
+| wip_limit | Open PRs per developer | 3 |
+| issues_in_progress | In-progress issues per developer | 2 |
 
 ## Plugin Task Execution Order
 
