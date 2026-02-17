@@ -84,15 +84,19 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 	for _, issue := range issues {
 		// Get hours worked (from worklogs or estimate from story points)
 		effortResult := getHoursWorkedMultiSource(db, issue, data.Settings, data.Options.ProjectName)
+		fiscalMonth := getFiscalMonth(issue)
 		if effortResult.Hours == 0 {
+			// Keep allocations in sync with current inference logic by removing stale rows
+			// that no longer have a valid effort source for this issue/month.
+			allocationId := fmt.Sprintf("%s:%s", issue.Id, fiscalMonth)
+			if err := db.Delete(&models.CostAllocation{}, dal.Where("id = ?", allocationId)); err != nil {
+				logger.Warn(err, "failed to remove stale cost allocation %s", allocationId)
+			}
 			continue // Skip issues with no time data
 		}
 
 		// Get hourly rate for assignee
 		hourlyRate := getHourlyRate(issue.AssigneeId, rateMap, defaultHourlyRate)
-
-		// Calculate fiscal month from issue resolution or update date
-		fiscalMonth := getFiscalMonth(issue)
 
 		// Get labels from tool layer
 		var labels string

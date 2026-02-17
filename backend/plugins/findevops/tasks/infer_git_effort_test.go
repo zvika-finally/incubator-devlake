@@ -60,13 +60,13 @@ func TestCalculateGitInferredHours(t *testing.T) {
 			expectedMax:    80.0,
 		},
 		{
-			name:           "Zero activity - returns min",
+			name:           "Zero activity - returns zero",
 			activeDays:     0,
 			reviewComments: 0,
 			linesChanged:   0,
 			filesChanged:   0,
-			expectedMin:    1.0,
-			expectedMax:    1.0,
+			expectedMin:    0.0,
+			expectedMax:    0.0,
 		},
 	}
 

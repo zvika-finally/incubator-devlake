@@ -140,6 +140,9 @@ func inferEffortForIssue(db dal.Dal, issueId string, config *GitInferenceConfig)
 		dal.Join("JOIN pull_requests pr ON pr.id = pri.pull_request_id"),
 		dal.Where("pri.issue_id = ?", issueId),
 	)
+	if len(commits) == 0 && len(prs) == 0 {
+		return nil
+	}
 
 	activeDays := countActiveDays(commits)
 	reviewComments := countReviewComments(db, prs)
@@ -161,6 +164,9 @@ func inferEffortForIssue(db dal.Dal, issueId string, config *GitInferenceConfig)
 	}
 	result.ReviewHours = (float64(reviewComments) / float64(commentsPerCycle)) * config.ReviewHoursPerCycle
 	result.TotalHours = calculateGitInferredHours(activeDays, reviewComments, linesChanged, filesChanged, config)
+	if result.TotalHours <= 0 {
+		return nil
+	}
 
 	return result
 }
@@ -216,6 +222,10 @@ func sumChanges(commits []commitInfo, prs []prInfo, db dal.Dal) (int, int) {
 }
 
 func calculateGitInferredHours(activeDays, reviewComments, linesChanged, filesChanged int, config *GitInferenceConfig) float64 {
+	if activeDays == 0 && reviewComments == 0 && linesChanged == 0 && filesChanged == 0 {
+		return 0
+	}
+
 	codingHours := float64(activeDays) * config.ProductiveHoursPerActiveDay
 
 	commentsPerCycle := config.CommentsPerReviewCycle

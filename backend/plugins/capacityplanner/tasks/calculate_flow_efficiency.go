@@ -56,9 +56,9 @@ var activeStatuses = map[string]bool{
 
 // statusTransition represents a single status change
 type statusTransition struct {
-	FromValue   string
-	ToValue     string
-	ChangedAt   time.Time
+	FromValue string
+	ToValue   string
+	ChangedAt time.Time
 }
 
 func CalculateFlowEfficiency(taskCtx plugin.SubTaskContext) errors.Error {
@@ -133,54 +133,48 @@ func calculateIssueFlowMetric(db dal.Dal, projectName string, issue ticket.Issue
 		}
 	}
 
-	// Calculate time in each status
+	// Calculate time in each status.
+	// Always bound durations to the issue completion timestamp so reopened/reprocessed
+	// transitions after completion don't inflate active/waiting time.
 	statusTime := make(map[string]float64) // status -> days
-	var startedAt, completedAt time.Time
-	var totalActiveDays, totalWaitingDays float64
-
-	for i, trans := range transitions {
-		if i == 0 {
-			startedAt = trans.ChangedAt
-		}
-
-		// Calculate duration in previous status
-		if i > 0 {
-			prevStatus := transitions[i-1].ToValue
-			duration := trans.ChangedAt.Sub(transitions[i-1].ChangedAt)
-			daysInStatus := duration.Hours() / 24
-
-			statusTime[prevStatus] += daysInStatus
-
-			if isActiveStatus(prevStatus) {
-				totalActiveDays += daysInStatus
-			} else {
-				totalWaitingDays += daysInStatus
-			}
-		}
-
-		// Track completion
-		if isCompletedStatus(trans.ToValue) {
-			completedAt = trans.ChangedAt
-		}
+	startedAt := transitions[0].ChangedAt
+	completedAt := determineCompletionTime(issue, transitions)
+	if startedAt.IsZero() || completedAt.IsZero() || !completedAt.After(startedAt) {
+		return nil
 	}
 
-	// Handle last status if not completed
-	if completedAt.IsZero() && issue.ResolutionDate != nil {
-		completedAt = *issue.ResolutionDate
-		lastStatus := transitions[len(transitions)-1].ToValue
-		duration := completedAt.Sub(transitions[len(transitions)-1].ChangedAt)
-		daysInStatus := duration.Hours() / 24
-		statusTime[lastStatus] += daysInStatus
+	var totalActiveDays, totalWaitingDays float64
 
-		if isActiveStatus(lastStatus) {
+	addDuration := func(status string, intervalStart, intervalEnd time.Time) {
+		if !intervalEnd.After(intervalStart) {
+			return
+		}
+		daysInStatus := intervalEnd.Sub(intervalStart).Hours() / 24
+		statusTime[status] += daysInStatus
+		if isActiveStatus(status) {
 			totalActiveDays += daysInStatus
 		} else {
 			totalWaitingDays += daysInStatus
 		}
 	}
 
-	if startedAt.IsZero() || completedAt.IsZero() {
-		return nil
+	for i := 1; i < len(transitions); i++ {
+		prev := transitions[i-1]
+		curr := transitions[i]
+		if !prev.ChangedAt.Before(completedAt) {
+			break
+		}
+		intervalEnd := curr.ChangedAt
+		if intervalEnd.After(completedAt) {
+			intervalEnd = completedAt
+		}
+		addDuration(prev.ToValue, prev.ChangedAt, intervalEnd)
+	}
+
+	// Add the tail from the last transition to completion.
+	last := transitions[len(transitions)-1]
+	if last.ChangedAt.Before(completedAt) {
+		addDuration(last.ToValue, last.ChangedAt, completedAt)
 	}
 
 	totalDays := completedAt.Sub(startedAt).Hours() / 24
@@ -189,6 +183,9 @@ func calculateIssueFlowMetric(db dal.Dal, projectName string, issue ticket.Issue
 	}
 
 	flowEfficiency := (totalActiveDays / totalDays) * 100
+	if flowEfficiency < 0 {
+		flowEfficiency = 0
+	}
 	if flowEfficiency > 100 {
 		flowEfficiency = 100
 	}
@@ -212,6 +209,26 @@ func calculateIssueFlowMetric(db dal.Dal, projectName string, issue ticket.Issue
 		TransitionCount: len(transitions),
 		CalculatedAt:    time.Now(),
 	}
+}
+
+func determineCompletionTime(issue ticket.Issue, transitions []statusTransition) time.Time {
+	var completedAt time.Time
+	// Prefer the latest explicit completed-status transition.
+	for _, trans := range transitions {
+		if isCompletedStatus(trans.ToValue) && trans.ChangedAt.After(completedAt) {
+			completedAt = trans.ChangedAt
+		}
+	}
+	// Fall back to issue resolution date when transition history is incomplete.
+	if issue.ResolutionDate != nil && issue.ResolutionDate.After(completedAt) {
+		completedAt = *issue.ResolutionDate
+	}
+	// Final fallback to the last observed status transition.
+	lastTransition := transitions[len(transitions)-1].ChangedAt
+	if completedAt.IsZero() || lastTransition.After(completedAt) {
+		completedAt = lastTransition
+	}
+	return completedAt
 }
 
 func isActiveStatus(status string) bool {
