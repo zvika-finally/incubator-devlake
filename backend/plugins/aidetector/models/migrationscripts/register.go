@@ -33,5 +33,6 @@ func All() []plugin.MigrationScript {
 		new(fixChurnColumns),
 		new(addExcludePatterns),
 		new(realignDetectedAtWithPrDates),
+		new(addDetectedAtIndex),
 	}
 }
