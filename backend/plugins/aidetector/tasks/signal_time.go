@@ -15,23 +15,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package migrationscripts
+package tasks
 
 import (
-	"github.com/apache/incubator-devlake/core/plugin"
+	"time"
+
+	"github.com/apache/incubator-devlake/core/models/domainlayer/code"
 )
 
-// All return all the migration scripts
-func All() []plugin.MigrationScript {
-	return []plugin.MigrationScript{
-		new(initSchema),
-		new(addExplicitSignals),
-		new(addAIImpact),
-		new(addSettings),
-		new(addCodeChurn),
-		new(backfillDetectedAt),
-		new(fixChurnColumns),
-		new(addExcludePatterns),
-		new(realignDetectedAtWithPrDates),
+// resolveSignalDetectedAt aligns signal timestamp to PR event time so dashboard trends are stable across reruns.
+func resolveSignalDetectedAt(pr *code.PullRequest) time.Time {
+	if pr != nil {
+		if pr.MergedDate != nil && !pr.MergedDate.IsZero() {
+			return *pr.MergedDate
+		}
+		if !pr.CreatedDate.IsZero() {
+			return pr.CreatedDate
+		}
 	}
+	return time.Now()
 }

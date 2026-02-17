@@ -182,8 +182,8 @@ var genericAIPatterns = []*regexp.Regexp{
 
 // Known AI bot email patterns
 var aiEmailPatterns = map[string]string{
-	"copilot":             "copilot",
-	"github-copilot":      "copilot",
+	"copilot":               "copilot",
+	"github-copilot":        "copilot",
 	"noreply@anthropic.com": "claude_code",
 }
 
@@ -227,10 +227,12 @@ func DetectExplicitSignals(taskCtx plugin.SubTaskContext) errors.Error {
 			signal = models.AIUsageSignal{
 				Id:            pr.Id,
 				PullRequestId: pr.Id,
-				DetectedAt:    time.Now(),
+				DetectedAt:    resolveSignalDetectedAt(&pr),
 				CreatedAt:     time.Now(),
 			}
 		}
+		// Keep detected_at anchored to PR event time, not batch run time.
+		signal.DetectedAt = resolveSignalDetectedAt(&pr)
 
 		// Analyze PR title
 		titleResult := DetectAIInText(pr.Title)

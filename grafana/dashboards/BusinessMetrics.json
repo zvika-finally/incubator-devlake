@@ -51,7 +51,7 @@
       "id": 21,
       "targets": [
         {
-          "rawSql": "SELECT health_level FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT COALESCE(NULLIF(health_level, ''), CASE WHEN total_score >= 80 THEN 'elite' WHEN total_score >= 60 THEN 'high' WHEN total_score >= 40 THEN 'medium' ELSE 'low' END) AS health_level FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],
@@ -68,7 +68,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT 'Deploy Freq' as metric, deploy_freq_score as score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores WHERE project_name in (${project:sqlstring})) UNION ALL SELECT 'Lead Time', lead_time_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores WHERE project_name in (${project:sqlstring})) UNION ALL SELECT 'CFR', cfr_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores WHERE project_name in (${project:sqlstring})) UNION ALL SELECT 'MTTR', mttr_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND calculated_at = (SELECT MAX(calculated_at) FROM team_health_scores WHERE project_name in (${project:sqlstring}))",
+          "rawSql": "WITH latest AS (SELECT deploy_freq_score, lead_time_score, cfr_score, mttr_score FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1) SELECT 'Deploy Freq' as metric, deploy_freq_score as score FROM latest UNION ALL SELECT 'Lead Time', lead_time_score FROM latest UNION ALL SELECT 'CFR', cfr_score FROM latest UNION ALL SELECT 'MTTR', mttr_score FROM latest",
           "refId": "A", "format": "table"
         }
       ],
@@ -81,7 +81,7 @@
       "id": 2,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as total FROM business_initiatives",
+          "rawSql": "SELECT COUNT(*) as total FROM business_initiatives bi WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring}))",
           "refId": "A", "format": "table"
         }
       ],
@@ -95,7 +95,7 @@
       "id": 3,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as active FROM business_initiatives WHERE status = 'active'",
+          "rawSql": "SELECT COUNT(*) as active FROM business_initiatives bi WHERE status = 'active' AND EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring}))",
           "refId": "A", "format": "table"
         }
       ],
@@ -108,7 +108,7 @@
       "id": 4,
       "targets": [
         {
-          "rawSql": "SELECT AVG(business_value_score) as avg_score FROM business_initiatives WHERE business_value_score > 0",
+          "rawSql": "SELECT AVG(bi.business_value_score) as avg_score FROM business_initiatives bi WHERE bi.business_value_score > 0 AND EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring}))",
           "refId": "A", "format": "table"
         }
       ],
@@ -121,7 +121,7 @@
       "id": 5,
       "targets": [
         {
-          "rawSql": "SELECT SUM(story_points) as points FROM work_allocations",
+          "rawSql": "SELECT SUM(wa.story_points) as points FROM work_allocations wa JOIN business_initiatives bi ON bi.id = wa.initiative_id WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring}))",
           "refId": "A", "format": "table"
         }
       ],
@@ -135,7 +135,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(investment_category, 'Uncategorized') as category, COUNT(*) as count FROM business_initiatives GROUP BY investment_category",
+          "rawSql": "SELECT COALESCE(bi.investment_category, 'Uncategorized') as category, COUNT(*) as count FROM business_initiatives bi WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring})) GROUP BY bi.investment_category",
           "refId": "A", "format": "table"
         }
       ],
@@ -149,7 +149,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(business_capability, 'Unclassified') as capability, COUNT(*) as count FROM business_initiatives GROUP BY business_capability",
+          "rawSql": "SELECT COALESCE(bi.business_capability, 'Unclassified') as capability, COUNT(*) as count FROM business_initiatives bi WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring})) GROUP BY bi.business_capability",
           "refId": "A", "format": "table"
         }
       ],
@@ -163,7 +163,7 @@
       "options": { "legend": { "displayMode": "list" }, "pieType": "pie" },
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(revenue_impact, 'Unknown') as impact, COUNT(*) as count FROM business_initiatives GROUP BY revenue_impact",
+          "rawSql": "SELECT COALESCE(bi.revenue_impact, 'Unknown') as impact, COUNT(*) as count FROM business_initiatives bi WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring})) GROUP BY bi.revenue_impact",
           "refId": "A", "format": "table"
         }
       ],
@@ -177,7 +177,7 @@
       "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "business_value_score" }] },
       "targets": [
         {
-          "rawSql": "SELECT bi.name as initiative, bi.jira_epic_key as epic, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio, COUNT(wa.id) as work_items, SUM(wa.story_points) as story_points FROM business_initiatives bi LEFT JOIN work_allocations wa ON wa.initiative_id = bi.id GROUP BY bi.id, bi.name, bi.jira_epic_key, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio ORDER BY bi.business_value_score DESC",
+          "rawSql": "SELECT bi.name as initiative, bi.jira_epic_key as epic, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio, COUNT(wa.id) as work_items, COALESCE(SUM(wa.story_points), 0) as story_points FROM business_initiatives bi LEFT JOIN work_allocations wa ON wa.initiative_id = bi.id WHERE EXISTS (SELECT 1 FROM issues i JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE i.epic_key = bi.jira_epic_key AND pm.project_name in (${project:sqlstring})) GROUP BY bi.id, bi.name, bi.jira_epic_key, bi.status, bi.business_capability, bi.revenue_impact, bi.business_value_score, bi.revenue_to_cost_ratio ORDER BY bi.business_value_score DESC",
           "refId": "A", "format": "table"
         }
       ],

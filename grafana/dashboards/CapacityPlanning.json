@@ -72,7 +72,7 @@
       "id": 4,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as forecasts FROM monte_carlo_forecasts WHERE $__timeFilter(calculated_at)",
+          "rawSql": "SELECT COUNT(*) as forecasts FROM monte_carlo_forecasts mc WHERE $__timeFilter(mc.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring}))",
           "refId": "A",
           "format": "table"
         }
@@ -100,7 +100,7 @@
       "id": 30,
       "targets": [
         {
-          "rawSql": "SELECT total_annual_benefit FROM investment_rois WHERE investment_type = 'ai_tools' AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT total_annual_benefit FROM investment_rois WHERE investment_type = 'ai_tools' AND SUBSTRING_INDEX(id, ':', 1) in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -144,7 +144,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT confidence_level, COUNT(*) as count FROM initiative_forecasts WHERE $__timeFilter(forecast_date) GROUP BY confidence_level",
+          "rawSql": "SELECT f.confidence_level, COUNT(*) as count FROM initiative_forecasts f WHERE $__timeFilter(f.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring})) GROUP BY f.confidence_level",
           "refId": "A",
           "format": "table"
         }
@@ -162,7 +162,7 @@
       },
       "id": 10,
       "options": {
-        "content": "## Monte Carlo Probabilistic Forecasts (Kanban)\nBased on historical throughput variance. **P50** = 50% chance of completion | **P90** = 90% confidence (recommended for commitments)\n\n*Note: Initiative forecasts and Monte Carlo data are organization-wide metrics.*",
+        "content": "## Monte Carlo Probabilistic Forecasts (Kanban)\nBased on historical throughput variance. **P50** = 50% chance of completion | **P90** = 90% confidence (recommended for commitments)\n\n*Note: Initiative forecasts and Monte Carlo data are scoped to the selected project.*",
         "mode": "markdown"
       },
       "title": "Monte Carlo Explanation",
@@ -182,7 +182,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT mc.initiative_id, mc.simulation_count, mc.velocity_variance as throughput_variance, mc.p50_sprints as p50_weeks, mc.p75_sprints as p75_weeks, mc.p90_sprints as p90_weeks, mc.p95_sprints as p95_weeks, DATE(mc.p50_date) as p50_date, DATE(mc.p90_date) as p90_date, mc.earliest_days, mc.latest_days, DATE(mc.calculated_at) as calculated FROM monte_carlo_forecasts mc WHERE $__timeFilter(mc.calculated_at) ORDER BY mc.calculated_at DESC LIMIT 20",
+          "rawSql": "SELECT mc.initiative_id, mc.simulation_count, mc.velocity_variance as throughput_variance, mc.p50_sprints as p50_weeks, mc.p75_sprints as p75_weeks, mc.p90_sprints as p90_weeks, mc.p95_sprints as p95_weeks, DATE(mc.p50_date) as p50_date, DATE(mc.p90_date) as p90_date, mc.earliest_days, mc.latest_days, DATE(mc.calculated_at) as calculated FROM monte_carlo_forecasts mc WHERE $__timeFilter(mc.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring})) ORDER BY mc.calculated_at DESC LIMIT 20",
           "refId": "A",
           "format": "table"
         }
@@ -238,7 +238,7 @@
       },
       "id": 14,
       "options": {
-        "content": "## Investment ROI Analysis\n**Constants:** Hourly cost = $75 | Bug fix time = 20% | AI hours saved = 2/week/user | AI quality improvement = 5%\n\n*Note: ROI metrics are organization-wide.*",
+        "content": "## Investment ROI Analysis\n**Constants:** Hourly cost = $75 | Bug fix time = 20% | AI hours saved = 2/week/user | AI quality improvement = 5%\n\n*Note: ROI metrics are scoped to the selected project.*",
         "mode": "markdown"
       },
       "title": "ROI Calculation Constants",
@@ -280,7 +280,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT payback_months FROM investment_rois WHERE investment_type = 'ai_tools' AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT payback_months FROM investment_rois WHERE investment_type = 'ai_tools' AND SUBSTRING_INDEX(id, ':', 1) in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -324,7 +324,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT three_year_roi FROM investment_rois WHERE investment_type = 'ai_tools' AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT three_year_roi FROM investment_rois WHERE investment_type = 'ai_tools' AND SUBSTRING_INDEX(id, ':', 1) in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A",
           "format": "table"
         }
@@ -346,7 +346,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT investment_name, investment_type, upfront_cost, monthly_cost, annual_cost, direct_benefit, productivity_benefit, quality_benefit, total_annual_benefit, payback_months, three_year_roi FROM investment_rois WHERE $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 10",
+          "rawSql": "SELECT investment_name, investment_type, upfront_cost, monthly_cost, annual_cost, direct_benefit, productivity_benefit, quality_benefit, total_annual_benefit, payback_months, three_year_roi FROM investment_rois WHERE SUBSTRING_INDEX(id, ':', 1) in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 10",
           "refId": "A",
           "format": "table"
         }
@@ -365,7 +365,7 @@
       "id": 7,
       "targets": [
         {
-          "rawSql": "SELECT initiative_name, total_story_points as total_issues, completed_story_points as completed_issues, remaining_story_points as remaining_issues, percent_complete, estimated_sprints as estimated_weeks, DATE(estimated_completion_date) as estimated_completion, confidence_level FROM initiative_forecasts WHERE $__timeFilter(forecast_date) ORDER BY estimated_completion_date",
+          "rawSql": "SELECT f.initiative_name, f.total_story_points as total_issues, f.completed_story_points as completed_issues, f.remaining_story_points as remaining_issues, f.percent_complete, f.estimated_sprints as estimated_weeks, DATE(f.estimated_completion_date) as estimated_completion, f.confidence_level FROM initiative_forecasts f WHERE $__timeFilter(f.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring})) ORDER BY f.estimated_completion_date",
           "refId": "A",
           "format": "table"
         }

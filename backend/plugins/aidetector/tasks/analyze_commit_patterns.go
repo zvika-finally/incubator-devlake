@@ -88,14 +88,40 @@ func AnalyzeCommitPatterns(taskCtx plugin.SubTaskContext) errors.Error {
 		}
 
 		// Calculate commit pattern metrics
-		signal := analyzeCommitsForPR(&pr, commits)
-		signal.PullRequestId = pr.Id
-		signal.Id = pr.Id // Use PR ID as signal ID
-		signal.DetectedAt = time.Now()
-		signal.CreatedAt = time.Now()
+		patternMetrics := analyzeCommitsForPR(&pr, commits)
+
+		// Load existing signal to avoid clobbering fields populated by other subtasks.
+		var signal models.AIUsageSignal
+		err := db.First(&signal, dal.Where("pull_request_id = ?", pr.Id))
+		if err != nil {
+			signal = models.AIUsageSignal{
+				Id:            pr.Id,
+				PullRequestId: pr.Id,
+				CreatedAt:     time.Now(),
+			}
+		}
+		if signal.Id == "" {
+			signal.Id = pr.Id
+		}
+		if signal.PullRequestId == "" {
+			signal.PullRequestId = pr.Id
+		}
+		if signal.CreatedAt.IsZero() {
+			signal.CreatedAt = time.Now()
+		}
+
+		// Update only commit-pattern related fields and preserve the rest.
+		signal.CommitCount = patternMetrics.CommitCount
+		signal.PRAdditions = patternMetrics.PRAdditions
+		signal.PRDeletions = patternMetrics.PRDeletions
+		signal.AvgTimeBetweenCommits = patternMetrics.AvgTimeBetweenCommits
+		signal.RapidCommitScore = patternMetrics.RapidCommitScore
+		signal.GenericMessageScore = patternMetrics.GenericMessageScore
+		signal.CycleTimeHours = patternMetrics.CycleTimeHours
+		signal.DetectedAt = resolveSignalDetectedAt(&pr)
 
 		// Save the partial signal (will be completed by other tasks)
-		if err := db.CreateOrUpdate(signal); err != nil {
+		if err := db.CreateOrUpdate(&signal); err != nil {
 			logger.Error(err, "failed to save signal for PR %s", pr.Id)
 		}
 	}
@@ -106,9 +132,9 @@ func AnalyzeCommitPatterns(taskCtx plugin.SubTaskContext) errors.Error {
 
 func analyzeCommitsForPR(pr *code.PullRequest, commits []code.Commit) *models.AIUsageSignal {
 	signal := &models.AIUsageSignal{
-		CommitCount:   len(commits),
-		PRAdditions:   pr.Additions,
-		PRDeletions:   pr.Deletions,
+		CommitCount: len(commits),
+		PRAdditions: pr.Additions,
+		PRDeletions: pr.Deletions,
 	}
 
 	// Calculate average time between commits

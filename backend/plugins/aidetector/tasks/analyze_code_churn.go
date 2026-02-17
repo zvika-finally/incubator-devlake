@@ -76,6 +76,11 @@ func AnalyzeCodeChurn(taskCtx plugin.SubTaskContext) errors.Error {
 		if pr.MergedDate == nil {
 			continue
 		}
+		baselineLines := pr.Additions + pr.Deletions
+		if baselineLines <= 0 {
+			// No changed lines in the original PR means churn ratio is undefined.
+			continue
+		}
 
 		// Get files changed in this PR (excluding infrastructure files)
 		files := getPRFiles(db, pr.Id)
@@ -87,11 +92,6 @@ func AnalyzeCodeChurn(taskCtx plugin.SubTaskContext) errors.Error {
 		// Calculate churn for these files after merge
 		churn7, commits7 := calculateChurnAfterMerge(db, files, *pr.MergedDate, 7)
 		churn30, commits30 := calculateChurnAfterMerge(db, files, *pr.MergedDate, 30)
-
-		initialAdditions := pr.Additions
-		if initialAdditions == 0 {
-			initialAdditions = 1 // Avoid division by zero
-		}
 
 		filesJSON, _ := json.Marshal(files)
 
@@ -111,8 +111,8 @@ func AnalyzeCodeChurn(taskCtx plugin.SubTaskContext) errors.Error {
 			ChurnWithin30Days: churn30,
 			FollowUpCommits7:  commits7,
 			FollowUpCommits30: commits30,
-			ChurnRatio7Days:   float64(churn7) / float64(initialAdditions),
-			ChurnRatio30Days:  float64(churn30) / float64(initialAdditions),
+			ChurnRatio7Days:   float64(churn7) / float64(baselineLines),
+			ChurnRatio30Days:  float64(churn30) / float64(baselineLines),
 			FilePaths:         string(filesJSON),
 			CalculatedAt:      time.Now(),
 		}
@@ -189,39 +189,41 @@ func calculateChurnAfterMerge(db dal.Dal, files []string, mergedAt time.Time, da
 }
 
 func generateChurnSummary(db dal.Dal, projectName string, metrics []models.AIChurnMetric, _ int, logger log.Logger) {
-	var aiChurnSum7, aiChurnSum30, aiAdditionsSum float64
-	var nonAIChurnSum7, nonAIChurnSum30, nonAIAdditionsSum float64
 	var aiCount, nonAICount int
+	var aiTotalChurn7, nonAITotalChurn7 int
 	var aiTotalChurn30, nonAITotalChurn30 int
+	var aiTotalBaselineLines, nonAITotalBaselineLines int
 	var aiTotalAdditions, nonAITotalAdditions int
 
 	for _, m := range metrics {
+		baselineLines := m.InitialAdditions + m.InitialDeletions
+		if baselineLines <= 0 {
+			continue
+		}
 		if m.IsAIAssisted {
 			aiCount++
-			aiChurnSum7 += m.ChurnRatio7Days
-			aiChurnSum30 += m.ChurnRatio30Days
-			aiAdditionsSum += float64(m.InitialAdditions)
+			aiTotalChurn7 += m.ChurnWithin7Days
 			aiTotalChurn30 += m.ChurnWithin30Days
+			aiTotalBaselineLines += baselineLines
 			aiTotalAdditions += m.InitialAdditions
 		} else {
 			nonAICount++
-			nonAIChurnSum7 += m.ChurnRatio7Days
-			nonAIChurnSum30 += m.ChurnRatio30Days
-			nonAIAdditionsSum += float64(m.InitialAdditions)
+			nonAITotalChurn7 += m.ChurnWithin7Days
 			nonAITotalChurn30 += m.ChurnWithin30Days
+			nonAITotalBaselineLines += baselineLines
 			nonAITotalAdditions += m.InitialAdditions
 		}
 	}
 
 	var aiAvg7, aiAvg30, nonAIAvg7, nonAIAvg30, churnDiff float64
 
-	if aiCount > 0 {
-		aiAvg7 = aiChurnSum7 / float64(aiCount)
-		aiAvg30 = aiChurnSum30 / float64(aiCount)
+	if aiTotalBaselineLines > 0 {
+		aiAvg7 = float64(aiTotalChurn7) / float64(aiTotalBaselineLines)
+		aiAvg30 = float64(aiTotalChurn30) / float64(aiTotalBaselineLines)
 	}
-	if nonAICount > 0 {
-		nonAIAvg7 = nonAIChurnSum7 / float64(nonAICount)
-		nonAIAvg30 = nonAIChurnSum30 / float64(nonAICount)
+	if nonAITotalBaselineLines > 0 {
+		nonAIAvg7 = float64(nonAITotalChurn7) / float64(nonAITotalBaselineLines)
+		nonAIAvg30 = float64(nonAITotalChurn30) / float64(nonAITotalBaselineLines)
 	}
 
 	// Calculate churn difference percentage
