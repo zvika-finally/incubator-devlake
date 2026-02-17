@@ -45,13 +45,26 @@
     {
       "datasource": "mysql",
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" } }
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "1": { "text": "low" }, "2": { "text": "medium" }, "3": { "text": "high" }, "4": { "text": "elite" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "green", "value": 3.5 }
+            ]
+          }
+        }
       },
       "gridPos": { "h": 8, "w": 6, "x": 6, "y": 5 },
       "id": 21,
       "targets": [
         {
-          "rawSql": "SELECT COALESCE(NULLIF(health_level, ''), CASE WHEN total_score >= 80 THEN 'elite' WHEN total_score >= 60 THEN 'high' WHEN total_score >= 40 THEN 'medium' ELSE 'low' END) AS health_level FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
+          "rawSql": "SELECT CASE COALESCE(NULLIF(health_level, ''), CASE WHEN total_score >= 80 THEN 'elite' WHEN total_score >= 60 THEN 'high' WHEN total_score >= 40 THEN 'medium' ELSE 'low' END) WHEN 'elite' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END AS health_level_code FROM team_health_scores WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 1",
           "refId": "A", "format": "table"
         }
       ],

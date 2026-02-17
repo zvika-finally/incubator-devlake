@@ -46,6 +46,11 @@ type EffortResult struct {
 	FteAllocationPct    float64
 }
 
+type jiraIssueFields struct {
+	Labels  string
+	EpicKey string
+}
+
 var CalculateCostsMeta = plugin.SubTaskMeta{
 	Name:             "calculateCosts",
 	EntryPoint:       CalculateCosts,
@@ -98,13 +103,7 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 		// Get hourly rate for assignee
 		hourlyRate := getHourlyRate(issue.AssigneeId, rateMap, defaultHourlyRate)
 
-		// Get labels from tool layer
-		var labels string
-		_ = db.First(&labels,
-			dal.Select("labels"),
-			dal.From("_tool_jira_issues"),
-			dal.Where("issue_key = ?", issue.IssueKey),
-		)
+		toolIssue := getJiraIssueFields(db, issue.IssueKey)
 
 		// Calculate budget variance from Jira estimates
 		var estimatedMinutes, actualMinutes int64
@@ -123,10 +122,10 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 		overBudget := actualMinutes > estimatedMinutes && estimatedMinutes > 0
 
 		// Check if issue is unallocated (no epic/initiative)
-		isUnallocated := checkIsUnallocated(db, issue)
+		isUnallocated := checkIsUnallocated(issue, toolIssue.EpicKey)
 
 		// Get initiative/epic ID for attribution
-		initiativeId := getInitiativeId(db, issue)
+		initiativeId := getInitiativeId(issue, toolIssue.EpicKey)
 
 		// Create cost allocation record
 		// Note: ProjectPhase, CapitalizationCategory, and CategoryReason
@@ -142,7 +141,7 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 			DeveloperCost:         effortResult.Hours * hourlyRate,
 			TotalCost:             effortResult.Hours * hourlyRate,
 			IssueType:             issue.Type,
-			IssueLabels:           labels,
+			IssueLabels:           toolIssue.Labels,
 			EstimatedMinutes:      estimatedMinutes,
 			ActualMinutes:         actualMinutes,
 			VarianceMinutes:       varianceMinutes,
@@ -179,16 +178,8 @@ func CalculateCosts(taskCtx plugin.SubTaskContext) errors.Error {
 	return nil
 }
 
-// checkIsUnallocated determines if an issue has no epic or initiative attribution
-func checkIsUnallocated(db dal.Dal, issue ticket.Issue) bool {
-	// Check for epic_key in Jira issues
-	var epicKey string
-	_ = db.First(&epicKey,
-		dal.Select("epic_key"),
-		dal.From("_tool_jira_issues"),
-		dal.Where("issue_key = ?", issue.IssueKey),
-	)
-
+// checkIsUnallocated determines if an issue has no epic or initiative attribution.
+func checkIsUnallocated(issue ticket.Issue, epicKey string) bool {
 	if epicKey != "" {
 		return false
 	}
@@ -406,9 +397,7 @@ func inferFteDistributedHours(db dal.Dal, issue ticket.Issue, settings *models.F
 		return 0, 0, 0
 	}
 
-	var issueCount int64
-	err = db.First(&issueCount,
-		dal.Select("COUNT(DISTINCT issues.id)"),
+	issueCount, err := db.Count(
 		dal.From("issues"),
 		dal.Join("LEFT JOIN board_issues bi ON bi.issue_id = issues.id"),
 		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'boards' AND pm.row_id = bi.board_id"),
@@ -452,15 +441,7 @@ func getFiscalMonth(issue ticket.Issue) string {
 }
 
 // getInitiativeId retrieves the epic or parent issue ID for cost attribution
-func getInitiativeId(db dal.Dal, issue ticket.Issue) string {
-	// Try to get epic_key from Jira issues
-	var epicKey string
-	_ = db.First(&epicKey,
-		dal.Select("epic_key"),
-		dal.From("_tool_jira_issues"),
-		dal.Where("issue_key = ?", issue.IssueKey),
-	)
-
+func getInitiativeId(issue ticket.Issue, epicKey string) string {
 	if epicKey != "" {
 		return epicKey
 	}
@@ -471,4 +452,22 @@ func getInitiativeId(db dal.Dal, issue ticket.Issue) string {
 	}
 
 	return ""
+}
+
+func getJiraIssueFields(db dal.Dal, issueKey string) jiraIssueFields {
+	var toolIssues []jiraIssueFields
+	err := db.All(&toolIssues,
+		dal.Select("labels, epic_key"),
+		dal.From("_tool_jira_issues"),
+		dal.Where("issue_key = ?", issueKey),
+		dal.Limit(1),
+	)
+	if err != nil {
+		// Missing tool-layer row is valid; keep defaults.
+		return jiraIssueFields{}
+	}
+	if len(toolIssues) == 0 {
+		return jiraIssueFields{}
+	}
+	return toolIssues[0]
 }

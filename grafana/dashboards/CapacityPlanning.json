@@ -580,12 +580,12 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_flow_efficiency, median_flow_efficiency, p90_flow_efficiency FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end ASC",
+          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(flow_efficiency), 2) AS avg_flow_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 5 ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
       ],
-      "title": "Flow Efficiency Trend (Avg, Median, P90)",
+      "title": "Flow Efficiency Trend (Monthly Avg)",
       "type": "timeseries"
     },
     {
@@ -624,7 +624,7 @@
       "id": 109,
       "targets": [
         {
-          "rawSql": "SELECT UNIX_TIMESTAMP(period_end) as time, avg_active_days, avg_waiting_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end ASC",
+          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(active_days), 2) AS avg_active_days, ROUND(AVG(waiting_days), 2) AS avg_waiting_days FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 5 ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
