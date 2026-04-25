@@ -18,6 +18,7 @@ limitations under the License.
 package models
 
 import (
+	"github.com/apache/incubator-devlake/core/models/common"
 	"github.com/apache/incubator-devlake/helpers/pluginhelper/api"
 	"testing"
 
@@ -224,6 +225,47 @@ func TestGithubConnection_Sanitize(t *testing.T) {
 				GithubConn: tt.fields.GithubConn,
 			}
 			assert.Equalf(t, tt.want, connection.Sanitize(), "Sanitize()")
+		})
+	}
+}
+
+func TestGithubConnection_GetHash(t *testing.T) {
+	tests := []struct {
+		name       string
+		connection GithubConnection
+		want       string
+	}{
+		{
+			name: "GitHub App connection should return empty hash to disable caching",
+			connection: GithubConnection{
+				GithubConn: GithubConn{
+					MultiAuth: api.MultiAuth{
+						AuthMethod: AppKey,
+					},
+				},
+			},
+			want: "",
+		},
+		{
+			name: "PAT connection should use default hash",
+			connection: GithubConnection{
+				BaseConnection: api.BaseConnection{
+					Model: common.Model{
+						ID: 123,
+					},
+				},
+				GithubConn: GithubConn{
+					MultiAuth: api.MultiAuth{
+						AuthMethod: AccessToken,
+					},
+				},
+			},
+			want: "1230001-01-01 00:00:00 +0000 UTC", // ID + zero UpdatedAt
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, tt.connection.GetHash(), "GetHash()")
 		})
 	}
 }
