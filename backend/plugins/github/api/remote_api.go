@@ -169,7 +169,8 @@ func listGithubOwnerRepos(
 	case "Organization":
 		reposBody, err = apiClient.Get(fmt.Sprintf("orgs/%s/repos", owner), query, nil)
 	case "User":
-		authUserID, err := getAuthenticatedUserID(apiClient)
+		var authUserID int
+		authUserID, err = getAuthenticatedUserID(apiClient)
 		if err != nil {
 			return nil, nil, err
 		}
