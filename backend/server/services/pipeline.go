@@ -261,8 +261,21 @@ func dequeuePipeline(runningParallelLabels []string) (pipeline *models.Pipeline,
 	}))
 	// prepare query to find an appropriate pipeline to execute
 	pipeline = &models.Pipeline{}
+	// 1. find out the current highest priority in the queue
+	top_priority := 0
+	var top_priorities []int
+	where_status := dal.Where("status IN ?", []string{models.TASK_CREATED, models.TASK_RERUN, models.TASK_RESUME})
+	err = tx.Pluck("priority", &top_priorities, dal.From(pipeline), where_status, dal.Orderby("priority DESC"), dal.Limit(1))
+	if err != nil {
+		panic(err)
+	}
+	if len(top_priorities) > 0 {
+		top_priority = top_priorities[0]
+	}
+	// 2. pick the earlier runnable pipeline with the highest priority
 	err = tx.First(pipeline,
-		dal.Where("status IN ?", []string{models.TASK_CREATED, models.TASK_RERUN, models.TASK_RESUME}),
+		where_status,
+		dal.Where("priority = ?", top_priority),
 		dal.Join(
 			`left join _devlake_pipeline_labels ON
 				_devlake_pipeline_labels.pipeline_id = _devlake_pipelines.id AND
@@ -270,10 +283,10 @@ func dequeuePipeline(runningParallelLabels []string) (pipeline *models.Pipeline,
 				_devlake_pipeline_labels.name in ?`,
 			runningParallelLabels,
 		),
-		dal.Groupby("id"),
+		dal.Groupby("priority, id"),
 		dal.Having("count(_devlake_pipeline_labels.name)=0"),
 		dal.Select("id"),
-		dal.Orderby("id ASC"),
+		dal.Orderby("priority DESC, id ASC"),
 		dal.Limit(1),
 	)
 	if err == nil {
@@ -450,10 +463,54 @@ func CancelPipeline(pipelineId uint64) errors.Error {
 	if count == 0 {
 		return nil
 	}
-	for _, pendingTask := range pendingTasks {
-		_ = CancelTask(pendingTask.ID)
+	var runningTaskIds []uint64
+	var pendingTaskIds []uint64
+	for _, task := range pendingTasks {
+		if task.Status == models.TASK_RUNNING {
+			runningTaskIds = append(runningTaskIds, task.ID)
+		} else {
+			pendingTaskIds = append(pendingTaskIds, task.ID)
+		}
 	}
-	return errors.Convert(err)
+	failedCancels := cancelRunningTasks(runningTaskIds) + cancelPendingTasksInDB(pendingTaskIds)
+	if failedCancels > 0 {
+		return errors.Default.New(fmt.Sprintf("failed to cancel %d task(s) for pipeline #%d", failedCancels, pipelineId))
+	}
+	return nil
+}
+
+// cancelRunningTasks cancels tasks that are actively running by triggering
+// their context cancellation. Returns the number of tasks that failed to cancel.
+func cancelRunningTasks(taskIds []uint64) int {
+	failCount := 0
+	for _, taskId := range taskIds {
+		if err := CancelTask(taskId); err != nil {
+			if err.GetType() == errors.NotFound {
+				continue // task no longer tracked in-memory (finished or context lost after restart)
+			}
+			globalPipelineLog.Error(err, "failed to cancel running task #%d", taskId)
+			failCount++
+		}
+	}
+	return failCount
+}
+
+// cancelPendingTasksInDB marks non-running pending tasks as cancelled directly
+// in the database. Returns the number of tasks that failed to update.
+func cancelPendingTasksInDB(taskIds []uint64) int {
+	if len(taskIds) == 0 {
+		return 0
+	}
+	err := db.UpdateColumn(
+		&models.Task{},
+		"status", models.TASK_CANCELLED,
+		dal.Where("id IN ? AND status IN ?", taskIds, []string{models.TASK_CREATED, models.TASK_RERUN, models.TASK_RESUME}),
+	)
+	if err != nil {
+		globalPipelineLog.Error(err, "failed to cancel %d pending tasks in DB", len(taskIds))
+		return len(taskIds)
+	}
+	return 0
 }
 
 // getPipelineLogsPath gets the logs directory of this pipeline

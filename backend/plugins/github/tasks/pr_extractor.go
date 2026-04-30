@@ -62,6 +62,15 @@ type GithubApiPullRequest struct {
 	GithubCreatedAt common.Iso8601Time     `json:"created_at"`
 	GithubUpdatedAt common.Iso8601Time     `json:"updated_at"`
 	MergeCommitSha  string                 `json:"merge_commit_sha"`
+	Merged          bool                   `json:"merged"`
+	Additions       int                    `json:"additions"`
+	Deletions       int                    `json:"deletions"`
+	ChangedFiles    int                    `json:"changed_files"`
+	Comments        int                    `json:"comments"`
+	ReviewComments  int                    `json:"review_comments"`
+	Commits         int                    `json:"commits"`
+	IsDraft         bool                   `json:"draft"`
+	MergedBy        *GithubAccountResponse `json:"merged_by"`
 	Head            struct {
 		Ref  string         `json:"ref"`
 		Sha  string         `json:"sha"`
@@ -120,6 +129,11 @@ func ExtractApiPullRequests(taskCtx plugin.SubTaskContext) errors.Error {
 			// need to extract 2 kinds of entities here
 			results := make([]interface{}, 0, 1)
 			if rawL.GithubId == 0 {
+				return nil, nil
+			}
+			// Filter bot PRs by username
+			if rawL.User != nil && shouldSkipByUsername(rawL.User.Login) {
+				taskCtx.GetLogger().Debug("Skipping PR #%d from bot user: %s", rawL.Number, rawL.User.Login)
 				return nil, nil
 			}
 			//If this is a pr, ignore
@@ -182,9 +196,20 @@ func convertGithubPullRequest(pull *GithubApiPullRequest, connId uint64, repoId 
 		BaseCommitSha:   pull.Base.Sha,
 		HeadRef:         pull.Head.Ref,
 		HeadCommitSha:   pull.Head.Sha,
+		Merged:          pull.Merged,
+		Additions:       pull.Additions,
+		Deletions:       pull.Deletions,
+		Comments:        pull.Comments,
+		ReviewComments:  pull.ReviewComments,
+		Commits:         pull.Commits,
+		IsDraft:         pull.IsDraft,
 	}
 	if pull.Head.Repo != nil {
 		githubPull.HeadRepoId = pull.Head.Repo.GithubId
+	}
+	if pull.MergedBy != nil {
+		githubPull.MergedByName = pull.MergedBy.Login
+		githubPull.MergedById = pull.MergedBy.Id
 	}
 
 	return githubPull, nil

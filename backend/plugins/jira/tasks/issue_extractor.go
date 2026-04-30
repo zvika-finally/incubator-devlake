@@ -73,6 +73,7 @@ func ExtractIssues(subtaskCtx plugin.SubTaskContext) errors.Error {
 			SubtaskConfig: map[string]any{
 				"typeMappings":    mappings,
 				"storyPointField": data.Options.ScopeConfig.StoryPointField,
+				"dueDateField":    data.Options.ScopeConfig.DueDateField,
 			},
 		},
 		BeforeExtract: func(apiIssue *apiv2models.Issue, stateManager *api.SubtaskStateManager) errors.Error {
@@ -215,6 +216,15 @@ func extractIssues(data *JiraTaskData, mappings *typeMappings, apiIssue *apiv2mo
 		componentNames = append(componentNames, v.Name)
 	}
 	issue.Components = strings.Join(componentNames, ",")
+
+	// fix versions
+	fixVersions := apiIssue.Fields.FixVersions
+	var fixVersionsNames []string
+	for _, v := range fixVersions {
+		fixVersionsNames = append(fixVersionsNames, v.Name)
+	}
+	issue.FixVersions = strings.Join(fixVersionsNames, ",")
+
 	// issuelinks
 	issuelinks := apiIssue.Fields.Issuelinks
 	for _, v := range issuelinks {

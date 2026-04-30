@@ -25,6 +25,7 @@ import (
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/models/domainlayer/ticket"
 	"github.com/apache/incubator-devlake/core/plugin"
+	"github.com/apache/incubator-devlake/core/utils"
 	"github.com/apache/incubator-devlake/helpers/pluginhelper/api"
 	"github.com/apache/incubator-devlake/plugins/github/models"
 	githubTasks "github.com/apache/incubator-devlake/plugins/github/tasks"
@@ -68,6 +69,8 @@ func ExtractIssues(taskCtx plugin.SubTaskContext) errors.Error {
 			if err != nil {
 				return nil, err
 			}
+			// Normalize zero-date to nil for closedAt
+			issue.ClosedAt = utils.NilIfZeroTime(issue.ClosedAt)
 			results := make([]interface{}, 0, 1)
 			githubIssue, err := convertGithubIssue(milestoneMap, issue, data.Options.ConnectionId, data.Options.GithubId)
 			if err != nil {
@@ -140,7 +143,7 @@ func convertGithubIssue(milestoneMap map[int]int, issue *GraphqlQueryIssue, conn
 		GithubCreatedAt: issue.CreatedAt,
 		GithubUpdatedAt: issue.UpdatedAt,
 	}
-	if issue.AssigneeList.Assignees != nil && len(issue.AssigneeList.Assignees) > 0 {
+	if len(issue.AssigneeList.Assignees) > 0 {
 		githubIssue.AssigneeId = issue.AssigneeList.Assignees[0].Id
 		githubIssue.AssigneeName = issue.AssigneeList.Assignees[0].Login
 	}

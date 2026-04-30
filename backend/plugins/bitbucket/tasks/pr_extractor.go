@@ -19,7 +19,6 @@ package tasks
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/apache/incubator-devlake/core/errors"
 	"github.com/apache/incubator-devlake/core/models/common"
@@ -57,8 +56,8 @@ type BitbucketApiPullRequest struct {
 	} `json:"links"`
 	ClosedBy           *BitbucketAccountResponse `json:"closed_by"`
 	Author             *BitbucketAccountResponse `json:"author"`
-	BitbucketCreatedAt time.Time                 `json:"created_on"`
-	BitbucketUpdatedAt time.Time                 `json:"updated_on"`
+	BitbucketCreatedAt *common.Iso8601Time       `json:"created_on"`
+	BitbucketUpdatedAt *common.Iso8601Time       `json:"updated_on"`
 	BaseRef            *struct {
 		Branch struct {
 			Name string `json:"name"`
@@ -77,8 +76,15 @@ type BitbucketApiPullRequest struct {
 		} `json:"commit"`
 		Repo *models.BitbucketApiRepo `json:"repository"`
 	} `json:"source"`
-	//Reviewers    []BitbucketAccountResponse `json:"reviewers"`
-	//Participants []BitbucketAccountResponse `json:"participants"`
+	Participants []BitbucketParticipant `json:"participants"`
+}
+
+type BitbucketParticipant struct {
+	User           *BitbucketAccountResponse `json:"user"`
+	Role           string                    `json:"role"`
+	State          *string                   `json:"state"`
+	Approved       bool                      `json:"approved"`
+	ParticipatedOn *common.Iso8601Time       `json:"participated_on"`
 }
 
 func ExtractApiPullRequests(taskCtx plugin.SubTaskContext) errors.Error {
@@ -117,6 +123,36 @@ func ExtractApiPullRequests(taskCtx plugin.SubTaskContext) errors.Error {
 			}
 			results = append(results, bitbucketPr)
 
+			// Extract participants/reviewers
+			for _, participant := range rawL.Participants {
+				if participant.User == nil {
+					continue
+				}
+				reviewer := &models.BitbucketPrReviewer{
+					ConnectionId:  data.Options.ConnectionId,
+					RepoId:        data.Options.FullName,
+					PullRequestId: rawL.BitbucketId,
+					AccountId:     participant.User.AccountId,
+					DisplayName:   participant.User.DisplayName,
+					Role:          participant.Role,
+					Approved:      participant.Approved,
+				}
+				if participant.State != nil {
+					reviewer.State = *participant.State
+				}
+				if participant.ParticipatedOn != nil {
+					reviewer.ParticipatedOn = participant.ParticipatedOn.ToNullableTime()
+				}
+				results = append(results, reviewer)
+
+				// Also save the user account
+				bitbucketUser, err := convertAccount(participant.User, data.Options.ConnectionId)
+				if err != nil {
+					return nil, err
+				}
+				results = append(results, bitbucketUser)
+			}
+
 			return results, nil
 		},
 	})
@@ -137,8 +173,8 @@ func convertBitbucketPullRequest(pull *BitbucketApiPullRequest, connId uint64, r
 		Url:                pull.Links.Html.Href,
 		Type:               pull.Type,
 		CommentCount:       pull.CommentCount,
-		BitbucketCreatedAt: pull.BitbucketCreatedAt,
-		BitbucketUpdatedAt: pull.BitbucketUpdatedAt,
+		BitbucketCreatedAt: pull.BitbucketCreatedAt.ToTime(),
+		BitbucketUpdatedAt: pull.BitbucketUpdatedAt.ToTime(),
 	}
 	if pull.BaseRef != nil {
 		if pull.BaseRef.Repo != nil {

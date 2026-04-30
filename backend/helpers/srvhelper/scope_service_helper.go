@@ -255,6 +255,9 @@ func (scopeSrv *ScopeSrvHelper[C, S, SC]) deleteScopeData(scope plugin.ToolLayer
 	}
 	tables := errors.Must1(scopeSrv.getAffectedTables())
 	for _, table := range tables {
+		if err := dal.ValidateTableName(table); err != nil {
+			panic(errors.Default.Wrap(err, fmt.Sprintf("unsafe table name %q when deleting scope data", table)))
+		}
 		where, params := generateWhereClause(table)
 		scopeSrv.log.Info("deleting data from table %s with WHERE \"%s\" and params: \"%v\"", table, where, params)
 		sql := fmt.Sprintf("DELETE FROM %s WHERE %s", table, where)
@@ -268,39 +271,39 @@ func (scopeSrv *ScopeSrvHelper[C, S, SC]) getAffectedTables() ([]string, errors.
 	if err != nil {
 		return nil, err
 	}
-	if pluginModel, ok := meta.(plugin.PluginModel); !ok {
+	pluginModel, ok := meta.(plugin.PluginModel)
+	if !ok {
 		panic(errors.Default.New(fmt.Sprintf("plugin \"%s\" does not implement listing its tables", scopeSrv.pluginName)))
-	} else {
-		// Unfortunately, can't cache the tables because Python creates some tables on a per-demand basis, so such a cache would possibly get outdated.
-		// It's a rare scenario in practice, but might as well play it safe and sacrifice some performance here
-		var allTables []string
-		if allTables, err = scopeSrv.db.AllTables(); err != nil {
-			return nil, err
-		}
-		// collect raw tables
-		for _, table := range allTables {
-			if strings.HasPrefix(table, "_raw_"+scopeSrv.pluginName) {
-				tables = append(tables, table)
-			}
-		}
-		// collect tool tables
-		toolModels := pluginModel.GetTablesInfo()
-		for _, toolModel := range toolModels {
-			if !isScopeModel(toolModel) && hasField(toolModel, "RawDataParams") {
-				tables = append(tables, toolModel.TableName())
-			}
-		}
-		// collect domain tables
-		for _, domainModel := range domaininfo.GetDomainTablesInfo() {
-			// we only care about tables with RawOrigin
-			ok = hasField(domainModel, "RawDataParams")
-			if ok {
-				tables = append(tables, domainModel.TableName())
-			}
-		}
-		// additional tables
-		tables = append(tables, models.CollectorLatestState{}.TableName())
 	}
+	// Unfortunately, can't cache the tables because Python creates some tables on a per-demand basis, so such a cache would possibly get outdated.
+	// It's a rare scenario in practice, but might as well play it safe and sacrifice some performance here
+	var allTables []string
+	if allTables, err = scopeSrv.db.AllTables(); err != nil {
+		return nil, err
+	}
+	// collect raw tables
+	for _, table := range allTables {
+		if strings.HasPrefix(table, "_raw_"+scopeSrv.pluginName) {
+			tables = append(tables, table)
+		}
+	}
+	// collect tool tables
+	toolModels := pluginModel.GetTablesInfo()
+	for _, toolModel := range toolModels {
+		if !isScopeModel(toolModel) && hasField(toolModel, "RawDataParams") {
+			tables = append(tables, toolModel.TableName())
+		}
+	}
+	// collect domain tables
+	for _, domainModel := range domaininfo.GetDomainTablesInfo() {
+		// we only care about tables with RawOrigin
+		ok = hasField(domainModel, "RawDataParams")
+		if ok {
+			tables = append(tables, domainModel.TableName())
+		}
+	}
+	// additional tables
+	tables = append(tables, models.CollectorLatestState{}.TableName())
 	scopeSrv.log.Debug("Discovered %d tables used by plugin \"%s\": %v", len(tables), scopeSrv.pluginName, tables)
 	return tables, nil
 }
