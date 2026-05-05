@@ -31,6 +31,7 @@ jobs:
   build-and-push-builder:
     name: Build and Push devlake builder
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
@@ -55,6 +56,7 @@ jobs:
   build-and-push-base:
     name: Build and Push devlake base
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
@@ -80,6 +82,7 @@ jobs:
     needs: build-and-push-builder
     name: Build and cache devlake
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     strategy:
       matrix:
         platform: ["arm64", "amd64"]
@@ -117,6 +120,7 @@ jobs:
   get-timestamp:
     name: Get build timestamp
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     outputs:
       timestamp: ${{ steps.ts.outputs.timestamp }}
     steps:
@@ -127,6 +131,7 @@ jobs:
     needs: [build-devlake, build-and-push-base, get-timestamp]
     name: Build and Push devlake image
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     steps:
       - uses: actions/checkout@v3
       - name: Get short sha
@@ -197,6 +202,7 @@ jobs:
     needs: [get-timestamp]
     name: Build and Push ${{ matrix.build.name }} image
     runs-on: ubuntu-latest
+    if: github.repository == 'apache/incubator-devlake'
     strategy:
       matrix:
         build:
