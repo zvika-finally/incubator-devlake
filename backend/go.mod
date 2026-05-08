@@ -128,3 +128,15 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+require (
+	github.com/chainguard-dev/git-urls v1.0.2
+	github.com/go-sql-driver/mysql v1.7.1
+	github.com/golang-jwt/jwt/v5 v5.0.0-rc.1
+	github.com/rogpeppe/go-internal v1.11.0
+	golang.org/x/mod v0.17.0
+)
+
+replace github.com/chenzhuoyu/iasm => github.com/cloudwego/iasm v0.2.0
+
+//replace github.com/apache/incubator-devlake => ./
