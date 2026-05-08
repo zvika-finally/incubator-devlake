@@ -109,6 +109,9 @@ func (p ClaudeCode) MigrationScripts() []plugin.MigrationScript {
 
 func (p ClaudeCode) ApiResources() map[string]map[string]plugin.ApiResourceHandler {
 	return map[string]map[string]plugin.ApiResourceHandler{
+		"test": {
+			"POST": api.TestConnection,
+		},
 		"connections": {
 			"GET":  api.GetConnections,
 			"POST": api.PostConnections,
@@ -117,6 +120,9 @@ func (p ClaudeCode) ApiResources() map[string]map[string]plugin.ApiResourceHandl
 			"GET":    api.GetConnection,
 			"PATCH":  api.PatchConnection,
 			"DELETE": api.DeleteConnection,
+		},
+		"connections/:connectionId/test": {
+			"POST": api.TestExistingConnection,
 		},
 	}
 }

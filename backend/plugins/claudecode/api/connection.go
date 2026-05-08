@@ -18,7 +18,10 @@ limitations under the License.
 package api
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/apache/incubator-devlake/core/context"
 	"github.com/apache/incubator-devlake/core/dal"
@@ -161,6 +164,73 @@ func DeleteConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput
 		Body:   map[string]string{"status": "deleted"},
 		Status: http.StatusOK,
 	}, nil
+}
+
+// @Summary Test a new Claude Code connection
+// @Description Test Claude Code Admin API connectivity with provided credentials
+// @Tags plugins/claudecode
+// @Param connection body models.ClaudeCodeConnection true "Connection data"
+// @Success 200
+// @Router /plugins/claudecode/test [post]
+func TestConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+	var connection models.ClaudeCodeConnection
+	if err := helper.Decode(input.Body, &connection, nil); err != nil {
+		return nil, errors.BadInput.Wrap(err, "invalid request body")
+	}
+	if err := testClaudeCodeConnection(&connection); err != nil {
+		return nil, err
+	}
+	return &plugin.ApiResourceOutput{Status: http.StatusOK, Body: map[string]string{"status": "success"}}, nil
+}
+
+// @Summary Test an existing Claude Code connection
+// @Description Test an existing Claude Code Admin API connection by ID
+// @Tags plugins/claudecode
+// @Param connectionId path int true "Connection ID"
+// @Success 200
+// @Router /plugins/claudecode/connections/{connectionId}/test [post]
+func TestExistingConnection(input *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+	connectionId := input.Params["connectionId"]
+	if connectionId == "" {
+		return nil, errors.BadInput.New("connectionId is required")
+	}
+	db := basicRes.GetDal()
+	var connection models.ClaudeCodeConnection
+	if err := db.First(&connection, dal.Where("id = ?", connectionId)); err != nil {
+		return nil, errors.NotFound.Wrap(err, "connection not found")
+	}
+	if err := testClaudeCodeConnection(&connection); err != nil {
+		return nil, err
+	}
+	return &plugin.ApiResourceOutput{Status: http.StatusOK, Body: map[string]string{"status": "success"}}, nil
+}
+
+func testClaudeCodeConnection(conn *models.ClaudeCodeConnection) errors.Error {
+	if conn.AdminApiKey == "" {
+		return errors.BadInput.New("adminApiKey is required")
+	}
+	url := fmt.Sprintf("https://api.anthropic.com/v1/organizations/usage_report/claude_code?starting_at=%s&limit=1",
+		time.Now().Format("2006-01-02"))
+	req, reqErr := http.NewRequest("GET", url, nil)
+	if reqErr != nil {
+		return errors.Default.Wrap(reqErr, "failed to create request")
+	}
+	req.Header.Set("x-api-key", conn.AdminApiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("User-Agent", "DevLake/1.0.0 (https://devlake.apache.org)")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return errors.Default.Wrap(err, "failed to connect to Claude Code Admin API")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return errors.Default.New(fmt.Sprintf("Claude Code Admin API returned %d: %s", resp.StatusCode, string(body)))
+	}
+	return nil
 }
 
 // GetConnectionForTask loads a connection for task execution
