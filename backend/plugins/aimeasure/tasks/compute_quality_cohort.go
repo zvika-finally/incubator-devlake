@@ -140,7 +140,7 @@ func boolToInt(b bool) int {
 func tableExists(db dal.Dal, tableName string) (bool, errors.Error) {
 	count, err := db.Count(
 		dal.From("information_schema.tables"),
-		dal.Where("table_name = ?", tableName),
+		dal.Where("table_name = ? AND table_schema NOT IN ('information_schema','pg_catalog','mysql','performance_schema','sys')", tableName),
 	)
 	if err != nil {
 		return false, err
