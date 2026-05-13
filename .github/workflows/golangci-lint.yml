@@ -36,6 +36,8 @@ jobs:
         with:
           path: golangci-lint
           key: ${{ runner.os }}-backend-golangci-lint
+      - name: Install mockery
+        run: go install github.com/vektra/mockery/v2@v2.53.5
       - name: generate mock
         run: |
           go version
