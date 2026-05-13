@@ -23,6 +23,7 @@ import (
 	"github.com/apache/incubator-devlake/helpers/unithelper"
 	ae "github.com/apache/incubator-devlake/plugins/ae/impl"
 	aidetector "github.com/apache/incubator-devlake/plugins/aidetector/impl"
+	aimeasure "github.com/apache/incubator-devlake/plugins/aimeasure/impl"
 	argocd "github.com/apache/incubator-devlake/plugins/argocd/impl"
 	azuredevops "github.com/apache/incubator-devlake/plugins/azuredevops_go/impl"
 	bamboo "github.com/apache/incubator-devlake/plugins/bamboo/impl"
@@ -71,6 +72,7 @@ func Test_GetPluginTablesInfo(t *testing.T) {
 	})
 	checker.FeedIn("ae/models", ae.AE{}.GetTablesInfo)
 	checker.FeedIn("aidetector/models", aidetector.AIDetector{}.GetTablesInfo)
+	checker.FeedIn("aimeasure/models", aimeasure.AIMeasure{}.GetTablesInfo)
 	checker.FeedIn("azuredevops_go/models", azuredevops.Azuredevops{}.GetTablesInfo)
 	checker.FeedIn("bamboo/models", bamboo.Bamboo{}.GetTablesInfo)
 	checker.FeedIn("bitbucket/models", bitbucket.Bitbucket{}.GetTablesInfo)
