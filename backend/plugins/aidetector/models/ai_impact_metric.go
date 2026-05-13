@@ -25,9 +25,9 @@ import (
 // relative to AI tool adoption date. Uses 90-day baseline before adoption
 // and 30-day current period after adoption for statistical significance.
 type AIImpactMetric struct {
-	Id              string     `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName     string     `gorm:"type:varchar(255);index"`
-	AIAdoptionDate  *time.Time `gorm:"index"` // Date of first explicit AI signal detection
+	Id             string     `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName    string     `gorm:"type:varchar(255);index"`
+	AIAdoptionDate *time.Time `gorm:"index"` // Date of first explicit AI signal detection
 
 	// Baseline period metrics (90 days pre-adoption)
 	BaselinePRThroughput float64 `gorm:"type:decimal(10,2)"` // PRs merged per week

@@ -31,6 +31,8 @@ import (
 	businessmetrics "github.com/apache/incubator-devlake/plugins/businessmetrics/impl"
 	capacityplanner "github.com/apache/incubator-devlake/plugins/capacityplanner/impl"
 	circleci "github.com/apache/incubator-devlake/plugins/circleci/impl"
+	claudecode "github.com/apache/incubator-devlake/plugins/claudecode/impl"
+	cursor "github.com/apache/incubator-devlake/plugins/cursor/impl"
 	customize "github.com/apache/incubator-devlake/plugins/customize/impl"
 	dbt "github.com/apache/incubator-devlake/plugins/dbt/impl"
 	dora "github.com/apache/incubator-devlake/plugins/dora/impl"
@@ -106,6 +108,8 @@ func Test_GetPluginTablesInfo(t *testing.T) {
 	checker.FeedIn("linker/models", linker.Linker{}.GetTablesInfo)
 	checker.FeedIn("issue_trace/models", issueTrace.IssueTrace{}.GetTablesInfo)
 	checker.FeedIn("q_dev/models", q_dev.QDev{}.GetTablesInfo)
+	checker.FeedIn("claudecode/models", claudecode.ClaudeCode{}.GetTablesInfo)
+	checker.FeedIn("cursor/models", cursor.Cursor{}.GetTablesInfo)
 	err := checker.Verify()
 	if err != nil {
 		t.Error(err)

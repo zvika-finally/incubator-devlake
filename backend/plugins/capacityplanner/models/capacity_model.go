@@ -24,13 +24,13 @@ import (
 // CapacityModel stores Brooks's Law capacity impact analysis for team size changes
 // Uses communication overhead formula: channels = n*(n-1)/2
 type CapacityModel struct {
-	Id              string `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName     string `gorm:"type:varchar(255);index"`
-	ScenarioName    string `gorm:"type:varchar(255)"`
+	Id           string `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName  string `gorm:"type:varchar(255);index"`
+	ScenarioName string `gorm:"type:varchar(255)"`
 
 	// Team parameters
 	CurrentTeamSize int `gorm:"type:int"`
-	TeamSizeDelta   int `gorm:"type:int"`          // +2 or -1
+	TeamSizeDelta   int `gorm:"type:int"`           // +2 or -1
 	RampUpWeeks     int `gorm:"type:int;default:8"` // New hire ramp-up period
 
 	// Communication overhead (Brooks's Law)

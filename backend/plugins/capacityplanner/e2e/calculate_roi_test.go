@@ -61,8 +61,8 @@ func TestCalculateROIFromParams_HighCostScenario(t *testing.T) {
 		HoursSavedPerWeek:  1.0,
 	}
 
-	upfrontCost := 50000.0  // $50k upfront
-	monthlyCost := 5000.0   // $5k/month
+	upfrontCost := 50000.0 // $50k upfront
+	monthlyCost := 5000.0  // $5k/month
 
 	annualBenefit, paybackMonths, _ := tasks.CalculateROIFromParams(params, upfrontCost, monthlyCost)
 

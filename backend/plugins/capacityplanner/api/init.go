@@ -24,11 +24,9 @@ import (
 	"github.com/apache/incubator-devlake/plugins/capacityplanner/models"
 )
 
-var basicRes context.BasicRes
 var settingsHelper *api.MetricSettingsApiHelper[*models.CapacityPlannerSettings]
 
 func Init(br context.BasicRes, p plugin.PluginMeta) {
-	basicRes = br
 	settingsHelper = api.NewMetricSettingsApiHelper[*models.CapacityPlannerSettings](
 		br,
 		p.Name(),

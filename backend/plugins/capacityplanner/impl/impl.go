@@ -107,12 +107,12 @@ func (p CapacityPlanner) Settings() interface{} {
 
 func (p CapacityPlanner) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
-		tasks.CalculateVelocityMeta,           // Sprint-based velocity (Scrum)
-		tasks.CalculateThroughputMeta,         // Time-based throughput (Kanban)
-		tasks.ForecastCompletionKanbanMeta,    // Kanban: issue-count forecasting
-		tasks.MonteCarloForecastKanbanMeta,    // Kanban: Monte Carlo with throughput
-		tasks.ForecastCompletionMeta,          // Scrum: story-point forecasting
-		tasks.MonteCarloForecastMeta,          // Scrum: Monte Carlo with velocity
+		tasks.CalculateVelocityMeta,        // Sprint-based velocity (Scrum)
+		tasks.CalculateThroughputMeta,      // Time-based throughput (Kanban)
+		tasks.ForecastCompletionKanbanMeta, // Kanban: issue-count forecasting
+		tasks.MonteCarloForecastKanbanMeta, // Kanban: Monte Carlo with throughput
+		tasks.ForecastCompletionMeta,       // Scrum: story-point forecasting
+		tasks.MonteCarloForecastMeta,       // Scrum: Monte Carlo with velocity
 		tasks.BrooksLawModelMeta,
 		tasks.CalculateROIMeta,
 		tasks.CalculateFlowEfficiencyMeta,
@@ -177,12 +177,12 @@ func (p CapacityPlanner) MakeMetricPluginPipelinePlanV200(projectName string, op
 					"projectName": projectName,
 				},
 				Subtasks: []string{
-					"calculateThroughput",           // Kanban: throughput metrics
-					"forecastCompletionKanban",      // Kanban: issue-based forecasting
-					"monteCarloForecastKanban",      // Kanban: probabilistic forecasts
-					"calculateVelocity",             // Scrum: sprint-based (optional)
-					"forecastCompletion",            // Scrum: story-point forecasting
-					"monteCarloForecast",            // Scrum: Monte Carlo with velocity
+					"calculateThroughput",      // Kanban: throughput metrics
+					"forecastCompletionKanban", // Kanban: issue-based forecasting
+					"monteCarloForecastKanban", // Kanban: probabilistic forecasts
+					"calculateVelocity",        // Scrum: sprint-based (optional)
+					"forecastCompletion",       // Scrum: story-point forecasting
+					"monteCarloForecast",       // Scrum: Monte Carlo with velocity
 					"brooksLawModel",
 					"calculateROI",
 					"calculateFlowEfficiency",

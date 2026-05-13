@@ -47,11 +47,11 @@ func (script *initSchema) Name() string {
 // Migration models
 
 type cursorConnection20260131 struct {
-	ID                 uint64    `gorm:"primaryKey;autoIncrement"`
-	Name               string    `gorm:"type:varchar(255);not null"`
-	TeamId             string    `gorm:"type:varchar(255)"`
-	ApiKey             string    `gorm:"type:text;serializer:encdec"`
-	RateLimitPerSecond int       `gorm:"default:5"`
+	ID                 uint64 `gorm:"primaryKey;autoIncrement"`
+	Name               string `gorm:"type:varchar(255);not null"`
+	TeamId             string `gorm:"type:varchar(255)"`
+	ApiKey             string `gorm:"type:text;serializer:encdec"`
+	RateLimitPerSecond int    `gorm:"default:5"`
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }

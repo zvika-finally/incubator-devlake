@@ -150,6 +150,7 @@ func CategorizeCapitalization(taskCtx plugin.SubTaskContext) errors.Error {
 	return nil
 }
 
+//nolint:unused // called from categorize_capitalization_test.go
 func categorizeWork(issueType, labels string) (stage, category, reason string) {
 	return categorizeWorkWithRules(issueType, labels, defaultCapitalizationRules())
 }

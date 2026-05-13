@@ -45,31 +45,31 @@ type CursorUsageMetric struct {
 	Date         time.Time `gorm:"index"`
 
 	// Suggestion metrics
-	TotalSuggestions    int       `gorm:"type:int"`
-	TotalAcceptances    int       `gorm:"type:int"`
-	AcceptanceRate      float64   `gorm:"type:decimal(5,2)"` // (Acceptances/Suggestions)*100
+	TotalSuggestions int     `gorm:"type:int"`
+	TotalAcceptances int     `gorm:"type:int"`
+	AcceptanceRate   float64 `gorm:"type:decimal(5,2)"` // (Acceptances/Suggestions)*100
 
 	// Lines metrics (green = additions, red = deletions)
-	GreenLinesAccepted  int       `gorm:"type:int"`
-	GreenLinesSuggested int       `gorm:"type:int"`
-	RedLinesAccepted    int       `gorm:"type:int"`
-	RedLinesSuggested   int       `gorm:"type:int"`
-	LineAcceptanceRatio float64   `gorm:"type:decimal(5,2)"`
+	GreenLinesAccepted  int     `gorm:"type:int"`
+	GreenLinesSuggested int     `gorm:"type:int"`
+	RedLinesAccepted    int     `gorm:"type:int"`
+	RedLinesSuggested   int     `gorm:"type:int"`
+	LineAcceptanceRatio float64 `gorm:"type:decimal(5,2)"`
 
 	// Tab completion metrics
-	TabSuggestions      int       `gorm:"type:int"`
-	TabAcceptances      int       `gorm:"type:int"`
-	TabAcceptanceRate   float64   `gorm:"type:decimal(5,2)"`
+	TabSuggestions    int     `gorm:"type:int"`
+	TabAcceptances    int     `gorm:"type:int"`
+	TabAcceptanceRate float64 `gorm:"type:decimal(5,2)"`
 
 	// Composer (AI chat) metrics
-	ComposerSuggestions int       `gorm:"type:int"`
-	ComposerAcceptances int       `gorm:"type:int"`
+	ComposerSuggestions    int     `gorm:"type:int"`
+	ComposerAcceptances    int     `gorm:"type:int"`
 	ComposerAcceptanceRate float64 `gorm:"type:decimal(5,2)"`
 
 	// Activity
-	DailyActiveUsers    int       `gorm:"type:int"`
+	DailyActiveUsers int `gorm:"type:int"`
 
-	CollectedAt         time.Time
+	CollectedAt time.Time
 }
 
 func (CursorUsageMetric) TableName() string {
@@ -86,17 +86,17 @@ type CursorUserMetric struct {
 	Date         time.Time `gorm:"index"`
 
 	// Suggestion metrics
-	TabSuggestions      int       `gorm:"type:int"`
-	TabAcceptances      int       `gorm:"type:int"`
-	ComposerSuggestions int       `gorm:"type:int"`
-	ComposerAcceptances int       `gorm:"type:int"`
-	AcceptanceRate      float64   `gorm:"type:decimal(5,2)"`
+	TabSuggestions      int     `gorm:"type:int"`
+	TabAcceptances      int     `gorm:"type:int"`
+	ComposerSuggestions int     `gorm:"type:int"`
+	ComposerAcceptances int     `gorm:"type:int"`
+	AcceptanceRate      float64 `gorm:"type:decimal(5,2)"`
 
 	// Lines
-	LinesAccepted       int       `gorm:"type:int"`
-	LinesSuggested      int       `gorm:"type:int"`
+	LinesAccepted  int `gorm:"type:int"`
+	LinesSuggested int `gorm:"type:int"`
 
-	CollectedAt         time.Time
+	CollectedAt time.Time
 }
 
 func (CursorUserMetric) TableName() string {

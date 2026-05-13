@@ -63,17 +63,17 @@ func (workingAgreement20260131) TableName() string {
 }
 
 type agreementViolation20260131 struct {
-	Id             string     `gorm:"primaryKey;type:varchar(255)"`
-	AgreementId    string     `gorm:"type:varchar(255);index"`
-	AgreementType  string     `gorm:"type:varchar(50);index"`
-	ProjectName    string     `gorm:"type:varchar(255);index"`
-	EntityType     string     `gorm:"type:varchar(50)"`
-	EntityId       string     `gorm:"type:varchar(255)"`
-	EntityKey      string     `gorm:"type:varchar(255)"`
-	CurrentValue   float64    `gorm:"type:decimal(10,2)"`
-	ThresholdValue float64    `gorm:"type:decimal(10,2)"`
-	ExcessValue    float64    `gorm:"type:decimal(10,2)"`
-	ViolatedAt     time.Time  `gorm:"index"`
+	Id             string    `gorm:"primaryKey;type:varchar(255)"`
+	AgreementId    string    `gorm:"type:varchar(255);index"`
+	AgreementType  string    `gorm:"type:varchar(50);index"`
+	ProjectName    string    `gorm:"type:varchar(255);index"`
+	EntityType     string    `gorm:"type:varchar(50)"`
+	EntityId       string    `gorm:"type:varchar(255)"`
+	EntityKey      string    `gorm:"type:varchar(255)"`
+	CurrentValue   float64   `gorm:"type:decimal(10,2)"`
+	ThresholdValue float64   `gorm:"type:decimal(10,2)"`
+	ExcessValue    float64   `gorm:"type:decimal(10,2)"`
+	ViolatedAt     time.Time `gorm:"index"`
 	ResolvedAt     *time.Time
 	IsResolved     bool `gorm:"type:bool;default:false;index"`
 	CreatedAt      time.Time

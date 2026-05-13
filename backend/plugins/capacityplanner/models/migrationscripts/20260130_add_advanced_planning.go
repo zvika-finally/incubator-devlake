@@ -90,9 +90,9 @@ func (monteCarloForecast20260130) TableName() string {
 }
 
 type capacityModel20260130 struct {
-	Id              string `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName     string `gorm:"type:varchar(255);index"`
-	ScenarioName    string `gorm:"type:varchar(255)"`
+	Id           string `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName  string `gorm:"type:varchar(255);index"`
+	ScenarioName string `gorm:"type:varchar(255)"`
 
 	CurrentTeamSize int `gorm:"type:int"`
 	TeamSizeDelta   int `gorm:"type:int"`

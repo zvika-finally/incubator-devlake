@@ -50,9 +50,9 @@ func (script *addAIImpact) Name() string {
 
 // Model for migration
 type aiImpactMetric20260130 struct {
-	Id              string     `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName     string     `gorm:"type:varchar(255);index"`
-	AIAdoptionDate  *time.Time `gorm:"index"`
+	Id             string     `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName    string     `gorm:"type:varchar(255);index"`
+	AIAdoptionDate *time.Time `gorm:"index"`
 
 	BaselinePRThroughput float64 `gorm:"type:decimal(10,2)"`
 	BaselineReviewTime   float64 `gorm:"type:decimal(10,2)"`

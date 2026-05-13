@@ -105,12 +105,12 @@ func (p AIDetector) Settings() interface{} {
 
 func (p AIDetector) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
-		tasks.DetectExplicitSignalsMeta,   // Run first: explicit markers (HIGH confidence)
-		tasks.AnalyzeCommitPatternsMeta,   // Then: behavioral patterns
+		tasks.DetectExplicitSignalsMeta, // Run first: explicit markers (HIGH confidence)
+		tasks.AnalyzeCommitPatternsMeta, // Then: behavioral patterns
 		tasks.AnalyzePRCharacteristicsMeta,
-		tasks.ScoreAIConfidenceMeta,       // Combine all scores
-		tasks.CalculateAIImpactMeta,       // Calculate productivity impact
-		tasks.AnalyzeCodeChurnMeta,        // Analyze code churn for AI vs non-AI PRs
+		tasks.ScoreAIConfidenceMeta, // Combine all scores
+		tasks.CalculateAIImpactMeta, // Calculate productivity impact
+		tasks.AnalyzeCodeChurnMeta,  // Analyze code churn for AI vs non-AI PRs
 	}
 }
 

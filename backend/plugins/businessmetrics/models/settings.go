@@ -23,7 +23,7 @@ type BusinessMetricsSettings struct {
 	ProjectName string `json:"projectName" gorm:"type:varchar(255);uniqueIndex"`
 
 	// DORA Elite Benchmarks - used in CalculateHealthScore
-	EliteDeployFreq    float64 `json:"eliteDeployFreq" gorm:"default:1.0"`    // Deploys per day for elite
+	EliteDeployFreq    float64 `json:"eliteDeployFreq" gorm:"default:1.0"`     // Deploys per day for elite
 	EliteLeadTimeHours float64 `json:"eliteLeadTimeHours" gorm:"default:24.0"` // Hours for elite lead time
 	EliteCFR           float64 `json:"eliteCfr" gorm:"default:5.0"`            // Elite change failure rate %
 	EliteMTTRHours     float64 `json:"eliteMttrHours" gorm:"default:1.0"`      // Elite MTTR in hours

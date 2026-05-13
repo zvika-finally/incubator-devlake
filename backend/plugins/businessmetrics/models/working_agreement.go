@@ -25,19 +25,19 @@ import (
 type AgreementType string
 
 const (
-	AgreementPRMergeTime        AgreementType = "pr_merge_time"
-	AgreementReviewTurnaround   AgreementType = "review_turnaround"
-	AgreementWIPLimit           AgreementType = "wip_limit"
-	AgreementIssuesInProgress   AgreementType = "issues_in_progress"
+	AgreementPRMergeTime      AgreementType = "pr_merge_time"
+	AgreementReviewTurnaround AgreementType = "review_turnaround"
+	AgreementWIPLimit         AgreementType = "wip_limit"
+	AgreementIssuesInProgress AgreementType = "issues_in_progress"
 )
 
 // ThresholdUnit defines the unit for threshold values
 type ThresholdUnit string
 
 const (
-	UnitDays   ThresholdUnit = "days"
-	UnitHours  ThresholdUnit = "hours"
-	UnitCount  ThresholdUnit = "count"
+	UnitDays  ThresholdUnit = "days"
+	UnitHours ThresholdUnit = "hours"
+	UnitCount ThresholdUnit = "count"
 )
 
 // WorkingAgreement defines a team's working agreement threshold
@@ -64,7 +64,7 @@ type AgreementViolation struct {
 	AgreementId    string        `gorm:"type:varchar(255);index"`
 	AgreementType  AgreementType `gorm:"type:varchar(50);index"`
 	ProjectName    string        `gorm:"type:varchar(255);index"`
-	EntityType     string        `gorm:"type:varchar(50)"`  // "pull_request", "issue", "developer"
+	EntityType     string        `gorm:"type:varchar(50)"` // "pull_request", "issue", "developer"
 	EntityId       string        `gorm:"type:varchar(255)"`
 	EntityKey      string        `gorm:"type:varchar(255)"` // PR number, issue key, developer name
 	CurrentValue   float64       `gorm:"type:decimal(10,2)"`
@@ -82,19 +82,19 @@ func (AgreementViolation) TableName() string {
 
 // AgreementComplianceSummary aggregates compliance metrics by project and period
 type AgreementComplianceSummary struct {
-	Id                   string        `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName          string        `gorm:"type:varchar(255);index"`
-	AgreementType        AgreementType `gorm:"type:varchar(50);index"`
-	PeriodStart          time.Time     `gorm:"index"`
-	PeriodEnd            time.Time     `gorm:"index"`
-	TotalChecked         int           `gorm:"type:int"`
-	TotalCompliant       int           `gorm:"type:int"`
-	TotalViolations      int           `gorm:"type:int"`
-	ComplianceRate       float64       `gorm:"type:decimal(5,2)"` // (Compliant/Total)*100
-	AverageValue         float64       `gorm:"type:decimal(10,2)"`
-	P50Value             float64       `gorm:"type:decimal(10,2)"` // Median
-	P90Value             float64       `gorm:"type:decimal(10,2)"` // 90th percentile
-	CalculatedAt         time.Time
+	Id              string        `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName     string        `gorm:"type:varchar(255);index"`
+	AgreementType   AgreementType `gorm:"type:varchar(50);index"`
+	PeriodStart     time.Time     `gorm:"index"`
+	PeriodEnd       time.Time     `gorm:"index"`
+	TotalChecked    int           `gorm:"type:int"`
+	TotalCompliant  int           `gorm:"type:int"`
+	TotalViolations int           `gorm:"type:int"`
+	ComplianceRate  float64       `gorm:"type:decimal(5,2)"` // (Compliant/Total)*100
+	AverageValue    float64       `gorm:"type:decimal(10,2)"`
+	P50Value        float64       `gorm:"type:decimal(10,2)"` // Median
+	P90Value        float64       `gorm:"type:decimal(10,2)"` // 90th percentile
+	CalculatedAt    time.Time
 }
 
 func (AgreementComplianceSummary) TableName() string {

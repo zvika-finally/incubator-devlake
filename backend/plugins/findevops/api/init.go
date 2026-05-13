@@ -24,11 +24,9 @@ import (
 	"github.com/apache/incubator-devlake/plugins/findevops/models"
 )
 
-var basicRes context.BasicRes
 var settingsHelper *api.MetricSettingsApiHelper[*models.FinDevOpsSettings]
 
 func Init(br context.BasicRes, p plugin.PluginMeta) {
-	basicRes = br
 	settingsHelper = api.NewMetricSettingsApiHelper[*models.FinDevOpsSettings](
 		br,
 		p.Name(),

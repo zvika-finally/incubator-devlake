@@ -28,22 +28,22 @@ import (
 type initSchema struct{}
 
 type costAllocation20260129 struct {
-	Id                     string    `gorm:"primaryKey;type:varchar(255)"`
-	InitiativeId           string    `gorm:"type:varchar(255);index"`
-	IssueId                string    `gorm:"type:varchar(255);index"`
-	FiscalMonth            string    `gorm:"type:varchar(10);index"`
-	DeveloperId            string    `gorm:"type:varchar(255);index"`
-	HoursWorked            float64   `gorm:"type:decimal(10,2)"`
-	HourlyRate             float64   `gorm:"type:decimal(10,2)"`
-	DeveloperCost          float64   `gorm:"type:decimal(12,2)"`
-	AIToolCost             float64   `gorm:"type:decimal(12,2)"`
-	TotalCost              float64   `gorm:"type:decimal(12,2)"`
-	CapitalizationCategory string    `gorm:"type:varchar(50)"`
-	ProjectPhase           string    `gorm:"type:varchar(50)"`
-	CapitalizationPercent  int       `gorm:"type:int"`
-	CategoryReason         string    `gorm:"type:varchar(255)"`
-	IssueType              string    `gorm:"type:varchar(50)"`
-	IssueLabels            string    `gorm:"type:text"`
+	Id                     string  `gorm:"primaryKey;type:varchar(255)"`
+	InitiativeId           string  `gorm:"type:varchar(255);index"`
+	IssueId                string  `gorm:"type:varchar(255);index"`
+	FiscalMonth            string  `gorm:"type:varchar(10);index"`
+	DeveloperId            string  `gorm:"type:varchar(255);index"`
+	HoursWorked            float64 `gorm:"type:decimal(10,2)"`
+	HourlyRate             float64 `gorm:"type:decimal(10,2)"`
+	DeveloperCost          float64 `gorm:"type:decimal(12,2)"`
+	AIToolCost             float64 `gorm:"type:decimal(12,2)"`
+	TotalCost              float64 `gorm:"type:decimal(12,2)"`
+	CapitalizationCategory string  `gorm:"type:varchar(50)"`
+	ProjectPhase           string  `gorm:"type:varchar(50)"`
+	CapitalizationPercent  int     `gorm:"type:int"`
+	CategoryReason         string  `gorm:"type:varchar(255)"`
+	IssueType              string  `gorm:"type:varchar(50)"`
+	IssueLabels            string  `gorm:"type:text"`
 	CalculatedAt           time.Time
 	CreatedAt              time.Time
 }
@@ -53,20 +53,20 @@ func (costAllocation20260129) TableName() string {
 }
 
 type monthlyCostSummary20260129 struct {
-	Id                 string    `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName        string    `gorm:"type:varchar(255);index"`
-	FiscalMonth        string    `gorm:"type:varchar(10);index"`
-	TotalCost          float64   `gorm:"type:decimal(14,2)"`
-	CapitalizableCost  float64   `gorm:"type:decimal(14,2)"`
-	ExpenseCost        float64   `gorm:"type:decimal(14,2)"`
-	CapitalizationRate float64   `gorm:"type:decimal(5,2)"`
-	PreliminaryCost    float64   `gorm:"type:decimal(14,2)"`
-	DevelopmentCost    float64   `gorm:"type:decimal(14,2)"`
-	PostImplCost       float64   `gorm:"type:decimal(14,2)"`
-	NewBusinessCost    float64   `gorm:"type:decimal(14,2)"`
-	KTLOCost           float64   `gorm:"type:decimal(14,2)"`
-	PlatformCost       float64   `gorm:"type:decimal(14,2)"`
-	TechDebtCost       float64   `gorm:"type:decimal(14,2)"`
+	Id                 string  `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName        string  `gorm:"type:varchar(255);index"`
+	FiscalMonth        string  `gorm:"type:varchar(10);index"`
+	TotalCost          float64 `gorm:"type:decimal(14,2)"`
+	CapitalizableCost  float64 `gorm:"type:decimal(14,2)"`
+	ExpenseCost        float64 `gorm:"type:decimal(14,2)"`
+	CapitalizationRate float64 `gorm:"type:decimal(5,2)"`
+	PreliminaryCost    float64 `gorm:"type:decimal(14,2)"`
+	DevelopmentCost    float64 `gorm:"type:decimal(14,2)"`
+	PostImplCost       float64 `gorm:"type:decimal(14,2)"`
+	NewBusinessCost    float64 `gorm:"type:decimal(14,2)"`
+	KTLOCost           float64 `gorm:"type:decimal(14,2)"`
+	PlatformCost       float64 `gorm:"type:decimal(14,2)"`
+	TechDebtCost       float64 `gorm:"type:decimal(14,2)"`
 	CalculatedAt       time.Time
 }
 
@@ -75,12 +75,12 @@ func (monthlyCostSummary20260129) TableName() string {
 }
 
 type developerHourlyRate20260129 struct {
-	Id            string    `gorm:"primaryKey;type:varchar(255)"`
-	DeveloperId   string    `gorm:"type:varchar(255);uniqueIndex"`
-	DeveloperName string    `gorm:"type:varchar(255)"`
-	HourlyRate    float64   `gorm:"type:decimal(10,2)"`
-	Role          string    `gorm:"type:varchar(100)"`
-	CostCenter    string    `gorm:"type:varchar(100)"`
+	Id            string  `gorm:"primaryKey;type:varchar(255)"`
+	DeveloperId   string  `gorm:"type:varchar(255);uniqueIndex"`
+	DeveloperName string  `gorm:"type:varchar(255)"`
+	HourlyRate    float64 `gorm:"type:decimal(10,2)"`
+	Role          string  `gorm:"type:varchar(100)"`
+	CostCenter    string  `gorm:"type:varchar(100)"`
 	EffectiveDate time.Time
 	CreatedAt     time.Time
 }

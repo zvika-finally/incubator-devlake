@@ -23,15 +23,15 @@ import (
 
 // BusinessInitiative represents a strategic business goal extracted from Jira Epics
 type BusinessInitiative struct {
-	Id                 string     `gorm:"primaryKey;type:varchar(255)"`
-	Name               string     `gorm:"type:varchar(500);not null"`
-	JiraEpicKey        string     `gorm:"type:varchar(100);not null;index"`
-	GoalType           string     `gorm:"type:varchar(50)"` // revenue, efficiency, compliance, innovation
-	InvestmentCategory string     `gorm:"type:varchar(50)"` // business, ktlo, platform, techdebt, support, rd
-	DevelopmentStage   string     `gorm:"type:varchar(50)"` // development, maintenance, research
-	FiscalQuarter      string     `gorm:"type:varchar(20)"` // 2026-Q1
+	Id                 string `gorm:"primaryKey;type:varchar(255)"`
+	Name               string `gorm:"type:varchar(500);not null"`
+	JiraEpicKey        string `gorm:"type:varchar(100);not null;index"`
+	GoalType           string `gorm:"type:varchar(50)"` // revenue, efficiency, compliance, innovation
+	InvestmentCategory string `gorm:"type:varchar(50)"` // business, ktlo, platform, techdebt, support, rd
+	DevelopmentStage   string `gorm:"type:varchar(50)"` // development, maintenance, research
+	FiscalQuarter      string `gorm:"type:varchar(20)"` // 2026-Q1
 	TargetDate         *time.Time
-	Status             string     `gorm:"type:varchar(50)"` // planned, active, completed, cancelled
+	Status             string `gorm:"type:varchar(50)"` // planned, active, completed, cancelled
 
 	// Business capability classification
 	BusinessCapability string `gorm:"type:varchar(50)"` // core_product, growth, monetization, platform, etc.
@@ -51,11 +51,11 @@ func (BusinessInitiative) TableName() string {
 
 // WorkAllocation links work items (issues, PRs, commits) to business initiatives
 type WorkAllocation struct {
-	Id             string  `gorm:"primaryKey;type:varchar(255)"`
-	InitiativeId   string  `gorm:"type:varchar(255);not null;index"`
-	EntityType     string  `gorm:"type:varchar(50);not null"` // issue, pull_request, commit
-	EntityId       string  `gorm:"type:varchar(255);not null;index"`
-	DeveloperId    string  `gorm:"type:varchar(255);index"`
+	Id             string `gorm:"primaryKey;type:varchar(255)"`
+	InitiativeId   string `gorm:"type:varchar(255);not null;index"`
+	EntityType     string `gorm:"type:varchar(50);not null"` // issue, pull_request, commit
+	EntityId       string `gorm:"type:varchar(255);not null;index"`
+	DeveloperId    string `gorm:"type:varchar(255);index"`
 	StoryPoints    int
 	EstimatedHours float64
 	ActualHours    float64

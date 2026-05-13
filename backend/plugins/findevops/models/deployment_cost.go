@@ -23,15 +23,15 @@ import (
 
 // DeploymentCost stores cost per deployment metrics for different time windows
 type DeploymentCost struct {
-	Id                string    `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName       string    `gorm:"type:varchar(255);index"`
-	WindowDays        int       `gorm:"type:int;index"` // 7, 30, or 90 days
-	PeriodStart       time.Time `gorm:"index"`
-	PeriodEnd         time.Time `gorm:"index"`
+	Id          string    `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName string    `gorm:"type:varchar(255);index"`
+	WindowDays  int       `gorm:"type:int;index"` // 7, 30, or 90 days
+	PeriodStart time.Time `gorm:"index"`
+	PeriodEnd   time.Time `gorm:"index"`
 
-	TotalCost           float64 `gorm:"type:decimal(14,2)"`
-	DeploymentCount     int     `gorm:"type:int"`
-	CostPerDeployment   float64 `gorm:"type:decimal(12,2)"`
+	TotalCost         float64 `gorm:"type:decimal(14,2)"`
+	DeploymentCount   int     `gorm:"type:int"`
+	CostPerDeployment float64 `gorm:"type:decimal(12,2)"`
 
 	CalculatedAt time.Time `gorm:"index"`
 }

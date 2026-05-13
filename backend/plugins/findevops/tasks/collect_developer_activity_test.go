@@ -33,13 +33,13 @@ func TestCalculateActivityScore(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name           string
-		prsAuthored    int
-		prsReviewed    int
-		commits        int
-		issuesUpdated  int
-		comments       int
-		expectedScore  float64
+		name          string
+		prsAuthored   int
+		prsReviewed   int
+		commits       int
+		issuesUpdated int
+		comments      int
+		expectedScore float64
 	}{
 		{
 			name:          "Typical developer month",

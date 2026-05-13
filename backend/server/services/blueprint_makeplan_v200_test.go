@@ -181,9 +181,9 @@ func TestGeneratePlanJsonV200_MetricPluginDependencies(t *testing.T) {
 		}
 		// Add plugins in random order to verify sorting works
 		metrics := map[string]json.RawMessage{
-			capName:   json.RawMessage("{}"),
-			doraName:  json.RawMessage("{}"),
-			bizName:   json.RawMessage("{}"),
+			capName:  json.RawMessage("{}"),
+			doraName: json.RawMessage("{}"),
+			bizName:  json.RawMessage("{}"),
 		}
 
 		plan, err := GeneratePlanJsonV200(projectName, connections, metrics, false)

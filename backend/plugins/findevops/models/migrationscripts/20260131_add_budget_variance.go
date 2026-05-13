@@ -48,22 +48,22 @@ func (script *addBudgetVariance) Name() string {
 
 // Migration model for cost_allocations - includes new variance fields
 type costAllocation20260131 struct {
-	Id                     string    `gorm:"primaryKey;type:varchar(255)"`
-	InitiativeId           string    `gorm:"type:varchar(255);index"`
-	IssueId                string    `gorm:"type:varchar(255);index"`
-	FiscalMonth            string    `gorm:"type:varchar(10);index"`
-	DeveloperId            string    `gorm:"type:varchar(255);index"`
-	HoursWorked            float64   `gorm:"type:decimal(10,2)"`
-	HourlyRate             float64   `gorm:"type:decimal(10,2)"`
-	DeveloperCost          float64   `gorm:"type:decimal(12,2)"`
-	AIToolCost             float64   `gorm:"type:decimal(12,2)"`
-	TotalCost              float64   `gorm:"type:decimal(12,2)"`
-	CapitalizationCategory string    `gorm:"type:varchar(50)"`
-	ProjectPhase           string    `gorm:"type:varchar(50)"`
-	CapitalizationPercent  int       `gorm:"type:int"`
-	CategoryReason         string    `gorm:"type:varchar(255)"`
-	IssueType              string    `gorm:"type:varchar(50)"`
-	IssueLabels            string    `gorm:"type:text"`
+	Id                     string  `gorm:"primaryKey;type:varchar(255)"`
+	InitiativeId           string  `gorm:"type:varchar(255);index"`
+	IssueId                string  `gorm:"type:varchar(255);index"`
+	FiscalMonth            string  `gorm:"type:varchar(10);index"`
+	DeveloperId            string  `gorm:"type:varchar(255);index"`
+	HoursWorked            float64 `gorm:"type:decimal(10,2)"`
+	HourlyRate             float64 `gorm:"type:decimal(10,2)"`
+	DeveloperCost          float64 `gorm:"type:decimal(12,2)"`
+	AIToolCost             float64 `gorm:"type:decimal(12,2)"`
+	TotalCost              float64 `gorm:"type:decimal(12,2)"`
+	CapitalizationCategory string  `gorm:"type:varchar(50)"`
+	ProjectPhase           string  `gorm:"type:varchar(50)"`
+	CapitalizationPercent  int     `gorm:"type:int"`
+	CategoryReason         string  `gorm:"type:varchar(255)"`
+	IssueType              string  `gorm:"type:varchar(50)"`
+	IssueLabels            string  `gorm:"type:text"`
 	// New budget variance fields
 	EstimatedMinutes int64   `gorm:"type:bigint"`
 	ActualMinutes    int64   `gorm:"type:bigint"`
@@ -81,24 +81,24 @@ func (costAllocation20260131) TableName() string {
 
 // Migration model for monthly_cost_summaries - includes new unallocated/variance fields
 type monthlyCostSummary20260131 struct {
-	Id                   string    `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName          string    `gorm:"type:varchar(255);index"`
-	FiscalMonth          string    `gorm:"type:varchar(10);index"`
-	TotalCost            float64   `gorm:"type:decimal(14,2)"`
-	CapitalizableCost    float64   `gorm:"type:decimal(14,2)"`
-	ExpenseCost          float64   `gorm:"type:decimal(14,2)"`
-	CapitalizationRate   float64   `gorm:"type:decimal(5,2)"`
-	PreliminaryCost      float64   `gorm:"type:decimal(14,2)"`
-	DevelopmentCost      float64   `gorm:"type:decimal(14,2)"`
-	PostImplCost         float64   `gorm:"type:decimal(14,2)"`
-	NewBusinessCost      float64   `gorm:"type:decimal(14,2)"`
-	KTLOCost             float64   `gorm:"type:decimal(14,2)"`
-	PlatformCost         float64   `gorm:"type:decimal(14,2)"`
-	TechDebtCost         float64   `gorm:"type:decimal(14,2)"`
+	Id                 string  `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName        string  `gorm:"type:varchar(255);index"`
+	FiscalMonth        string  `gorm:"type:varchar(10);index"`
+	TotalCost          float64 `gorm:"type:decimal(14,2)"`
+	CapitalizableCost  float64 `gorm:"type:decimal(14,2)"`
+	ExpenseCost        float64 `gorm:"type:decimal(14,2)"`
+	CapitalizationRate float64 `gorm:"type:decimal(5,2)"`
+	PreliminaryCost    float64 `gorm:"type:decimal(14,2)"`
+	DevelopmentCost    float64 `gorm:"type:decimal(14,2)"`
+	PostImplCost       float64 `gorm:"type:decimal(14,2)"`
+	NewBusinessCost    float64 `gorm:"type:decimal(14,2)"`
+	KTLOCost           float64 `gorm:"type:decimal(14,2)"`
+	PlatformCost       float64 `gorm:"type:decimal(14,2)"`
+	TechDebtCost       float64 `gorm:"type:decimal(14,2)"`
 	// New unallocated cost fields
-	UnallocatedCost      float64 `gorm:"type:decimal(14,2)"`
-	UnallocatedPercent   float64 `gorm:"type:decimal(5,2)"`
-	OrphanIssueCount     int     `gorm:"type:int"`
+	UnallocatedCost    float64 `gorm:"type:decimal(14,2)"`
+	UnallocatedPercent float64 `gorm:"type:decimal(5,2)"`
+	OrphanIssueCount   int     `gorm:"type:int"`
 	// New budget variance fields
 	TotalEstimatedCost   float64 `gorm:"type:decimal(14,2)"`
 	TotalActualCost      float64 `gorm:"type:decimal(14,2)"`

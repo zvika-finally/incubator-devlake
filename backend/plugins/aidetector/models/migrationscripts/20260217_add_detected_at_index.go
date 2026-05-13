@@ -62,4 +62,3 @@ func (script *addDetectedAtIndex) Version() uint64 {
 func (script *addDetectedAtIndex) Name() string {
 	return "aidetector: add index on ai_usage_signals.detected_at"
 }
-

@@ -124,20 +124,26 @@ func forecastInitiative(db dal.Dal, initiative bmModels.BusinessInitiative, avgV
 	var totalPoints, completedPoints int64
 
 	// Total story points (from work allocations)
-	db.First(&totalPoints,
+	if err := db.First(&totalPoints,
 		dal.Select("COALESCE(SUM(story_points), 0)"),
 		dal.From("work_allocations"),
 		dal.Where("initiative_id = ?", initiative.Id),
-	)
+	); err != nil {
+		logger.Warn(err, "failed to load total story points for initiative %s", initiative.Id)
+		return nil
+	}
 
 	// Completed story points (issues that are done)
-	db.First(&completedPoints,
+	if err := db.First(&completedPoints,
 		dal.Select("COALESCE(SUM(wa.story_points), 0)"),
 		dal.From("work_allocations wa"),
 		dal.Join("LEFT JOIN issues i ON i.id = wa.entity_id"),
 		dal.Where("wa.initiative_id = ? AND wa.entity_type = ? AND i.status = ?",
 			initiative.Id, "issue", "Done"),
-	)
+	); err != nil {
+		logger.Warn(err, "failed to load completed story points for initiative %s", initiative.Id)
+		return nil
+	}
 
 	remaining := int(totalPoints - completedPoints)
 	if remaining <= 0 {

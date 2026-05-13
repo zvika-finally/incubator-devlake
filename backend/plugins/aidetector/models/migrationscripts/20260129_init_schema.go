@@ -28,23 +28,23 @@ import (
 type initSchema struct{}
 
 type aiUsageSignal20260129 struct {
-	Id                    string    `gorm:"primaryKey;type:varchar(255)"`
-	PullRequestId         string    `gorm:"type:varchar(255);not null;index"`
-	AIConfidenceScore     int       `gorm:"type:int"`
-	DetectedTool          string    `gorm:"type:varchar(50)"`
-	RapidCommitScore      int       `gorm:"type:int"`
-	PRSizeScore           int       `gorm:"type:int"`
-	LinesPerMinuteScore   int       `gorm:"type:int"`
-	DuplicationScore      int       `gorm:"type:int"`
-	GenericMessageScore   int       `gorm:"type:int"`
-	AvgTimeBetweenCommits float64   `gorm:"type:decimal(10,2)"`
-	LinesPerMinute        float64   `gorm:"type:decimal(10,2)"`
+	Id                    string  `gorm:"primaryKey;type:varchar(255)"`
+	PullRequestId         string  `gorm:"type:varchar(255);not null;index"`
+	AIConfidenceScore     int     `gorm:"type:int"`
+	DetectedTool          string  `gorm:"type:varchar(50)"`
+	RapidCommitScore      int     `gorm:"type:int"`
+	PRSizeScore           int     `gorm:"type:int"`
+	LinesPerMinuteScore   int     `gorm:"type:int"`
+	DuplicationScore      int     `gorm:"type:int"`
+	GenericMessageScore   int     `gorm:"type:int"`
+	AvgTimeBetweenCommits float64 `gorm:"type:decimal(10,2)"`
+	LinesPerMinute        float64 `gorm:"type:decimal(10,2)"`
 	PRAdditions           int
 	PRDeletions           int
 	CommitCount           int
-	CycleTimeHours        float64   `gorm:"type:decimal(10,2)"`
-	VelocityMultiplier    float64   `gorm:"type:decimal(5,2)"`
-	PatternSignatures     string    `gorm:"type:text"`
+	CycleTimeHours        float64 `gorm:"type:decimal(10,2)"`
+	VelocityMultiplier    float64 `gorm:"type:decimal(5,2)"`
+	PatternSignatures     string  `gorm:"type:text"`
 	DetectedAt            time.Time
 	CreatedAt             time.Time
 }
@@ -54,13 +54,13 @@ func (aiUsageSignal20260129) TableName() string {
 }
 
 type developerBaseline20260129 struct {
-	Id                    string    `gorm:"primaryKey;type:varchar(255)"`
-	DeveloperId           string    `gorm:"type:varchar(255);not null;uniqueIndex"`
-	AvgPRAdditions        float64   `gorm:"type:decimal(10,2)"`
-	AvgPRDeletions        float64   `gorm:"type:decimal(10,2)"`
-	AvgCycleTimeHours     float64   `gorm:"type:decimal(10,2)"`
-	AvgCommitsPerPR       float64   `gorm:"type:decimal(10,2)"`
-	AvgTimeBetweenCommits float64   `gorm:"type:decimal(10,2)"`
+	Id                    string  `gorm:"primaryKey;type:varchar(255)"`
+	DeveloperId           string  `gorm:"type:varchar(255);not null;uniqueIndex"`
+	AvgPRAdditions        float64 `gorm:"type:decimal(10,2)"`
+	AvgPRDeletions        float64 `gorm:"type:decimal(10,2)"`
+	AvgCycleTimeHours     float64 `gorm:"type:decimal(10,2)"`
+	AvgCommitsPerPR       float64 `gorm:"type:decimal(10,2)"`
+	AvgTimeBetweenCommits float64 `gorm:"type:decimal(10,2)"`
 	PRCount               int
 	CalculatedAt          time.Time
 }

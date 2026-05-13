@@ -31,9 +31,9 @@ const (
 
 // RevenueImpact values classify how an initiative impacts revenue
 const (
-	RevenueImpactDirect     = "direct"     // Directly generates revenue
-	RevenueImpactEnabling   = "enabling"   // Enables revenue-generating features
-	RevenueImpactSupporting = "supporting" // Supports revenue indirectly
+	RevenueImpactDirect     = "direct"      // Directly generates revenue
+	RevenueImpactEnabling   = "enabling"    // Enables revenue-generating features
+	RevenueImpactSupporting = "supporting"  // Supports revenue indirectly
 	RevenueImpactCostCenter = "cost_center" // Pure cost (compliance, maintenance)
 )
 

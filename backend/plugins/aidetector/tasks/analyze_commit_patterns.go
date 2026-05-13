@@ -207,9 +207,5 @@ func isGenericMessage(message string) bool {
 	}
 
 	// Also check for very short messages (< 10 chars)
-	if len(message) < 10 {
-		return true
-	}
-
-	return false
+	return len(message) < 10
 }

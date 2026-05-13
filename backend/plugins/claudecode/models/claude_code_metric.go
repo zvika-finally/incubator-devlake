@@ -53,21 +53,21 @@ type ClaudeCodeUsageMetric struct {
 	TerminalType string `gorm:"type:varchar(100)"` // e.g., "vscode", "iTerm.app", "tmux"
 
 	// Core metrics from API
-	NumSessions                int `gorm:"type:int"` // Number of distinct Claude Code sessions
-	LinesAdded                 int `gorm:"type:int"` // Lines of code added
-	LinesRemoved               int `gorm:"type:int"` // Lines of code removed
-	CommitsByClaudeCode        int `gorm:"type:int"` // Git commits created through Claude Code
-	PullRequestsByClaudeCode   int `gorm:"type:int"` // PRs created through Claude Code
+	NumSessions              int `gorm:"type:int"` // Number of distinct Claude Code sessions
+	LinesAdded               int `gorm:"type:int"` // Lines of code added
+	LinesRemoved             int `gorm:"type:int"` // Lines of code removed
+	CommitsByClaudeCode      int `gorm:"type:int"` // Git commits created through Claude Code
+	PullRequestsByClaudeCode int `gorm:"type:int"` // PRs created through Claude Code
 
 	// Tool action metrics (acceptance/rejection)
-	EditToolAccepted       int `gorm:"type:int"`
-	EditToolRejected       int `gorm:"type:int"`
-	MultiEditToolAccepted  int `gorm:"type:int"`
-	MultiEditToolRejected  int `gorm:"type:int"`
-	WriteToolAccepted      int `gorm:"type:int"`
-	WriteToolRejected      int `gorm:"type:int"`
-	NotebookEditAccepted   int `gorm:"type:int"`
-	NotebookEditRejected   int `gorm:"type:int"`
+	EditToolAccepted      int `gorm:"type:int"`
+	EditToolRejected      int `gorm:"type:int"`
+	MultiEditToolAccepted int `gorm:"type:int"`
+	MultiEditToolRejected int `gorm:"type:int"`
+	WriteToolAccepted     int `gorm:"type:int"`
+	WriteToolRejected     int `gorm:"type:int"`
+	NotebookEditAccepted  int `gorm:"type:int"`
+	NotebookEditRejected  int `gorm:"type:int"`
 
 	// Calculated acceptance rates
 	EditToolAcceptanceRate  float64 `gorm:"type:decimal(5,2)"`
@@ -75,9 +75,9 @@ type ClaudeCodeUsageMetric struct {
 	OverallAcceptanceRate   float64 `gorm:"type:decimal(5,2)"`
 
 	// Token usage (aggregated across models)
-	InputTokens        int64 `gorm:"type:bigint"`
-	OutputTokens       int64 `gorm:"type:bigint"`
-	CacheReadTokens    int64 `gorm:"type:bigint"`
+	InputTokens         int64 `gorm:"type:bigint"`
+	OutputTokens        int64 `gorm:"type:bigint"`
+	CacheReadTokens     int64 `gorm:"type:bigint"`
 	CacheCreationTokens int64 `gorm:"type:bigint"`
 
 	// Cost (in cents USD)
@@ -93,27 +93,27 @@ func (ClaudeCodeUsageMetric) TableName() string {
 
 // ClaudeCodeUserMetric stores per-user usage metrics
 type ClaudeCodeUserMetric struct {
-	Id              string    `gorm:"primaryKey;type:varchar(255)"`
-	ConnectionId    uint64    `gorm:"type:bigint;index"`
-	OrganizationId  string    `gorm:"type:varchar(255);index"`
-	UserId          string    `gorm:"type:varchar(255);index"`
-	UserEmail       string    `gorm:"type:varchar(255)"`
-	Date            time.Time `gorm:"index"`
+	Id             string    `gorm:"primaryKey;type:varchar(255)"`
+	ConnectionId   uint64    `gorm:"type:bigint;index"`
+	OrganizationId string    `gorm:"type:varchar(255);index"`
+	UserId         string    `gorm:"type:varchar(255);index"`
+	UserEmail      string    `gorm:"type:varchar(255)"`
+	Date           time.Time `gorm:"index"`
 
 	// Tool usage
-	EditToolUses    int       `gorm:"type:int"`
-	WriteToolUses   int       `gorm:"type:int"`
-	TotalToolUses   int       `gorm:"type:int"`
+	EditToolUses  int `gorm:"type:int"`
+	WriteToolUses int `gorm:"type:int"`
+	TotalToolUses int `gorm:"type:int"`
 
 	// Code metrics
-	LinesWritten    int       `gorm:"type:int"`
-	SessionCount    int       `gorm:"type:int"`
+	LinesWritten int `gorm:"type:int"`
+	SessionCount int `gorm:"type:int"`
 
 	// Token usage
-	InputTokens     int64     `gorm:"type:bigint"`
-	OutputTokens    int64     `gorm:"type:bigint"`
+	InputTokens  int64 `gorm:"type:bigint"`
+	OutputTokens int64 `gorm:"type:bigint"`
 
-	CollectedAt     time.Time
+	CollectedAt time.Time
 }
 
 func (ClaudeCodeUserMetric) TableName() string {

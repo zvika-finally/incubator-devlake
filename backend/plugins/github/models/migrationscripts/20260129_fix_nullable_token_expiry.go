@@ -71,4 +71,3 @@ func (*fixNullableTokenExpiry) Version() uint64 {
 func (*fixNullableTokenExpiry) Name() string {
 	return "fix nullable token_expires_at and refresh_token_expires_at for MySQL compatibility"
 }
-

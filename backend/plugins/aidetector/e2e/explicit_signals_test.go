@@ -229,9 +229,9 @@ func TestNoFalsePositives(t *testing.T) {
 		"Update dependencies",
 		"Merge branch 'feature' into main",
 		"Initial commit",
-		"The code generator module was updated",     // "generator" shouldn't trigger
-		"This is a generic solution",                // "generic" shouldn't trigger
-		"AI is mentioned but not as a tool marker",  // Just mentioning AI
+		"The code generator module was updated",    // "generator" shouldn't trigger
+		"This is a generic solution",               // "generic" shouldn't trigger
+		"AI is mentioned but not as a tool marker", // Just mentioning AI
 	}
 
 	for _, text := range normalTexts {

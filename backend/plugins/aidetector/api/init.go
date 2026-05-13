@@ -24,11 +24,9 @@ import (
 	"github.com/apache/incubator-devlake/plugins/aidetector/models"
 )
 
-var basicRes context.BasicRes
 var settingsHelper *api.MetricSettingsApiHelper[*models.AIDetectorSettings]
 
 func Init(br context.BasicRes, p plugin.PluginMeta) {
-	basicRes = br
 	settingsHelper = api.NewMetricSettingsApiHelper[*models.AIDetectorSettings](
 		br,
 		p.Name(),

@@ -35,7 +35,8 @@ var CalculateDeploymentCostsMeta = plugin.SubTaskMeta{
 	DomainTypes:      []string{plugin.DOMAIN_TYPE_CICD},
 }
 
-// Time windows for cost calculation
+// CostTimeWindows lists the day-window sizes (7, 30, 90) used when
+// computing rolling deployment costs.
 var CostTimeWindows = []int{7, 30, 90}
 
 func CalculateDeploymentCosts(taskCtx plugin.SubTaskContext) errors.Error {
@@ -73,11 +74,11 @@ func CalculateDeploymentCosts(taskCtx plugin.SubTaskContext) errors.Error {
 
 		// Create/update deployment cost record
 		deploymentCost := models.DeploymentCost{
-			Id:                fmt.Sprintf("%s:%d:%s", data.Options.ProjectName, windowDays, periodEnd.Format("20060102")),
-			ProjectName:       data.Options.ProjectName,
-			WindowDays:        windowDays,
-			PeriodStart:       periodStart,
-			PeriodEnd:         periodEnd,
+			Id:          fmt.Sprintf("%s:%d:%s", data.Options.ProjectName, windowDays, periodEnd.Format("20060102")),
+			ProjectName: data.Options.ProjectName,
+			WindowDays:  windowDays,
+			PeriodStart: periodStart,
+			PeriodEnd:   periodEnd,
 
 			TotalCost:         totalCost,
 			DeploymentCount:   deploymentCount,

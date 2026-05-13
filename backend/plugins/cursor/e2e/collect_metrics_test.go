@@ -60,21 +60,21 @@ func TestCursorAgentEditsResponseParsing(t *testing.T) {
 
 func TestCursorUsageMetricStorage(t *testing.T) {
 	metric := models.CursorUsageMetric{
-		Id:                 "1:2024-01-15",
-		ConnectionId:       1,
-		Date:               time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-		TotalSuggestions:   5000,
-		TotalAcceptances:   3500,
-		AcceptanceRate:     70.0,
-		GreenLinesAccepted: 2000,
+		Id:                  "1:2024-01-15",
+		ConnectionId:        1,
+		Date:                time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+		TotalSuggestions:    5000,
+		TotalAcceptances:    3500,
+		AcceptanceRate:      70.0,
+		GreenLinesAccepted:  2000,
 		GreenLinesSuggested: 3000,
-		TabSuggestions:     4000,
-		TabAcceptances:     2800,
-		TabAcceptanceRate:  70.0,
+		TabSuggestions:      4000,
+		TabAcceptances:      2800,
+		TabAcceptanceRate:   70.0,
 		ComposerSuggestions: 1000,
 		ComposerAcceptances: 700,
-		DailyActiveUsers:   25,
-		CollectedAt:        time.Now(),
+		DailyActiveUsers:    25,
+		CollectedAt:         time.Now(),
 	}
 
 	// Verify metric fields
@@ -129,19 +129,19 @@ func TestRateLimitHandling(t *testing.T) {
 
 func TestCursorUserMetricModel(t *testing.T) {
 	metric := models.CursorUserMetric{
-		Id:                 "1:user-456:2024-01-15",
-		ConnectionId:       1,
-		UserId:             "user-456",
-		UserEmail:          "alice@example.com",
-		Date:               time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
-		TabSuggestions:     500,
-		TabAcceptances:     350,
+		Id:                  "1:user-456:2024-01-15",
+		ConnectionId:        1,
+		UserId:              "user-456",
+		UserEmail:           "alice@example.com",
+		Date:                time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+		TabSuggestions:      500,
+		TabAcceptances:      350,
 		ComposerSuggestions: 100,
 		ComposerAcceptances: 70,
-		AcceptanceRate:     70.0,
-		LinesAccepted:      800,
-		LinesSuggested:     1200,
-		CollectedAt:        time.Now(),
+		AcceptanceRate:      70.0,
+		LinesAccepted:       800,
+		LinesSuggested:      1200,
+		CollectedAt:         time.Now(),
 	}
 
 	assert.NotEmpty(t, metric.Id)

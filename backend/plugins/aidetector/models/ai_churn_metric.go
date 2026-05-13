@@ -25,36 +25,36 @@ import (
 // Based on GitClear's research showing AI code has 41% higher churn rate
 // Churn = lines modified in follow-up commits / original lines added
 type AIChurnMetric struct {
-	Id                string    `gorm:"primaryKey;type:varchar(255)"`
-	PullRequestId     string    `gorm:"type:varchar(255);index"`
-	PullRequestKey    int       `gorm:"type:int"`
-	ProjectName       string    `gorm:"type:varchar(255);index"`
-	AuthorId          string    `gorm:"type:varchar(255);index"`
-	AuthorName        string    `gorm:"type:varchar(255)"`
+	Id             string `gorm:"primaryKey;type:varchar(255)"`
+	PullRequestId  string `gorm:"type:varchar(255);index"`
+	PullRequestKey int    `gorm:"type:int"`
+	ProjectName    string `gorm:"type:varchar(255);index"`
+	AuthorId       string `gorm:"type:varchar(255);index"`
+	AuthorName     string `gorm:"type:varchar(255)"`
 
 	// AI detection linkage
-	AIConfidenceScore int       `gorm:"type:int"`      // From AIUsageSignal
-	IsAIAssisted      bool      `gorm:"type:bool;index"` // Confidence >= effective threshold (options/settings fallback 65)
+	AIConfidenceScore int  `gorm:"type:int"`        // From AIUsageSignal
+	IsAIAssisted      bool `gorm:"type:bool;index"` // Confidence >= effective threshold (options/settings fallback 65)
 
 	// Original PR metrics
-	InitialAdditions  int       `gorm:"type:int"`      // Lines added in original PR
-	InitialDeletions  int       `gorm:"type:int"`      // Lines deleted in original PR
-	MergedAt          *time.Time `gorm:"index"`
+	InitialAdditions int        `gorm:"type:int"` // Lines added in original PR
+	InitialDeletions int        `gorm:"type:int"` // Lines deleted in original PR
+	MergedAt         *time.Time `gorm:"index"`
 
 	// Churn metrics (modifications to PR's files after merge)
-	ChurnWithin7Days  int       `gorm:"type:int"`      // Lines modified within 7 days
-	ChurnWithin30Days int       `gorm:"type:int"`      // Lines modified within 30 days
-	FollowUpCommits7  int       `gorm:"type:int"`      // Count of commits touching these files within 7 days
-	FollowUpCommits30 int       `gorm:"type:int"`      // Count of commits touching these files within 30 days
+	ChurnWithin7Days  int `gorm:"type:int"` // Lines modified within 7 days
+	ChurnWithin30Days int `gorm:"type:int"` // Lines modified within 30 days
+	FollowUpCommits7  int `gorm:"type:int"` // Count of commits touching these files within 7 days
+	FollowUpCommits30 int `gorm:"type:int"` // Count of commits touching these files within 30 days
 
 	// Calculated churn ratios
-	ChurnRatio7Days   float64   `gorm:"type:decimal(8,4)"` // Churn7 / InitialAdditions
-	ChurnRatio30Days  float64   `gorm:"type:decimal(8,4)"` // Churn30 / InitialAdditions
+	ChurnRatio7Days  float64 `gorm:"type:decimal(8,4)"` // Churn7 / InitialAdditions
+	ChurnRatio30Days float64 `gorm:"type:decimal(8,4)"` // Churn30 / InitialAdditions
 
 	// Files from the original PR
-	FilePaths         string    `gorm:"type:text"` // JSON array of file paths
+	FilePaths string `gorm:"type:text"` // JSON array of file paths
 
-	CalculatedAt      time.Time
+	CalculatedAt time.Time
 }
 
 func (AIChurnMetric) TableName() string {
@@ -78,34 +78,34 @@ func (m *AIChurnMetric) ChurnCategory() string {
 
 // ProjectChurnSummary aggregates churn metrics at project level
 type ProjectChurnSummary struct {
-	Id                    string    `gorm:"primaryKey;type:varchar(255)"`
-	ProjectName           string    `gorm:"type:varchar(255);index"`
-	PeriodStart           time.Time `gorm:"index"`
-	PeriodEnd             time.Time `gorm:"index"`
+	Id          string    `gorm:"primaryKey;type:varchar(255)"`
+	ProjectName string    `gorm:"type:varchar(255);index"`
+	PeriodStart time.Time `gorm:"index"`
+	PeriodEnd   time.Time `gorm:"index"`
 
 	// Counts
-	TotalPRsAnalyzed      int       `gorm:"type:int"`
-	AIPRCount             int       `gorm:"type:int"` // PRs with AI confidence >= threshold
-	NonAIPRCount          int       `gorm:"type:int"` // PRs with AI confidence < threshold
+	TotalPRsAnalyzed int `gorm:"type:int"`
+	AIPRCount        int `gorm:"type:int"` // PRs with AI confidence >= threshold
+	NonAIPRCount     int `gorm:"type:int"` // PRs with AI confidence < threshold
 
 	// AI-assisted PR churn
-	AIAvgChurnRatio7      float64   `gorm:"type:decimal(8,4)"`
-	AIAvgChurnRatio30     float64   `gorm:"type:decimal(8,4)"`
-	AITotalChurn30        int       `gorm:"type:int"`
-	AITotalAdditions      int       `gorm:"type:int"`
+	AIAvgChurnRatio7  float64 `gorm:"type:decimal(8,4)"`
+	AIAvgChurnRatio30 float64 `gorm:"type:decimal(8,4)"`
+	AITotalChurn30    int     `gorm:"type:int"`
+	AITotalAdditions  int     `gorm:"type:int"`
 
 	// Non-AI PR churn
-	NonAIAvgChurnRatio7   float64   `gorm:"type:decimal(8,4)"`
-	NonAIAvgChurnRatio30  float64   `gorm:"type:decimal(8,4)"`
-	NonAITotalChurn30     int       `gorm:"type:int"`
-	NonAITotalAdditions   int       `gorm:"type:int"`
+	NonAIAvgChurnRatio7  float64 `gorm:"type:decimal(8,4)"`
+	NonAIAvgChurnRatio30 float64 `gorm:"type:decimal(8,4)"`
+	NonAITotalChurn30    int     `gorm:"type:int"`
+	NonAITotalAdditions  int     `gorm:"type:int"`
 
 	// Comparison metrics
-	ChurnDifferencePercent float64  `gorm:"type:decimal(8,2)"` // (AI - NonAI) / NonAI * 100
+	ChurnDifferencePercent float64 `gorm:"type:decimal(8,2)"` // (AI - NonAI) / NonAI * 100
 	// Positive = AI code has more churn (expected based on research)
 	// GitClear benchmark: +41%
 
-	CalculatedAt          time.Time
+	CalculatedAt time.Time
 }
 
 func (ProjectChurnSummary) TableName() string {

@@ -150,10 +150,10 @@ func TestEliteTeamScenario(t *testing.T) {
 
 func TestAverageTeamScenario(t *testing.T) {
 	// Average team: 0.5 deploy/day, 48h lead time, 10% CFR, 4h MTTR
-	deployScore := tasks.CalculateDeployFreqScore(0.5)    // 12
-	leadTimeScore := tasks.CalculateLeadTimeScore(48.0)   // 12
-	cfrScore := tasks.CalculateCFRScore(10.0)             // 12
-	mttrScore := tasks.CalculateMTTRScore(4.0)            // 6
+	deployScore := tasks.CalculateDeployFreqScore(0.5)  // 12
+	leadTimeScore := tasks.CalculateLeadTimeScore(48.0) // 12
+	cfrScore := tasks.CalculateCFRScore(10.0)           // 12
+	mttrScore := tasks.CalculateMTTRScore(4.0)          // 6
 
 	total := deployScore + leadTimeScore + cfrScore + mttrScore
 	assert.InDelta(t, 42, total, 2, "Average team should score around 42")
@@ -162,10 +162,10 @@ func TestAverageTeamScenario(t *testing.T) {
 
 func TestStruggleTeamScenario(t *testing.T) {
 	// Struggling team: 0.1 deploy/day, 168h (1 week) lead time, 25% CFR, 24h MTTR
-	deployScore := tasks.CalculateDeployFreqScore(0.1)     // 2
-	leadTimeScore := tasks.CalculateLeadTimeScore(168.0)   // 3
-	cfrScore := tasks.CalculateCFRScore(25.0)              // 5
-	mttrScore := tasks.CalculateMTTRScore(24.0)            // 1
+	deployScore := tasks.CalculateDeployFreqScore(0.1)   // 2
+	leadTimeScore := tasks.CalculateLeadTimeScore(168.0) // 3
+	cfrScore := tasks.CalculateCFRScore(25.0)            // 5
+	mttrScore := tasks.CalculateMTTRScore(24.0)          // 1
 
 	total := deployScore + leadTimeScore + cfrScore + mttrScore
 	assert.InDelta(t, 11, total, 2, "Struggling team should score around 11")

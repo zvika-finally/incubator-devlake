@@ -27,34 +27,34 @@ import (
 // Formula: capitalization_rate = capitalizable_cost / total_cost * 100
 func TestCapitalizationRateFormula(t *testing.T) {
 	testCases := []struct {
-		name             string
+		name              string
 		capitalizableCost float64
-		totalCost        float64
-		expectedRate     float64
+		totalCost         float64
+		expectedRate      float64
 	}{
 		{
-			name:             "50% capitalization",
+			name:              "50% capitalization",
 			capitalizableCost: 50000.00,
-			totalCost:        100000.00,
-			expectedRate:     50.00,
+			totalCost:         100000.00,
+			expectedRate:      50.00,
 		},
 		{
-			name:             "100% capitalization (all features)",
+			name:              "100% capitalization (all features)",
 			capitalizableCost: 75000.00,
-			totalCost:        75000.00,
-			expectedRate:     100.00,
+			totalCost:         75000.00,
+			expectedRate:      100.00,
 		},
 		{
-			name:             "0% capitalization (all maintenance)",
+			name:              "0% capitalization (all maintenance)",
 			capitalizableCost: 0.00,
-			totalCost:        50000.00,
-			expectedRate:     0.00,
+			totalCost:         50000.00,
+			expectedRate:      0.00,
 		},
 		{
-			name:             "Zero total cost",
+			name:              "Zero total cost",
 			capitalizableCost: 0.00,
-			totalCost:        0.00,
-			expectedRate:     0.00, // Avoid division by zero
+			totalCost:         0.00,
+			expectedRate:      0.00, // Avoid division by zero
 		},
 	}
 
@@ -74,38 +74,38 @@ func TestCapitalizationRateFormula(t *testing.T) {
 // Positive = under budget, Negative = over budget
 func TestBudgetVarianceFormula(t *testing.T) {
 	testCases := []struct {
-		name             string
-		estimatedMinutes int64
-		actualMinutes    int64
-		expectedVariance float64
+		name               string
+		estimatedMinutes   int64
+		actualMinutes      int64
+		expectedVariance   float64
 		expectedOverBudget bool
 	}{
 		{
-			name:             "On budget",
-			estimatedMinutes: 480,  // 8 hours
-			actualMinutes:    480,
-			expectedVariance: 0.00,
+			name:               "On budget",
+			estimatedMinutes:   480, // 8 hours
+			actualMinutes:      480,
+			expectedVariance:   0.00,
 			expectedOverBudget: false,
 		},
 		{
-			name:             "Under budget by 25%",
-			estimatedMinutes: 480,
-			actualMinutes:    360,  // 6 hours
-			expectedVariance: 25.00,
+			name:               "Under budget by 25%",
+			estimatedMinutes:   480,
+			actualMinutes:      360, // 6 hours
+			expectedVariance:   25.00,
 			expectedOverBudget: false,
 		},
 		{
-			name:             "Over budget by 50%",
-			estimatedMinutes: 480,
-			actualMinutes:    720,  // 12 hours
-			expectedVariance: -50.00,
+			name:               "Over budget by 50%",
+			estimatedMinutes:   480,
+			actualMinutes:      720, // 12 hours
+			expectedVariance:   -50.00,
 			expectedOverBudget: true,
 		},
 		{
-			name:             "No estimate (zero)",
-			estimatedMinutes: 0,
-			actualMinutes:    480,
-			expectedVariance: 0.00, // Cannot calculate variance
+			name:               "No estimate (zero)",
+			estimatedMinutes:   0,
+			actualMinutes:      480,
+			expectedVariance:   0.00,  // Cannot calculate variance
 			expectedOverBudget: false, // No estimate means no over-budget flag
 		},
 	}
@@ -169,32 +169,32 @@ func TestCostPerDeploymentFormula(t *testing.T) {
 // Target: < 10%
 func TestUnallocatedPercentFormula(t *testing.T) {
 	testCases := []struct {
-		name              string
-		unallocatedCost   float64
-		totalCost         float64
-		expectedPercent   float64
-		meetsTarget       bool
+		name            string
+		unallocatedCost float64
+		totalCost       float64
+		expectedPercent float64
+		meetsTarget     bool
 	}{
 		{
-			name:              "Good - 5% unallocated",
-			unallocatedCost:   5000.00,
-			totalCost:        100000.00,
-			expectedPercent:   5.00,
-			meetsTarget:       true, // < 10%
+			name:            "Good - 5% unallocated",
+			unallocatedCost: 5000.00,
+			totalCost:       100000.00,
+			expectedPercent: 5.00,
+			meetsTarget:     true, // < 10%
 		},
 		{
-			name:              "Warning - 15% unallocated",
-			unallocatedCost:   15000.00,
-			totalCost:        100000.00,
-			expectedPercent:   15.00,
-			meetsTarget:       false, // >= 10%
+			name:            "Warning - 15% unallocated",
+			unallocatedCost: 15000.00,
+			totalCost:       100000.00,
+			expectedPercent: 15.00,
+			meetsTarget:     false, // >= 10%
 		},
 		{
-			name:              "Perfect - 0% unallocated",
-			unallocatedCost:   0.00,
-			totalCost:        100000.00,
-			expectedPercent:   0.00,
-			meetsTarget:       true,
+			name:            "Perfect - 0% unallocated",
+			unallocatedCost: 0.00,
+			totalCost:       100000.00,
+			expectedPercent: 0.00,
+			meetsTarget:     true,
 		},
 	}
 

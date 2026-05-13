@@ -32,13 +32,13 @@ type CapacityPlannerSettings struct {
 	VelocitySprintCount int `json:"velocitySprintCount" gorm:"default:6"` // Sprints to use for velocity calculation
 
 	// Brooks's Law model parameters
-	RampUpWeeks         float64 `json:"rampUpWeeks" gorm:"default:4.0"`    // Weeks for new hire to ramp up
+	RampUpWeeks         float64 `json:"rampUpWeeks" gorm:"default:4.0"`         // Weeks for new hire to ramp up
 	NewHireProductivity float64 `json:"newHireProductivity" gorm:"default:0.5"` // New hire productivity during ramp-up (0-1)
 	ChannelOverhead     float64 `json:"channelOverhead" gorm:"default:0.1"`     // Communication overhead per new channel (0-1)
 
 	// ROI calculation parameters
-	DefaultDeveloperCost  float64 `json:"defaultDeveloperCost" gorm:"default:150000.0"` // Annual developer cost
-	RoiTimeHorizonMonths  int     `json:"roiTimeHorizonMonths" gorm:"default:12"`       // ROI calculation horizon
+	DefaultDeveloperCost float64 `json:"defaultDeveloperCost" gorm:"default:150000.0"` // Annual developer cost
+	RoiTimeHorizonMonths int     `json:"roiTimeHorizonMonths" gorm:"default:12"`       // ROI calculation horizon
 
 	// Forecast percentiles (JSON array)
 	// Format: [50, 80, 90, 95] for P50, P80, P90, P95 percentiles
@@ -62,16 +62,16 @@ func (s *CapacityPlannerSettings) SetProjectName(name string) {
 // NewDefaultSettings creates settings with sensible defaults
 func NewDefaultSettings() *CapacityPlannerSettings {
 	return &CapacityPlannerSettings{
-		MonteCarloIterations:  1000,
-		VelocityVariance:      0.25,
-		DefaultVelocity:       20.0,
-		SprintDurationWeeks:   2,
-		VelocitySprintCount:   6,
-		RampUpWeeks:           4.0,
-		NewHireProductivity:   0.5,
-		ChannelOverhead:       0.1,
-		DefaultDeveloperCost:  150000.0,
-		RoiTimeHorizonMonths:  12,
-		ForecastPercentiles:   "[50,80,90,95]",
+		MonteCarloIterations: 1000,
+		VelocityVariance:     0.25,
+		DefaultVelocity:      20.0,
+		SprintDurationWeeks:  2,
+		VelocitySprintCount:  6,
+		RampUpWeeks:          4.0,
+		NewHireProductivity:  0.5,
+		ChannelOverhead:      0.1,
+		DefaultDeveloperCost: 150000.0,
+		RoiTimeHorizonMonths: 12,
+		ForecastPercentiles:  "[50,80,90,95]",
 	}
 }
