@@ -96,6 +96,13 @@ type TableOptions struct {
 	IgnoreTypes []interface{}
 	// if Nullable is set to be true, only the string `NULL` will be taken as NULL
 	Nullable bool
+	// NumericEpsilon specifies per-column absolute tolerance for numeric comparisons.
+	// When a column name is present in this map, both the expected (CSV) and actual (DB)
+	// values are parsed as float64 and the assertion passes if |actual-expected| <= epsilon.
+	// This is useful when different database drivers produce slightly different computed
+	// numeric values (e.g. due to timestamp-precision differences between MySQL and
+	// PostgreSQL). Columns not listed here are compared with exact string equality as usual.
+	NumericEpsilon map[string]float64
 }
 
 // NewDataFlowTester create a *DataFlowTester to help developer test their subtasks data flow
@@ -578,6 +585,22 @@ func (t *DataFlowTester) VerifyTableWithOptions(dst schema.Tabler, opts TableOpt
 		for _, field := range targetFields {
 			expectation := formatDbValue(expected[field], opts.Nullable)
 			reality := formatDbValue(actual[field], opts.Nullable)
+			if epsilon, hasEpsilon := opts.NumericEpsilon[field]; hasEpsilon {
+				if expectation != "" && reality != "" {
+					expFloat, expErr := strconv.ParseFloat(expectation, 64)
+					actFloat, actErr := strconv.ParseFloat(reality, 64)
+					if expErr == nil && actErr == nil {
+						diff := expFloat - actFloat
+						if diff < 0 {
+							diff = -diff
+						}
+						assert.LessOrEqual(t.T, diff, epsilon,
+							fmt.Sprintf(`%s.%s exceeds epsilon %.0f (expected=%s actual=%s, params from csv %s)`,
+								dst.TableName(), field, epsilon, expectation, reality, pkValues))
+						continue
+					}
+				}
+			}
 			if !assert.Equal(t.T, expectation, reality, fmt.Sprintf(`%s.%s not match (with params from csv %s)`, dst.TableName(), field, pkValues)) {
 				_ = t.T // useful for debugging
 			}
