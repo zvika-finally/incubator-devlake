@@ -1,3 +1,3 @@
 id,project_name,agreement_type,threshold_value,threshold_unit,alert_enabled,description,created_at,updated_at
-project1:pr_merge_time,project1,pr_merge_time,7,days,true,PR merge time should be less than 7 days,2026-01-01 00:00:00,2026-01-01 00:00:00
-project1:wip_limit,project1,wip_limit,3,count,true,No more than 3 open PRs per developer,2026-01-01 00:00:00,2026-01-01 00:00:00
+project1:pr_merge_time,project1,pr_merge_time,7,days,1,PR merge time should be less than 7 days,2026-01-01 00:00:00,2026-01-01 00:00:00
+project1:wip_limit,project1,wip_limit,3,count,1,No more than 3 open PRs per developer,2026-01-01 00:00:00,2026-01-01 00:00:00
