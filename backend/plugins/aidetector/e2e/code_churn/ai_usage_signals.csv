@@ -1,5 +1,5 @@
 id,pull_request_id,ai_confidence_score,explicit_tool_detected,detected_at
-sig1,pr1,85,true,2026-01-10 10:00:00
-sig2,pr2,20,false,2026-01-11 10:00:00
-sig3,pr3,90,true,2026-01-12 10:00:00
-sig4,pr4,15,false,2026-01-13 10:00:00
+sig1,pr1,85,1,2026-01-10 10:00:00
+sig2,pr2,20,0,2026-01-11 10:00:00
+sig3,pr3,90,1,2026-01-12 10:00:00
+sig4,pr4,15,0,2026-01-13 10:00:00
