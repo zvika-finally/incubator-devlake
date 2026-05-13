@@ -1,0 +1,8 @@
+id,commit_sha,file_path,additions,deletions
+cf1,sha-commit-1,apps/api/widget.go,100,0
+cf2,sha-commit-2,apps/api/handler.go,150,40
+cf3,sha-commit-2,apps/api/handler_test.go,50,10
+cf4,sha-commit-3,apps/api/handler.go,5,2
+cf5,sha-commit-4,apps/api/cleanup.go,0,100
+cf6,sha-commit-4,apps/api/util.go,50,0
+cf7,sha-commit-6,apps/api/widget.go,5,20
