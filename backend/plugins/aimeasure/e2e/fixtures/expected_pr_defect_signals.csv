@@ -1,4 +1,4 @@
-pr_id,has_revert_14d,has_hotfix_14d,has_incident_14d,incident_data_available,total_defect_count
+pr_id,has_revert14d,has_hotfix14d,has_incident14d,incident_data_available,total_defect_count
 pr1,1,1,0,0,2
 pr2,0,0,0,0,0
 pr3,0,0,0,0,0

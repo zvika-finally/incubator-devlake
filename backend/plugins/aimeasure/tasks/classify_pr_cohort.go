@@ -87,7 +87,7 @@ func ClassifyPRCohort(taskCtx plugin.SubTaskContext) errors.Error {
 	logger := taskCtx.GetLogger()
 
 	cursor, err := db.Cursor(
-		dal.Select("pull_requests.id AS pr_id, COALESCE(ai_usage_signals.ai_confidence_score, 0) AS confidence_score, COALESCE(ai_usage_signals.explicit_tool_detected, 0) AS has_explicit_marker"),
+		dal.Select("pull_requests.id AS pr_id, COALESCE(ai_usage_signals.ai_confidence_score, 0) AS confidence_score, COALESCE(ai_usage_signals.explicit_tool_detected, FALSE) AS has_explicit_marker"),
 		dal.From("pull_requests"),
 		dal.Join("LEFT JOIN ai_usage_signals ON ai_usage_signals.pull_request_id = pull_requests.id"),
 		dal.Where("pull_requests.merged_date IS NOT NULL"),
