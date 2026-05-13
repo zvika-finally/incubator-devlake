@@ -107,7 +107,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  DATE_TRUNC('week', pr.merged_date) AS time,\n  c.ai_cohort,\n  AVG(CASE WHEN d.total_defect_count > 0 THEN 1.0 ELSE 0.0 END) * 100 AS defect_rate_pct\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nLEFT JOIN pr_defect_signals d ON d.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY DATE_TRUNC('week', pr.merged_date), c.ai_cohort\nORDER BY time",
+          "rawSql": "SELECT\n  DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY) AS time,\n  c.ai_cohort,\n  AVG(CASE WHEN d.total_defect_count > 0 THEN 1.0 ELSE 0.0 END) * 100 AS defect_rate_pct\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nLEFT JOIN pr_defect_signals d ON d.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY), c.ai_cohort\nORDER BY time",
           "refId": "A",
           "select": [
             [
@@ -304,7 +304,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  DATE_TRUNC('week', pr.merged_date) AS time,\n  c.ai_cohort,\n  AVG(comp.refactor_ratio) AS avg_refactor_ratio\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nJOIN pr_change_composition comp ON comp.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY DATE_TRUNC('week', pr.merged_date), c.ai_cohort\nORDER BY time",
+          "rawSql": "SELECT\n  DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY) AS time,\n  c.ai_cohort,\n  AVG(comp.refactor_ratio) AS avg_refactor_ratio\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nJOIN pr_change_composition comp ON comp.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY), c.ai_cohort\nORDER BY time",
           "refId": "A",
           "select": [
             [

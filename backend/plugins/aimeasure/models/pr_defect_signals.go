@@ -21,7 +21,8 @@ import "time"
 
 // PRDefectSignals records whether a merged PR was followed by a defect indicator
 // (revert / hotfix / incident) within a 14-day window. One row per PR; recomputed
-// nightly until WindowCloseDate passes (30 days after merge).
+// on every run via CreateOrUpdate. WindowCloseDate is recorded for future use;
+// a Phase B optimization may skip rows whose window has already closed.
 type PRDefectSignals struct {
 	PRId                  string    `gorm:"primaryKey;type:varchar(255)" json:"prId"`
 	HasRevert14d          bool      `gorm:"type:bool" json:"hasRevert14d"`

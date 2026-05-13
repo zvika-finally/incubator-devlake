@@ -23,7 +23,7 @@ Options accepted by the blueprint plan:
 
 ## Idempotency
 
-All three subtasks are idempotent: rerunning overwrites rows. `computeQualityCohort` recomputes rows whose `window_close_date` has not yet passed; once the 30-day window closes, the row is treated as frozen.
+All three subtasks are idempotent: rerunning overwrites rows via `CreateOrUpdate`. `computeQualityCohort` recomputes every merged PR on every run — defect signals can only become more accurate as the window matures, so reruns are safe. A future optimization is to skip rows whose `window_close_date` has passed (Phase B).
 
 ## Identity & seniority
 
