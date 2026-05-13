@@ -1,0 +1,5 @@
+id,base_repo_id,merged_date,title,merge_commit_sha,additions,deletions,status
+pr1,repo1,2026-05-01 10:00:00,feat: add widget,sha-merge-1,100,10,MERGED
+pr2,repo1,2026-05-02 10:00:00,feat: AI-assisted refactor,sha-merge-2,200,50,MERGED
+pr3,repo1,2026-05-03 10:00:00,fix: nil deref,sha-merge-3,5,2,MERGED
+pr4,repo1,2026-05-04 10:00:00,chore: cleanup,sha-merge-4,50,100,MERGED

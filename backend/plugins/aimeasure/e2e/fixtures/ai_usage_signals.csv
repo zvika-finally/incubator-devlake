@@ -1,0 +1,5 @@
+id,pull_request_id,ai_confidence_score,explicit_tool_detected,detected_at
+s1,pr1,15,0,2026-05-01 10:00:00
+s2,pr2,90,1,2026-05-02 10:00:00
+s3,pr3,45,0,2026-05-03 10:00:00
+s4,pr4,5,0,2026-05-04 10:00:00
