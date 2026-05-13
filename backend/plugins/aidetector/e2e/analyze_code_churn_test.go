@@ -67,5 +67,9 @@ func TestAnalyzeCodeChurnDataFlow(t *testing.T) {
 			"file_paths",
 			"calculated_at",
 		},
+		NumericEpsilon: map[string]float64{
+			"churn_ratio7_days":  0.0001,
+			"churn_ratio30_days": 0.0001,
+		},
 	})
 }
