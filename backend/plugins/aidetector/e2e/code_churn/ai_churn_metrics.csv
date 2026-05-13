@@ -1,4 +1,4 @@
-id,pull_request_id,pull_request_key,project_name,author_id,author_name,ai_confidence_score,is_ai_assisted,initial_additions,initial_deletions,churn_within_7_days,churn_within_30_days,follow_up_commits_7,follow_up_commits_30,churn_ratio_7_days,churn_ratio_30_days
+id,pull_request_id,pull_request_key,project_name,author_id,author_name,ai_confidence_score,is_ai_assisted,initial_additions,initial_deletions,churn_within7_days,churn_within30_days,follow_up_commits7,follow_up_commits30,churn_ratio7_days,churn_ratio30_days
 project1:pr1,pr1,101,project1,dev1,Alice,85,1,100,20,20,20,1,1,0.1667,0.1667
 project1:pr2,pr2,102,project1,dev2,Bob,20,0,50,10,0,0,0,0,0.0000,0.0000
 project1:pr3,pr3,103,project1,dev1,Alice,90,1,200,50,50,50,1,1,0.2000,0.2000
