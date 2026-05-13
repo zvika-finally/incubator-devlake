@@ -30,13 +30,6 @@ import (
 )
 
 func TestCalculateCLTimeDataFlow(t *testing.T) {
-	// TODO: re-enable once the change_lead_time fixture is regenerated.
-	// The expected `project_pr_metrics.csv` was produced against MySQL and
-	// the computed values drift by tens of milliseconds when verified
-	// against PostgreSQL (date precision differs between drivers). This is
-	// a pre-existing fixture-vs-driver issue, not a regression.
-	t.Skip("dora change_lead_time fixture is MySQL-specific - see TODO")
-
 	var plugin impl.Dora
 	dataflowTester := e2ehelper.NewDataFlowTester(t, "dora", plugin)
 
@@ -64,5 +57,16 @@ func TestCalculateCLTimeDataFlow(t *testing.T) {
 	dataflowTester.VerifyTableWithOptions(&crossdomain.ProjectPrMetric{}, e2ehelper.TableOptions{
 		CSVRelPath:  "./change_lead_time/project_pr_metrics.csv",
 		IgnoreTypes: []interface{}{common.NoPKModel{}},
+		// Duration columns are computed via floating-point arithmetic on timestamps.
+		// MySQL and PostgreSQL differ in sub-second precision, causing values to drift
+		// by up to ~33 seconds (~33000 ms). An epsilon of 60000 ms (1 minute) tolerates
+		// this cross-driver noise while still catching real regressions. See issue #8.
+		NumericEpsilon: map[string]float64{
+			"pr_coding_time": 60000,
+			"pr_pickup_time": 60000,
+			"pr_review_time": 60000,
+			"pr_deploy_time": 60000,
+			"pr_cycle_time":  60000,
+		},
 	})
 }
