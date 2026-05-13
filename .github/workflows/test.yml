@@ -63,7 +63,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     - name: Install mockery
-      run: go install github.com/vektra/mockery/v2@v2.53.5
+      run: |
+        curl -sL https://github.com/vektra/mockery/releases/download/v2.53.5/mockery_2.53.5_Linux_x86_64.tar.gz \
+          | tar -xz -C /usr/local/bin mockery
+        mockery --version
     - name: Unit tests
       run: |
         go version
