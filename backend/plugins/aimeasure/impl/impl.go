@@ -24,6 +24,7 @@ import (
 	"github.com/apache/incubator-devlake/core/plugin"
 	"github.com/apache/incubator-devlake/plugins/aimeasure/models"
 	"github.com/apache/incubator-devlake/plugins/aimeasure/models/migrationscripts"
+	"github.com/apache/incubator-devlake/plugins/aimeasure/tasks"
 )
 
 // make sure interfaces are implemented
@@ -68,11 +69,17 @@ func (p AIMeasure) GetTablesInfo() []dal.Tabler {
 }
 
 func (p AIMeasure) SubTaskMetas() []plugin.SubTaskMeta {
-	// filled in Task 9 — empty for now so the build succeeds
-	return []plugin.SubTaskMeta{}
+	return []plugin.SubTaskMeta{
+		tasks.ClassifyPRCohortMeta,         // run first — produces pr_ai_cohort
+		tasks.ComputeChangeCompositionMeta, // independent — produces pr_change_composition
+		tasks.ComputeQualityCohortMeta,     // independent — produces pr_defect_signals
+	}
 }
 
 func (p AIMeasure) PrepareTaskData(taskCtx plugin.TaskContext, options map[string]interface{}) (interface{}, errors.Error) {
-	// filled in Task 9 — return nil for now
-	return nil, nil
+	opts, err := tasks.DecodeAndValidateTaskOptions(options)
+	if err != nil {
+		return nil, err
+	}
+	return &tasks.AIMeasureTaskData{Options: opts}, nil
 }
