@@ -48,12 +48,19 @@ var ConvertDeploymentsMeta = plugin.SubTaskMeta{
 
 // ConvertDeployment should be split into two task theoretically
 // But in GitHub, all deployments have commits, so there is no need to change it.
+//
+// GitHub's GraphQL Deployments API emits one Deployment entity per deploy job within a
+// workflow (typically 3 INACTIVE + 1 ACTIVE per ref update), which would inflate
+// cicd_deployment_commits rows ~4x per real deployment. We collapse rows that share the
+// same (commit_oid, environment, ref_name) and keep the entity with the latest
+// updated_date, which represents the latest known status for that deployment event.
 func ConvertDeployment(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	rawDataSubTaskArgs, data := CreateRawDataSubTaskArgs(taskCtx, RAW_DEPLOYMENT_TABLE)
 	cursor, err := db.Cursor(
 		dal.From(&models.GithubDeployment{}),
 		dal.Where("connection_id = ? and github_id = ?", data.Options.ConnectionId, data.Options.GithubId),
+		dal.Orderby("updated_date DESC"),
 	)
 	if err != nil {
 		return err
@@ -62,6 +69,7 @@ func ConvertDeployment(taskCtx plugin.SubTaskContext) errors.Error {
 
 	deploymentIdGen := didgen.NewDomainIdGenerator(&models.GithubDeployment{})
 	deploymentScopeIdGen := didgen.NewDomainIdGenerator(&models.GithubRepo{})
+	seenDedupKey := make(map[string]struct{})
 
 	converter, err := api.NewDataConverter(api.DataConverterArgs{
 		InputRowType:       reflect.TypeOf(models.GithubDeployment{}),
@@ -69,6 +77,12 @@ func ConvertDeployment(taskCtx plugin.SubTaskContext) errors.Error {
 		RawDataSubTaskArgs: *rawDataSubTaskArgs,
 		Convert: func(inputRow interface{}) ([]interface{}, errors.Error) {
 			githubDeployment := inputRow.(*models.GithubDeployment)
+
+			dedupKey := githubDeployment.CommitOid + "\x00" + githubDeployment.Environment + "\x00" + githubDeployment.RefName
+			if _, ok := seenDedupKey[dedupKey]; ok {
+				return nil, nil
+			}
+			seenDedupKey[dedupKey] = struct{}{}
 
 			deploymentCommit := &devops.CicdDeploymentCommit{
 				DomainEntity: domainlayer.DomainEntity{
