@@ -173,11 +173,13 @@ func computeTimeSpan(start, end *time.Time) *int64 {
 		return nil
 	}
 	span := end.Sub(*start)
-	minutes := int64(math.Ceil(span.Minutes()))
-	if minutes < 0 {
+	// Convert to milliseconds (not minutes) for consistency with database fields
+	// The pr_coding_time, pr_review_time, pr_deploy_time fields store milliseconds
+	milliseconds := int64(math.Ceil(span.Minutes() * 60 * 1000))
+	if milliseconds < 0 {
 		return nil
 	}
-	return &minutes
+	return &milliseconds
 }
 
 // deploymentCommitWithMergeSha is a helper struct to capture both the deployment commit

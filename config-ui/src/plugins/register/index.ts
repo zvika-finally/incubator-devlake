@@ -18,6 +18,7 @@
 
 import { IPluginConfig } from '@/types';
 
+import { ArgoCDConfig } from './argocd';
 import { AzureConfig, AzureGoConfig } from './azure';
 import { BambooConfig } from './bamboo';
 import { BitbucketConfig } from './bitbucket';
@@ -33,8 +34,15 @@ import { TAPDConfig } from './tapd';
 import { WebhookConfig } from './webhook';
 import { ZenTaoConfig } from './zentao';
 import { OpsgenieConfig } from './opsgenie';
+import { QDevConfig } from './q-dev';
+import { TeambitionConfig } from './teambition';
+import { TestmoConfig } from './testmo';
+import { SlackConfig } from './slack/config';
+import { CursorConfig } from './cursor';
+import { ClaudeCodeConfig } from './claudecode';
 
 export const pluginConfigs: IPluginConfig[] = [
+  ArgoCDConfig,
   AzureConfig,
   AzureGoConfig,
   BambooConfig,
@@ -46,9 +54,15 @@ export const pluginConfigs: IPluginConfig[] = [
   JenkinsConfig,
   JiraConfig,
   PagerDutyConfig,
+  SlackConfig,
+  QDevConfig,
   SonarQubeConfig,
   TAPDConfig,
+  TestmoConfig,
   ZenTaoConfig,
   WebhookConfig,
   OpsgenieConfig,
+  TeambitionConfig,
+  CursorConfig,
+  ClaudeCodeConfig,
 ].sort((a, b) => a.sort - b.sort);

@@ -1,0 +1,7 @@
+pull_request_id,commit_sha
+pr-claude-1,sha-claude-1
+pr-claude-1,sha-claude-2
+pr-copilot-1,sha-copilot-1
+pr-cursor-1,sha-cursor-1
+pr-normal-1,sha-normal-1
+pr-coderabbit-1,sha-coderabbit-1

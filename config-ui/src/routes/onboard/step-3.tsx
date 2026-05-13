@@ -63,6 +63,31 @@ export const Step3 = () => {
               pluginOption: '',
               enable: true,
             },
+            {
+              pluginName: 'issue_trace',
+              pluginOption: {},
+              enable: true,
+            },
+            {
+              pluginName: 'aidetector',
+              pluginOption: {},
+              enable: true,
+            },
+            {
+              pluginName: 'businessmetrics',
+              pluginOption: {},
+              enable: true,
+            },
+            {
+              pluginName: 'capacityplanner',
+              pluginOption: {},
+              enable: true,
+            },
+            {
+              pluginName: 'findevops',
+              pluginOption: {},
+              enable: true,
+            },
           ],
         });
 

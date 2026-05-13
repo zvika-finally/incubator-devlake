@@ -1,0 +1,7 @@
+id,base_repo_id,author_id,author_name,pull_request_key,status,created_date,merged_date
+pr1,repo1,dev1,Alice,101,MERGED,2026-01-01 10:00:00,2026-01-03 10:00:00
+pr2,repo1,dev1,Alice,102,OPEN,2026-01-05 10:00:00,
+pr3,repo1,dev1,Alice,103,OPEN,2026-01-06 10:00:00,
+pr4,repo1,dev1,Alice,104,OPEN,2026-01-07 10:00:00,
+pr5,repo1,dev1,Alice,105,OPEN,2026-01-08 10:00:00,
+pr6,repo1,dev2,Bob,106,MERGED,2026-01-02 10:00:00,2026-01-10 10:00:00

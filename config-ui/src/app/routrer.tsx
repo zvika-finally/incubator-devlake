@@ -37,6 +37,11 @@ import {
   NotFound,
 } from '@/routes';
 
+import { AIDetectorSettingsPage } from '@/pages/plugins/aidetector';
+import { BusinessMetricsSettingsPage, WorkingAgreementsPageDefault } from '@/pages/plugins/businessmetrics';
+import { CapacityPlannerSettingsPage } from '@/pages/plugins/capacityplanner';
+import { FinDevOpsSettingsPage } from '@/pages/plugins/findevops';
+
 const PATH_PREFIX = import.meta.env.DEVLAKE_PATH_PREFIX ?? '';
 
 export const router = createBrowserRouter([
@@ -110,6 +115,31 @@ export const router = createBrowserRouter([
       {
         path: 'keys',
         element: <ApiKeys />,
+      },
+      {
+        path: 'plugins',
+        children: [
+          {
+            path: 'aidetector/settings',
+            element: <AIDetectorSettingsPage />,
+          },
+          {
+            path: 'businessmetrics/settings',
+            element: <BusinessMetricsSettingsPage />,
+          },
+          {
+            path: 'businessmetrics/agreements/:projectName',
+            element: <WorkingAgreementsPageDefault />,
+          },
+          {
+            path: 'capacityplanner/settings',
+            element: <CapacityPlannerSettingsPage />,
+          },
+          {
+            path: 'findevops/settings',
+            element: <FinDevOpsSettingsPage />,
+          },
+        ],
       },
     ],
   },

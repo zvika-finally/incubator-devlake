@@ -1,0 +1,7 @@
+commit_sha,file_path,additions,deletions
+commit1,src/feature.go,100,20
+commit2,src/bugfix.go,50,10
+commit3,src/refactor.go,200,50
+commit4,docs/readme.md,30,5
+churn1,src/feature.go,15,5
+churn2,src/refactor.go,40,10

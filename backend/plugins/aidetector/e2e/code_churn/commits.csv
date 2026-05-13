@@ -1,0 +1,7 @@
+sha,authored_date,message
+commit1,2026-01-05 10:00:00,Add AI feature
+commit2,2026-01-08 10:00:00,Fix bug manually
+commit3,2026-01-09 10:00:00,Refactor with Copilot
+commit4,2026-01-12 10:00:00,Update docs
+churn1,2026-01-15 10:00:00,Fix feature issues
+churn2,2026-01-17 10:00:00,Fix refactor issues

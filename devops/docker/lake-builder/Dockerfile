@@ -55,14 +55,14 @@ COPY --from=builder /tmp/deps/include/ /usr/include/
 ENV PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
 
 # Install Golang
-RUN curl -L https://git.io/vQhTU | bash -s -- --version 1.20.4
+RUN curl -L https://git.io/vQhTU | bash -s -- --version 1.23.0
 RUN mv /root/go /go &&\
     mv /root/.go /usr/local/go &&\
     ln -sf /usr/local/go/bin/* /usr/bin
 
 # Install Golang Tools
 RUN export GOPATH=/go &&  \
-    go install github.com/vektra/mockery/v2@v2.20.0 &&  \
+    go install github.com/vektra/mockery/v2@v2.53.5 &&  \
     go install github.com/swaggo/swag/cmd/swag@v1.16.1
 
 # Golang Env

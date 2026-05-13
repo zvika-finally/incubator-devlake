@@ -23,6 +23,10 @@ const URLS = {
   },
   DORA: 'https://devlake.apache.org/docs/DORA/',
   PLUGIN: {
+    ARGOCD: {
+      BASIS: 'https://devlake.apache.org/docs/Configuration/ArgoCD',
+      TRANSFORMATION: 'https://devlake.apache.org/docs/Configuration/ArgoCD#step-3---adding-transformation-rules-optional',
+    },
     AZUREDEVOPS: {
       BASIS: 'https://devlake.apache.org/docs/Configuration/AzureDevOps',
       RATE_LIMIT: 'https://devlake.apache.org/docs/Configuration/AzureDevOps/#custom-rate-limit-optional',
@@ -97,6 +101,10 @@ const URLS = {
     PAGERDUTY: {
       BASIS: 'https://devlake.apache.org/docs/Configuration/PagerDuty',
       RATE_LIMIT: 'https://devlake.apache.org/docs/Configuration/PagerDuty/#custom-rate-limit-optional',
+    },
+    SLACK: {
+      BASIS: 'https://devlake.apache.org/docs/Configuration/Slack',
+      RATE_LIMIT: 'https://devlake.apache.org/docs/Configuration/Slack#custom-rate-limit-optional',
     },
     SONARQUBE: {
       BASIS: 'https://devlake.apache.org/docs/Configuration/SonarQube',

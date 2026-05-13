@@ -55,6 +55,8 @@ func All() []plugin.MigrationScript {
 		new(addIsDraftToPr),
 		new(changeIssueComponentType),
 		new(addIndexToGithubJobs),
+		new(addRefreshTokenFields),
+		new(fixNullableTokenExpiry),
 		new(addPrSizeExcludedFileExtensions),
 	}
 }

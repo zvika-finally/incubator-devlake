@@ -1,0 +1,200 @@
+# DevLake Build and Push for Finally Internal
+# Usage: make -f Makefile.finally <target>
+#
+# Examples:
+#   make -f Makefile.finally all          # Build and push everything
+#   make -f Makefile.finally build        # Build all images locally
+#   make -f Makefile.finally push         # Push all images to ECR
+#   make -f Makefile.finally api          # Build and push API only
+#   make -f Makefile.finally ui           # Build and push UI only
+#   make -f Makefile.finally grafana      # Build and push Grafana only
+
+.PHONY: all build push api ui ui-base grafana login clean help
+
+# Configuration
+REGION := us-east-1
+ACCOUNT_ID := 958969365976
+ECR_BASE := $(ACCOUNT_ID).dkr.ecr.$(REGION).amazonaws.com
+AWS_PROFILE := finally-internal
+
+# Paths
+DEVLAKE_REPO := $(shell pwd)
+FINALLY_REPO := /Users/zvikabadalov/workspaces/finally/finally-internal
+
+# ECR Repositories
+ECR_API := $(ECR_BASE)/finally-internal/devlake_api
+ECR_UI := $(ECR_BASE)/finally-internal/devlake_ui
+ECR_UI_BASE := $(ECR_BASE)/finally-internal/devlake_ui_base
+ECR_GRAFANA := $(ECR_BASE)/finally-internal/devlake_grafana
+
+# Image tags
+TAG := latest
+SHA := $(shell git rev-parse --short HEAD)
+
+# ============================================================================
+# Main targets
+# ============================================================================
+
+all: login build push
+	@echo "✅ All DevLake images built and pushed!"
+
+build: build-api build-ui-base build-ui build-grafana
+	@echo "✅ All images built locally"
+
+push: push-api push-ui-base push-ui push-grafana
+	@echo "✅ All images pushed to ECR"
+
+# ============================================================================
+# ECR Login
+# ============================================================================
+
+login:
+	@echo "🔐 Logging into ECR..."
+	@aws ecr get-login-password --region $(REGION) --profile $(AWS_PROFILE) | \
+		docker login --username AWS --password-stdin $(ECR_BASE)
+	@echo "✅ ECR login successful"
+
+# ============================================================================
+# API (Backend)
+# ============================================================================
+
+api: login build-api push-api
+	@echo "✅ DevLake API built and pushed"
+
+build-api:
+	@echo "📦 Building DevLake API..."
+	docker buildx build --platform linux/amd64 --load \
+		-t devlake-api:$(TAG) \
+		-t $(ECR_API):$(TAG) \
+		--build-arg TAG=$(TAG) \
+		--build-arg SHA=$(SHA) \
+		--file ./backend/Dockerfile.amd64 \
+		./backend
+	@echo "✅ DevLake API built"
+
+push-api:
+	@echo "📤 Pushing DevLake API to ECR..."
+	docker push $(ECR_API):$(TAG)
+	@echo "✅ DevLake API pushed"
+
+# ============================================================================
+# UI Base (from incubator-devlake)
+# ============================================================================
+
+ui-base: login build-ui-base push-ui-base
+	@echo "✅ DevLake UI Base built and pushed"
+
+build-ui-base:
+	@echo "📦 Building DevLake UI Base..."
+	docker buildx build --platform linux/amd64 --load \
+		-t devlake-ui-base:$(TAG) \
+		-t $(ECR_UI_BASE):$(TAG) \
+		--file ./config-ui/Dockerfile \
+		./config-ui
+	@echo "✅ DevLake UI Base built"
+
+push-ui-base:
+	@echo "📤 Pushing DevLake UI Base to ECR..."
+	docker push $(ECR_UI_BASE):$(TAG)
+	@echo "✅ DevLake UI Base pushed"
+
+# ============================================================================
+# UI Final (with nginx template from finally-internal)
+# ============================================================================
+
+ui: login build-ui-base push-ui-base build-ui push-ui
+	@echo "✅ DevLake UI built and pushed"
+
+ui-only: login build-ui push-ui
+	@echo "✅ DevLake UI (final only) built and pushed"
+
+build-ui:
+	@echo "📦 Building DevLake UI Final..."
+	cd $(FINALLY_REPO)/docker/devlake-ui && \
+	docker buildx build --platform linux/amd64 --load \
+		-t devlake-ui:$(TAG) \
+		-t $(ECR_UI):$(TAG) \
+		--build-arg ECR_REGISTRY=$(ECR_BASE) \
+		.
+	@echo "✅ DevLake UI Final built"
+
+push-ui:
+	@echo "📤 Pushing DevLake UI to ECR..."
+	docker push $(ECR_UI):$(TAG)
+	@echo "✅ DevLake UI pushed"
+
+# ============================================================================
+# Grafana
+# ============================================================================
+
+grafana: login build-grafana push-grafana
+	@echo "✅ DevLake Grafana built and pushed"
+
+build-grafana:
+	@echo "📦 Building DevLake Grafana..."
+	docker buildx build --platform linux/amd64 --load \
+		-t devlake-grafana:$(TAG) \
+		-t $(ECR_GRAFANA):$(TAG) \
+		--file ./grafana/Dockerfile \
+		./grafana
+	@echo "✅ DevLake Grafana built"
+
+push-grafana:
+	@echo "📤 Pushing DevLake Grafana to ECR..."
+	docker push $(ECR_GRAFANA):$(TAG)
+	@echo "✅ DevLake Grafana pushed"
+
+# ============================================================================
+# Utilities
+# ============================================================================
+
+clean:
+	@echo "🧹 Cleaning local images..."
+	-docker rmi devlake-api:$(TAG) 2>/dev/null
+	-docker rmi devlake-ui-base:$(TAG) 2>/dev/null
+	-docker rmi devlake-ui:$(TAG) 2>/dev/null
+	-docker rmi devlake-grafana:$(TAG) 2>/dev/null
+	-docker rmi $(ECR_API):$(TAG) 2>/dev/null
+	-docker rmi $(ECR_UI_BASE):$(TAG) 2>/dev/null
+	-docker rmi $(ECR_UI):$(TAG) 2>/dev/null
+	-docker rmi $(ECR_GRAFANA):$(TAG) 2>/dev/null
+	@echo "✅ Local images cleaned"
+
+restart-services:
+	@echo "🔄 Restarting ECS services..."
+	aws ecs update-service --cluster finally-internal-cluster --service finally-internal-devlake_api-service --force-new-deployment --region $(REGION) --profile $(AWS_PROFILE) > /dev/null
+	aws ecs update-service --cluster finally-internal-cluster --service finally-internal-devlake_ui-service --force-new-deployment --region $(REGION) --profile $(AWS_PROFILE) > /dev/null
+	aws ecs update-service --cluster finally-internal-cluster --service finally-internal-devlake_grafana-service --force-new-deployment --region $(REGION) --profile $(AWS_PROFILE) > /dev/null
+	@echo "✅ ECS services restarting"
+
+deploy: all restart-services
+	@echo "🚀 Full deployment complete!"
+
+help:
+	@echo "DevLake Build and Push for Finally Internal"
+	@echo ""
+	@echo "Usage: make -f Makefile.finally <target>"
+	@echo ""
+	@echo "Main targets:"
+	@echo "  all              Build and push all images"
+	@echo "  build            Build all images locally"
+	@echo "  push             Push all images to ECR"
+	@echo "  deploy           Build, push, and restart ECS services"
+	@echo ""
+	@echo "Individual components:"
+	@echo "  api              Build and push API (backend)"
+	@echo "  ui               Build and push UI (base + final)"
+	@echo "  ui-only          Build and push UI final only (skip base)"
+	@echo "  ui-base          Build and push UI base only"
+	@echo "  grafana          Build and push Grafana"
+	@echo ""
+	@echo "Utilities:"
+	@echo "  login            Login to ECR"
+	@echo "  clean            Remove local images"
+	@echo "  restart-services Force ECS service restart"
+	@echo "  help             Show this help"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make -f Makefile.finally all"
+	@echo "  make -f Makefile.finally api"
+	@echo "  make -f Makefile.finally ui-only  # When only nginx changes"

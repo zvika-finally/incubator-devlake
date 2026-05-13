@@ -25,6 +25,7 @@ import { ConnectionProxy } from './proxy';
 import { ConnectionRateLimit } from './rate-limit';
 import { ConnectionAppId } from './app-id';
 import { ConnectionSecretKey } from './secret-key';
+import { ConnectionGenericText } from './generic-text';
 
 interface Props {
   type: 'create' | 'update';
@@ -87,6 +88,24 @@ export const Form = ({ type, name, fields, initialValues, values, errors, setVal
         case 'rateLimitPerHour':
           return <ConnectionRateLimit key={key} {...getProps('rateLimitPerHour', 0)} {...field} />;
         default:
+          // Handle custom fields using the generic text component
+          if (typeof field === 'object' && field.key) {
+            const inputType = field.type === 'password' ? 'password' : field.inputType || 'text';
+            return (
+              <ConnectionGenericText
+                key={key}
+                type={type}
+                fieldKey={field.key}
+                label={field.label}
+                subLabel={field.subLabel}
+                placeholder={field.placeholder}
+                required={field.required}
+                inputType={inputType}
+                defaultValue={field.defaultValue}
+                {...getProps(field.key, field.defaultValue ?? '')}
+              />
+            );
+          }
           return null;
       }
     });

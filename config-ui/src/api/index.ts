@@ -21,6 +21,7 @@ import { request } from '@/utils';
 import * as apiKey from './api-key';
 import * as blueprint from './blueprint';
 import * as connection from './connection';
+import * as metricSettings from './metric-settings';
 import * as pipeline from './pipeline';
 import plugin from './plugin';
 import * as project from './project';
@@ -37,6 +38,7 @@ export const API = {
   apiKey,
   blueprint,
   connection,
+  metricSettings,
   pipeline,
   plugin,
   project,

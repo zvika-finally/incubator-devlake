@@ -1,0 +1,5 @@
+id,base_repo_id,author_id,author_name,pull_request_key,title,additions,deletions,merged_date,created_date,_raw_data_remark
+pr1,repo1,dev1,Alice,101,Add AI feature,100,20,2026-01-10 10:00:00,2026-01-05 10:00:00,AI assisted PR
+pr2,repo1,dev2,Bob,102,Fix bug manually,50,10,2026-01-11 10:00:00,2026-01-08 10:00:00,Non-AI PR
+pr3,repo1,dev1,Alice,103,Refactor with Copilot,200,50,2026-01-12 10:00:00,2026-01-09 10:00:00,AI assisted PR
+pr4,repo1,dev3,Charlie,104,Update docs,30,5,2026-01-13 10:00:00,2026-01-12 10:00:00,Non-AI PR

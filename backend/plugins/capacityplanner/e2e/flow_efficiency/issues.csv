@@ -1,0 +1,4 @@
+id,issue_key,type,status,resolution_date,created_date
+issue1,PROJ-1,Story,DONE,2026-01-15 10:00:00,2026-01-01 10:00:00
+issue2,PROJ-2,Bug,DONE,2026-01-12 10:00:00,2026-01-05 10:00:00
+issue3,PROJ-3,Task,DONE,2026-01-18 10:00:00,2026-01-10 10:00:00

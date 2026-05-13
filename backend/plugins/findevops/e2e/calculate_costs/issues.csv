@@ -1,0 +1,4 @@
+id,issue_key,type,status,assignee_id,assignee_name,story_point,original_estimate_minutes,time_spent_minutes,resolution_date,updated_date
+issue1,PROJ-1,Story,DONE,dev1,Alice,5,2400,2200,2026-01-15 10:00:00,2026-01-15 10:00:00
+issue2,PROJ-2,Bug,DONE,dev2,Bob,2,960,1200,2026-01-12 10:00:00,2026-01-12 10:00:00
+issue3,PROJ-3,Task,DONE,dev1,Alice,3,1440,1440,2026-01-18 10:00:00,2026-01-18 10:00:00

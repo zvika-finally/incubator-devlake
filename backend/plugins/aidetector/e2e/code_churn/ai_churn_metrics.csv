@@ -1,0 +1,5 @@
+id,pull_request_id,pull_request_key,project_name,author_id,author_name,ai_confidence_score,is_ai_assisted,initial_additions,initial_deletions,churn_within_7_days,churn_within_30_days,follow_up_commits_7,follow_up_commits_30,churn_ratio_7_days,churn_ratio_30_days
+project1:pr1,pr1,101,project1,dev1,Alice,85,true,100,20,20,20,1,1,0.2,0.2
+project1:pr2,pr2,102,project1,dev2,Bob,20,false,50,10,0,0,0,0,0,0
+project1:pr3,pr3,103,project1,dev1,Alice,90,true,200,50,50,50,1,1,0.25,0.25
+project1:pr4,pr4,104,project1,dev3,Charlie,15,false,30,5,0,0,0,0,0,0

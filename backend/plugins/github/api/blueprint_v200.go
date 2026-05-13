@@ -125,6 +125,7 @@ func makeDataSourcePipelinePlanV200(
 			}
 			token := strings.Split(connection.Token, ",")[0]
 			cloneUrl.User = url.UserPassword("git", token)
+			skipCommitFiles := false // Enable file-level commit data collection for code churn analysis
 			stage = append(stage, &coreModels.PipelineTask{
 				Plugin: "gitextractor",
 				Options: map[string]interface{}{
@@ -135,6 +136,8 @@ func makeDataSourcePipelinePlanV200(
 					"proxy":                 connection.Proxy,
 					"connectionId":          githubRepo.ConnectionId,
 					"pluginName":            "github",
+					"skipCommitFiles":       skipCommitFiles, // Required for aidetector code churn analysis
+					"noShallowClone":        true,            // Full clone required to match PR commits
 					"excludeFileExtensions": scopeConfig.PrSizeExcludedFileExtensions,
 				},
 			})

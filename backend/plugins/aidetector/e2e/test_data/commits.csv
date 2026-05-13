@@ -1,0 +1,7 @@
+sha,additions,deletions,dev_eq,message,author_name,author_email,authored_date,author_id,committer_name,committer_email,committed_date,committer_id
+sha-claude-1,80,10,0,"Add auth middleware\n\nCo-Authored-By: Claude Sonnet <noreply@anthropic.com>",Developer One,dev1@example.com,2026-01-01T10:30:00.000+00:00,dev1,Developer One,dev1@example.com,2026-01-01T10:30:00.000+00:00,dev1
+sha-claude-2,70,10,0,Add tests for auth,Developer One,dev1@example.com,2026-01-01T10:35:00.000+00:00,dev1,Developer One,dev1@example.com,2026-01-01T10:35:00.000+00:00,dev1
+sha-copilot-1,200,50,0,"Refactor queries\n\nCo-Authored-By: GitHub Copilot",Developer Two,dev2@example.com,2026-01-02T12:00:00.000+00:00,dev2,Developer Two,dev2@example.com,2026-01-02T12:00:00.000+00:00,dev2
+sha-cursor-1,300,30,0,[Cursor] Add user endpoint,Developer Three,dev3@example.com,2026-01-03T10:20:00.000+00:00,dev3,Developer Three,dev3@example.com,2026-01-03T10:20:00.000+00:00,dev3
+sha-normal-1,5,2,0,Fix typo,Developer Four,dev4@example.com,2026-01-04T10:10:00.000+00:00,dev4,Developer Four,dev4@example.com,2026-01-04T10:10:00.000+00:00,dev4
+sha-coderabbit-1,100,10,0,Add input validation,Developer Five,dev5@example.com,2026-01-05T12:00:00.000+00:00,dev5,Developer Five,dev5@example.com,2026-01-05T12:00:00.000+00:00,dev5
