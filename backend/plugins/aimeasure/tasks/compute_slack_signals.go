@@ -68,16 +68,6 @@ func SlackTsToTime(ts string) (time.Time, error) {
 	return time.Unix(n, 0).UTC(), nil
 }
 
-// safeRatioFloat returns num/denom or 0.0 when denom is 0.
-// NOTE: SafeRatio (int args) lives in compute_verification_effort.go (Task 5).
-// This local helper avoids a cross-file dependency so Task 6 compiles standalone.
-func safeRatioFloat(num, denom int) float64 {
-	if denom == 0 {
-		return 0.0
-	}
-	return float64(num) / float64(denom)
-}
-
 func ComputeSlackSignals(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	logger := taskCtx.GetLogger()
@@ -185,7 +175,7 @@ func ComputeSlackSignals(taskCtx plugin.SubTaskContext) errors.Error {
 			MessageCount:             agg.Messages,
 			ThreadParticipationCount: agg.Threaded,
 			AfterHoursMessageCount:   agg.AfterHours,
-			AfterHoursRatio:          safeRatioFloat(agg.AfterHours, agg.Messages),
+			AfterHoursRatio:          SafeRatio(agg.AfterHours, agg.Messages),
 			ComputedAt:               now,
 		}
 		if err := db.CreateOrUpdate(row); err != nil {
