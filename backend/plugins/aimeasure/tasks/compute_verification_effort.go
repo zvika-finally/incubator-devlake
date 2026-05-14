@@ -78,14 +78,6 @@ type authoredPR struct {
 	AICohort   string    `gorm:"column:ai_cohort"`
 }
 
-// reviewerActivity is one row from the reviewer-comment scan.
-type reviewerActivity struct {
-	PRId        string    `gorm:"column:pr_id"`
-	ReviewerId  string    `gorm:"column:reviewer_id"`
-	CommentedAt time.Time `gorm:"column:created_date"`
-	AICohort    string    `gorm:"column:ai_cohort"`
-}
-
 // effortBucket is the aggregator key (engineer, week).
 type effortBucket struct {
 	EngineerId string
@@ -96,7 +88,6 @@ type effortBucket struct {
 type effortAgg struct {
 	AuthorMinutes            int
 	ReviewerMinutes          int
-	AuthorLOC                int
 	ReviewedLOC              int
 	ReviewCommentsTotal      int
 	ReviewCommentsHighCohort int
@@ -133,7 +124,6 @@ func ComputeVerificationEffort(taskCtx plugin.SubTaskContext) errors.Error {
 		loc := a.Additions + a.Deletions
 		bucket := getOrCreate(a.AuthorId, PeriodWeekStart(a.MergedDate))
 		bucket.AuthorMinutes += EstimateAuthorMinutes(loc)
-		bucket.AuthorLOC += loc
 	}
 
 	// 2. Reviewer-side: walk pull_request_comments with type=REVIEW or DIFF,
