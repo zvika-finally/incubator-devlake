@@ -70,6 +70,11 @@ func (p AIMeasure) GetTablesInfo() []dal.Tabler {
 		&models.PRChangeComposition{},
 		&models.AccountOverride{},
 		&models.EngineerRole{},
+		// Phase B
+		&models.EngineerVerificationEffort{},
+		&models.EngineerSlackSignals{},
+		&models.EngineerDxiProxy{},
+		&models.SlackChannelCategory{},
 	}
 }
 
