@@ -1,0 +1,5 @@
+engineer_id,period_week,channel_category,message_count,thread_participation_count,after_hours_message_count,after_hours_ratio
+alice,2026-05-11T00:00:00.000+00:00,engineering,1,0,0,0.0000
+alice,2026-05-11T00:00:00.000+00:00,incident_support,1,0,1,1.0000
+bob,2026-05-11T00:00:00.000+00:00,design_architecture,1,1,1,1.0000
+slack:U_UNMAPPED,2026-05-11T00:00:00.000+00:00,engineering,1,0,0,0.0000

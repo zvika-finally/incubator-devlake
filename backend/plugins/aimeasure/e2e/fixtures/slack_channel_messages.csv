@@ -1,0 +1,5 @@
+connection_id,channel_id,ts,client_msg_id,type,subtype,thread_ts,user,text,team,reply_count,reply_users_count,latest_reply,is_locked,subscribed,parent_user_id
+1,C001,1778493600.000100,m1,message,,,U_ALICE,deploy ok,T1,0,0,,0,0,
+1,C002,1778529600.000200,m2,message,,,U_ALICE,paging,T1,0,0,,0,0,
+1,C003,1778932800.000300,m3,message,,1778900000.000999,U_BOB,thread reply,T1,0,0,,0,0,U_ALICE
+1,C001,1778493600.000400,m4,message,,,U_UNMAPPED,from someone unmapped,T1,0,0,,0,0,
