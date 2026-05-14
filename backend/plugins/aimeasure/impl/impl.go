@@ -18,9 +18,12 @@ limitations under the License.
 package impl
 
 import (
+	"encoding/json"
+
 	"github.com/apache/incubator-devlake/core/context"
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
+	coreModels "github.com/apache/incubator-devlake/core/models"
 	"github.com/apache/incubator-devlake/core/plugin"
 	"github.com/apache/incubator-devlake/plugins/aimeasure/models"
 	"github.com/apache/incubator-devlake/plugins/aimeasure/models/migrationscripts"
@@ -33,7 +36,9 @@ var _ interface {
 	plugin.PluginInit
 	plugin.PluginTask
 	plugin.PluginModel
+	plugin.PluginMetric
 	plugin.PluginMigration
+	plugin.MetricPluginBlueprintV200
 } = (*AIMeasure)(nil)
 
 type AIMeasure struct{}
@@ -68,6 +73,38 @@ func (p AIMeasure) GetTablesInfo() []dal.Tabler {
 	}
 }
 
+func (p AIMeasure) Dashboards() []plugin.GrafanaDashboard {
+	return nil
+}
+
+func (p AIMeasure) SvgIcon() string {
+	return `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 8 3.5-1.5 6-4.5 6-8V4L8 1z" fill="#444444"/>
+<path d="M5 7l2 2 4-4" stroke="#FFFFFF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`
+}
+
+func (p AIMeasure) RequiredDataEntities() (data []map[string]interface{}, err errors.Error) {
+	return []map[string]interface{}{
+		{"model": "pull_requests"},
+		{"model": "commits"},
+		{"model": "commit_files"},
+		{"model": "pull_request_commits"},
+	}, nil
+}
+
+func (p AIMeasure) IsProjectMetric() bool {
+	return true
+}
+
+func (p AIMeasure) RunAfter() ([]string, errors.Error) {
+	return []string{"aidetector"}, nil // reads ai_usage_signals produced by aidetector
+}
+
+func (p AIMeasure) Settings() interface{} {
+	return nil
+}
+
 func (p AIMeasure) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
 		tasks.ClassifyPRCohortMeta,         // run first — produces pr_ai_cohort
@@ -82,4 +119,35 @@ func (p AIMeasure) PrepareTaskData(taskCtx plugin.TaskContext, options map[strin
 		return nil, err
 	}
 	return &tasks.AIMeasureTaskData{Options: opts}, nil
+}
+
+func (p AIMeasure) MakeMetricPluginPipelinePlanV200(projectName string, options json.RawMessage) (coreModels.PipelinePlan, errors.Error) {
+	op := &tasks.AIMeasureOptions{}
+	if options != nil && string(options) != "\"\"" {
+		err := json.Unmarshal(options, op)
+		if err != nil {
+			return nil, errors.Default.WrapRaw(err)
+		}
+	}
+	op.ProjectName = projectName
+
+	plan := coreModels.PipelinePlan{
+		{
+			{
+				Plugin: "aimeasure",
+				Options: map[string]interface{}{
+					"projectName":         projectName,
+					"highCohortThreshold": op.HighCohortThreshold,
+					"lowCohortThreshold":  op.LowCohortThreshold,
+					"defectWindowDays":    op.DefectWindowDays,
+				},
+				Subtasks: []string{
+					"classifyPRCohort",
+					"computeChangeComposition",
+					"computeQualityCohort",
+				},
+			},
+		},
+	}
+	return plan, nil
 }
