@@ -1,0 +1,7 @@
+engineer_id,period_week,author_minutes,reviewer_minutes,review_to_author_ratio,review_comments_total,review_comments_per_loc,review_comments_high_cohort,review_comments_per_loc_high
+alice,2026-04-27T00:00:00.000+00:00,72,0,0.0000,0,0.0000,0,0.0000
+dave,2026-04-27T00:00:00.000+00:00,10,0,0.0000,0,0.0000,0,0.0000
+eve,2026-05-04T00:00:00.000+00:00,30,0,0.0000,0,0.0000,0,0.0000
+frank,2026-05-04T00:00:00.000+00:00,10,0,0.0000,0,0.0000,0,0.0000
+bob,2026-05-04T00:00:00.000+00:00,0,34,0.0000,2,0.0171,0,0.0000
+carol,2026-05-04T00:00:00.000+00:00,0,21,0.0000,3,0.0120,3,0.0120

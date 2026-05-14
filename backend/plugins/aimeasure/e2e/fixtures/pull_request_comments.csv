@@ -1,0 +1,6 @@
+id,pull_request_id,body,account_id,created_date,commit_sha,type,review_id,status
+prc1,pr1,Looks good,bob,2026-05-04 10:00:00,,REVIEW,r1,APPROVED
+prc2,pr2,Why this change?,carol,2026-05-05 11:00:00,,DIFF,r2,COMMENTED
+prc3,pr2,Refactor suggested,carol,2026-05-05 11:05:00,,DIFF,r2,COMMENTED
+prc4,pr2,nit: rename,carol,2026-05-05 11:10:00,,DIFF,r2,COMMENTED
+prc5,pr3,LGTM,bob,2026-05-06 09:00:00,,REVIEW,r3,APPROVED

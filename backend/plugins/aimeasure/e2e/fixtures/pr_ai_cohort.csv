@@ -1,0 +1,6 @@
+pr_id,ai_cohort,confidence_score,has_explicit_marker,has_commit_trailer,classifier_version,classified_at
+pr1,NONE,15,0,0,v1,2026-05-13 00:00:00
+pr2,HIGH,90,1,1,v1,2026-05-13 00:00:00
+pr3,LOW,45,0,0,v1,2026-05-13 00:00:00
+pr4,NONE,5,0,0,v1,2026-05-13 00:00:00
+pr5,NONE,0,0,0,v1,2026-05-13 00:00:00
