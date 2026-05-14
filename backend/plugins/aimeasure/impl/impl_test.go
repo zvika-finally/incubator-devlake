@@ -38,8 +38,8 @@ func TestMakeMetricPluginPipelinePlanV200_EmptyOptions(t *testing.T) {
 	if task.Options["projectName"] != "demo" {
 		t.Errorf("expected projectName 'demo', got %v", task.Options["projectName"])
 	}
-	if len(task.Subtasks) != 3 {
-		t.Errorf("expected 3 subtasks, got %d: %v", len(task.Subtasks), task.Subtasks)
+	if len(task.Subtasks) != 6 {
+		t.Errorf("expected 6 subtasks, got %d: %v", len(task.Subtasks), task.Subtasks)
 	}
 }
 
@@ -90,10 +90,12 @@ func TestRequiredDataEntities_ListsUpstreamModels(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	expected := map[string]bool{
-		"pull_requests":        false,
-		"commits":              false,
-		"commit_files":         false,
-		"pull_request_commits": false,
+		"pull_requests":          false,
+		"commits":                false,
+		"commit_files":           false,
+		"pull_request_commits":   false,
+		"pull_request_comments":  false,
+		"pull_request_reviewers": false,
 	}
 	for _, e := range entities {
 		if m, ok := e["model"].(string); ok {

@@ -15,14 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package migrationscripts
+package models
 
-import "github.com/apache/incubator-devlake/core/plugin"
+// SlackChannelCategory maps a Slack channel (by name or ID) to one of the
+// aimeasure ChannelCategory values. Manually maintained — engineering leadership
+// curates the mapping. Lookup falls back to "general" for unmapped channels.
+type SlackChannelCategory struct {
+	ChannelKey string `gorm:"primaryKey;type:varchar(255)" json:"channelKey"` // channel name OR channel ID (whichever is more stable)
+	Category   string `gorm:"type:varchar(32);not null" json:"category"`
+	Note       string `gorm:"type:varchar(500)" json:"note,omitempty"`
+}
 
-// All returns all the migration scripts for the aimeasure plugin.
-func All() []plugin.MigrationScript {
-	return []plugin.MigrationScript{
-		new(initSchema),
-		new(phaseBSchema), // Phase B — added 2026-05-14
-	}
+func (SlackChannelCategory) TableName() string {
+	return "aimeasure_slack_channel_categories"
 }

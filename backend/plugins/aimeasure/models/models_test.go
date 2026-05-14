@@ -21,11 +21,25 @@ import "testing"
 
 func TestTableNames(t *testing.T) {
 	cases := map[string]string{
-		"pr_ai_cohort":               PRAICohort{}.TableName(),
-		"pr_defect_signals":          PRDefectSignals{}.TableName(),
-		"pr_change_composition":      PRChangeComposition{}.TableName(),
+		"pr_ai_cohort":                PRAICohort{}.TableName(),
+		"pr_defect_signals":           PRDefectSignals{}.TableName(),
+		"pr_change_composition":       PRChangeComposition{}.TableName(),
 		"aimeasure_account_overrides": AccountOverride{}.TableName(),
-		"aimeasure_engineer_roles":   EngineerRole{}.TableName(),
+		"aimeasure_engineer_roles":    EngineerRole{}.TableName(),
+	}
+	for expected, actual := range cases {
+		if expected != actual {
+			t.Errorf("expected table name %q, got %q", expected, actual)
+		}
+	}
+}
+
+func TestPhaseBTableNames(t *testing.T) {
+	cases := map[string]string{
+		"engineer_verification_effort":       EngineerVerificationEffort{}.TableName(),
+		"engineer_slack_signals":             EngineerSlackSignals{}.TableName(),
+		"engineer_dxi_proxy":                 EngineerDxiProxy{}.TableName(),
+		"aimeasure_slack_channel_categories": SlackChannelCategory{}.TableName(),
 	}
 	for expected, actual := range cases {
 		if expected != actual {

@@ -1,0 +1,5 @@
+engineer_id,period_week,channel_category,message_count,thread_participation_count,after_hours_message_count,after_hours_ratio,computed_at
+alice,2026-05-04T00:00:00.000+00:00,general,40,0,0,0.0000,2026-05-14T00:00:00.000+00:00
+alice,2026-05-11T00:00:00.000+00:00,general,10,0,0,0.0000,2026-05-14T00:00:00.000+00:00
+carol,2026-05-04T00:00:00.000+00:00,general,50,0,5,0.1000,2026-05-14T00:00:00.000+00:00
+carol,2026-05-11T00:00:00.000+00:00,general,50,0,40,0.8000,2026-05-14T00:00:00.000+00:00

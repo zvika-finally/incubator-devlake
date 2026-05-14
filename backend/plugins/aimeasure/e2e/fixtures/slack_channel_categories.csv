@@ -1,0 +1,4 @@
+channel_key,category,note
+eng-platform,engineering,Maps name to engineering bucket
+inc-alerts,incident_support,Production incident channel
+design-review,design_architecture,RFC discussions

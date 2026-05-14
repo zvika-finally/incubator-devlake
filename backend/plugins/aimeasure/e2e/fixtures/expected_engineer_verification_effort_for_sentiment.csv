@@ -1,0 +1,5 @@
+engineer_id,period_week,author_minutes,reviewer_minutes,review_to_author_ratio,review_comments_total,review_comments_per_loc,review_comments_high_cohort,review_comments_per_loc_high,computed_at
+alice,2026-05-04T00:00:00.000+00:00,60,0,0.0000,0,0.0000,0,0.0000,2026-05-14T00:00:00.000+00:00
+alice,2026-05-11T00:00:00.000+00:00,60,0,0.0000,0,0.0000,0,0.0000,2026-05-14T00:00:00.000+00:00
+carol,2026-05-04T00:00:00.000+00:00,30,90,3.0000,5,0.0500,5,0.0500,2026-05-14T00:00:00.000+00:00
+carol,2026-05-11T00:00:00.000+00:00,30,90,3.0000,5,0.0500,5,0.0500,2026-05-14T00:00:00.000+00:00

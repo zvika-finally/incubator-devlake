@@ -70,6 +70,11 @@ func (p AIMeasure) GetTablesInfo() []dal.Tabler {
 		&models.PRChangeComposition{},
 		&models.AccountOverride{},
 		&models.EngineerRole{},
+		// Phase B
+		&models.EngineerVerificationEffort{},
+		&models.EngineerSlackSignals{},
+		&models.EngineerDxiProxy{},
+		&models.SlackChannelCategory{},
 	}
 }
 
@@ -90,6 +95,8 @@ func (p AIMeasure) RequiredDataEntities() (data []map[string]interface{}, err er
 		{"model": "commits"},
 		{"model": "commit_files"},
 		{"model": "pull_request_commits"},
+		{"model": "pull_request_comments"},
+		{"model": "pull_request_reviewers"},
 	}, nil
 }
 
@@ -107,9 +114,14 @@ func (p AIMeasure) Settings() interface{} {
 
 func (p AIMeasure) SubTaskMetas() []plugin.SubTaskMeta {
 	return []plugin.SubTaskMeta{
+		// Phase A
 		tasks.ClassifyPRCohortMeta,         // run first — produces pr_ai_cohort
 		tasks.ComputeChangeCompositionMeta, // independent — produces pr_change_composition
 		tasks.ComputeQualityCohortMeta,     // independent — produces pr_defect_signals
+		// Phase B — depend on Phase A's outputs being present
+		tasks.ComputeVerificationEffortMeta, // reads pr_ai_cohort, writes engineer_verification_effort
+		tasks.ComputeSlackSignalsMeta,       // reads slack tool tables, writes engineer_slack_signals
+		tasks.ComputeSentimentProxyMeta,     // reads both above, writes engineer_dxi_proxy (run last)
 	}
 }
 
@@ -145,6 +157,9 @@ func (p AIMeasure) MakeMetricPluginPipelinePlanV200(projectName string, options 
 					"classifyPRCohort",
 					"computeChangeComposition",
 					"computeQualityCohort",
+					"computeVerificationEffort",
+					"computeSlackSignals",
+					"computeSentimentProxy",
 				},
 			},
 		},
