@@ -1,0 +1,5 @@
+engineer_id,period_week,sentiment_score,bad_developer_day_flag
+alice,2026-05-04T00:00:00.000+00:00,100.00,0
+alice,2026-05-11T00:00:00.000+00:00,90.00,0
+carol,2026-05-04T00:00:00.000+00:00,66.00,0
+carol,2026-05-11T00:00:00.000+00:00,38.00,1
