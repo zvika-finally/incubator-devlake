@@ -56,14 +56,14 @@ backend/plugins/aimeasure/
         └── expected_engineer_dxi_proxy.csv
 
 grafana/dashboards/
-└── InvisibleWork.json                               # 6-panel Phase B dashboard
+└── InvisibleWork.json                               # 7-panel Phase B dashboard
 ```
 
 **Modified files:**
 
 - `backend/plugins/aimeasure/impl/impl.go` — register the 3 new subtasks in `SubTaskMetas()`, extend `MakeMetricPluginPipelinePlanV200` subtask list, extend `RequiredDataEntities` to include slack tables and PR comment tables, extend `GetTablesInfo`
 - `backend/plugins/aimeasure/models/migrationscripts/register.go` — append the new migration script
-- `backend/plugins/aimeasure/README.md` — Phase B section + open-decisions update
+- `backend/plugins/aimeasure/README.md` — Phase B section + resolved-decisions tracker
 - `backend/plugins/table_info_test.go` — no change needed (aimeasure already registered; the FeedIn captures all tables returned by `GetTablesInfo`)
 
 ---
@@ -1791,7 +1791,7 @@ git commit -m "test(aimeasure): e2e for computeSentimentProxy across MySQL+Postg
 **Files:**
 - Create: `grafana/dashboards/InvisibleWork.json`
 
-Six panels per spec § 6.3, all SQL written for MySQL (the default DevLake datasource; Postgres deployments can swap `DATE_ADD/WEEKDAY` for `DATE_TRUNC('week', …)` later).
+Seven panels — six per spec § 6.3 plus one disambiguation panel (1b) added because the resolved decision on review-to-author ratio (`SafeRatio → 0` for pure reviewers) collapses the senior-burnout signal on the heatmap alone. All SQL written for MySQL (the default DevLake datasource; Postgres deployments can swap `DATE_ADD/WEEKDAY` for `DATE_TRUNC('week', …)` later).
 
 - [ ] **Step 1: Build the dashboard**
 
@@ -1814,7 +1814,23 @@ FROM engineer_verification_effort
 WHERE period_week >= $__timeFrom() AND period_week < $__timeTo()
 ORDER BY time
 ```
-Type: heatmap, x=time, y=engineer_id, color=value.
+Type: heatmap, x=time, y=engineer_id, color=value. **Panel description must note:** "Pure reviewers (no authored PRs) display as 0 due to SafeRatio; use Panel 1b to identify them."
+
+**Panel 1b — Reviewer minutes (raw), top 20 (table) — pure-reviewer disambiguation:**
+```sql
+SELECT
+  engineer_id,
+  SUM(reviewer_minutes) AS total_reviewer_minutes,
+  SUM(author_minutes)   AS total_author_minutes,
+  ROUND(SUM(reviewer_minutes) * 1.0 / NULLIF(SUM(author_minutes), 0), 2) AS combined_ratio
+FROM engineer_verification_effort
+WHERE period_week >= $__timeFrom() AND period_week < $__timeTo()
+GROUP BY engineer_id
+HAVING SUM(reviewer_minutes) > 0
+ORDER BY total_reviewer_minutes DESC
+LIMIT 20
+```
+Type: table; columns: `engineer_id | total_reviewer_minutes | total_author_minutes | combined_ratio`. **Why:** Panel 1 alone collapses the senior-burnout signal because `SafeRatio` returns 0 for pure reviewers. This raw view exposes engineers who do significant review work whether or not they author — exactly the senior-burnout shape the spec describes. The `combined_ratio` column uses `NULLIF` to keep pure reviewers as NULL in the ratio column while still showing them at the top of the table.
 
 **Panel 2 — Top reviewers by load share (stacked area):**
 ```sql
@@ -1900,7 +1916,7 @@ git commit -m "feat(aimeasure): add InvisibleWork Phase B Grafana dashboard"
 
 ---
 
-## Task 13 — Update plugin README + open-decisions tracker
+## Task 13 — Update plugin README + resolved-decisions tracker
 
 **Files:**
 - Modify: `backend/plugins/aimeasure/README.md`
@@ -1918,7 +1934,7 @@ Three additional subtasks layered on top of the Phase A cohort:
 - **computeSlackSignals** — writes `engineer_slack_signals`. Per-engineer per-week per-category Slack participation. Categories come from the manually-curated `aimeasure_slack_channel_categories` table; unmapped channels fall back to "general".
 - **computeSentimentProxy** — writes `engineer_dxi_proxy`. Behavioral 0–100 sentiment score derived from after-hours ratio + review-to-author ratio + WoW message drop. **Phase B is behavioral-only — there is no message-content analysis.** Survey fields (`last_survey_date`, `last_survey_dxi`) stay nullable; ingest is Phase B+.
 
-Dashboard: `grafana/dashboards/InvisibleWork.json` (6 panels).
+Dashboard: `grafana/dashboards/InvisibleWork.json` (7 panels).
 
 ### Proxies (Phase B heuristics, marked for replacement in Phase C)
 
@@ -1945,20 +1961,24 @@ design-rfcs,design_architecture,
 
 The `channel_key` is matched first against the channel name, then against the channel ID, then falls back to "general".
 
-## Open decisions (Phase B)
+## Resolved decisions (Phase B)
 
-1. **Slack privacy scope.** Phase B reads `_tool_slack_channel_messages` from whatever channels the `slack` plugin has been configured to collect. The plugin **does not** look at message text. Public engineering channels only is the recommended default; incident channels require legal review.
-2. **Per-engineer timezone.** Phase B uses UTC 09:00–18:00 for everyone. Phase C should add an `engineer_timezone` table or read from a directory integration; until then engineers in non-UTC zones will appear to work "after hours" abnormally often.
-3. **Tone analysis.** Out of scope for Phase B (behavioral-only). If we want it later, it would mean shipping message text to an LLM at aggregate (per-channel-per-week) level only — privacy and cost review required.
-4. **Engineer identity for Slack.** Unmapped Slack users get a synthetic `slack:<userid>` engineer_id rather than being dropped. To map them, insert into `aimeasure_account_overrides` with `source_system='slack'`.
-5. **Review-to-author ratio for pure reviewers.** `SafeRatio` returns 0 when `author_minutes` is 0. The alternative is NULL or a sentinel large value. We chose 0 because the dashboard heatmap renders 0 as "no signal" rather than "off the chart", which we judged more useful for triage.
+All seven open decisions from the spec § 6.6 and the original plan draft are resolved. Rationale captured here so future readers know *why*.
+
+1. **Slack scope: public engineering channels + private incident channels + private design channels.** No DMs. Aimeasure reads what the `slack` plugin already collects — operators are responsible for inviting the bot to private channels they want included. Aimeasure **does not** look at message text, only metadata (sender, timestamp, channel, thread relationship). Legal review covered Phase A; Phase B does not change the collection surface, only the analytics.
+2. **Sentiment proxy: behavioral only.** Score = `f(after_hours_ratio, review_to_author_ratio, WoW message drop)`. **No LLM tone analysis.** Survey columns (`last_survey_date`, `last_survey_dxi`) stay nullable for a future ingest pipeline tracked in [issue #15](https://github.com/zvika-finally/incubator-devlake/issues/15).
+3. **DXI survey ingest: deferred.** Columns ship empty in Phase B. The dedicated tracking issue (#15) lays out the work: source (Forms/Lattice/CSV), respondent→account_id mapping, k-anonymity, dashboard fallback when survey is fresh.
+4. **Timezone: UTC for everyone in Phase B.** `IsAfterHours` uses UTC 09:00–18:00 Mon–Fri. Phase C adds an `aimeasure_engineer_timezones` table or directory-integration to fix non-UTC engineers; until then, engineers in non-UTC zones will appear to work "after hours" abnormally often. The dashboard documents this caveat in a panel description.
+5. **Slack identity fallback: synthetic `slack:<userid>` for unmapped users.** Their rows appear in the dashboard as "unmapped" so operators can backfill mappings into `aimeasure_account_overrides` rather than silently losing data. Active unmapped users surface visibly on the per-engineer panels — that's a feature, not a bug.
+6. **Channel→category mapping: DB config table (`aimeasure_slack_channel_categories`).** Operators edit via SQL; rerunning the subtask picks up changes immediately. No admin UI in Phase B — direct DB access is the workflow. A regex-based auto-classifier is a Phase C polish if curation becomes painful.
+7. **Review-to-author ratio for pure reviewers: 0 (via `SafeRatio`).** A pure reviewer (`reviewer_minutes > 0, author_minutes = 0`) gets ratio=0 just like a pure author. **Caveat:** this collapses the senior-burnout signal on the ratio heatmap alone, so the dashboard adds a separate **"Reviewer minutes (raw)"** panel ranking engineers by `reviewer_minutes` regardless of authoring. The combination of "low ratio + high raw reviewer minutes" identifies pure reviewers; "high ratio + non-zero author minutes" identifies the spec's senior-burnout pattern. NULL was rejected because it breaks `AVG` aggregations across multiple downstream queries; a sentinel was rejected because it skews aggregations even worse.
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add backend/plugins/aimeasure/README.md
-git commit -m "docs(aimeasure): Phase B README section + open-decisions"
+git commit -m "docs(aimeasure): Phase B README + resolved-decisions tracker"
 ```
 
 ---
@@ -2006,7 +2026,7 @@ git push -u origin <feature-branch>
 gh pr create --base main --title "feat(aimeasure): Phase B — verification effort + dark matter" --body-file <body.md>
 ```
 
-PR body should cover: summary, 4 new tables, 3 new subtasks, dashboard, open decisions, test plan checklist.
+PR body should cover: summary, 4 new tables, 3 new subtasks, 7-panel dashboard, resolved-decisions reference, test plan checklist.
 
 ---
 
@@ -2020,13 +2040,13 @@ PR body should cover: summary, 4 new tables, 3 new subtasks, dashboard, open dec
 | `computeVerificationEffort` subtask | Task 5 (impl) + Task 9 (e2e) |
 | `computeSlackSignals` subtask | Task 6 (impl) + Task 10 (e2e) |
 | `computeSentimentProxy` subtask | Task 7 (impl) + Task 11 (e2e) |
-| `InvisibleWork.json` dashboard (6 panels) | Task 12 |
+| `InvisibleWork.json` dashboard (6 panels per spec + 1 disambiguation panel) | Task 12 |
 | Identity resolution (Slack → account) | Task 6 (`ResolveSlackEngineer`) + reuses Phase A's `aimeasure_account_overrides` |
 | Channel-category mapping | Task 1 (`SlackChannelCategory` model) + Task 4 (`CategorizeChannel` pure fn) + Task 6 (DB join) |
 | Subtask scheduling (after Phase A) | Task 8 (extends `SubTaskMetas` + `MakeMetricPluginPipelinePlanV200`) |
 | Survey integration | Out of scope; columns are nullable, populated externally |
 | Cross-signal red flags (senior burnout cascade, reviewer collapse, dark-matter ghost) | Surfaced via the dashboard panels — no separate alerting in Phase B |
-| Open decisions tracker | Task 13 (README section) |
+| Resolved-decisions tracker (all 7 from spec § 6.6 + plan draft) | Task 13 (README section) |
 
 ---
 
