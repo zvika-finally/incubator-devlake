@@ -52,8 +52,8 @@ func TestComputeVerificationEffortDataFlow(t *testing.T) {
 		IgnoreTypes:  []interface{}{common.NoPKModel{}},
 		IgnoreFields: []string{"computed_at"},
 		NumericEpsilon: map[string]float64{
-			"review_to_author_ratio":      0.0001,
-			"review_comments_per_loc":     0.0001,
+			"review_to_author_ratio":       0.0001,
+			"review_comments_per_loc":      0.0001,
 			"review_comments_per_loc_high": 0.0001,
 		},
 	})

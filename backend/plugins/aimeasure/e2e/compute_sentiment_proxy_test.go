@@ -48,8 +48,8 @@ func TestComputeSentimentProxyDataFlow(t *testing.T) {
 	dataflowTester.FlushTabler(&models.EngineerDxiProxy{})
 	dataflowTester.Subtask(tasks.ComputeSentimentProxyMeta, taskData)
 	dataflowTester.VerifyTableWithOptions(&models.EngineerDxiProxy{}, e2ehelper.TableOptions{
-		CSVRelPath:  "./fixtures/expected_engineer_dxi_proxy.csv",
-		IgnoreTypes: []interface{}{common.NoPKModel{}},
+		CSVRelPath:   "./fixtures/expected_engineer_dxi_proxy.csv",
+		IgnoreTypes:  []interface{}{common.NoPKModel{}},
 		IgnoreFields: []string{"computed_at", "last_survey_date", "last_survey_dxi"},
 		// NumericEpsilon on sentiment_score at 0.01 (column is decimal(5,2)).
 		NumericEpsilon: map[string]float64{

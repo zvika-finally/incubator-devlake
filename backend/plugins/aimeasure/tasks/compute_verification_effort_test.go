@@ -24,8 +24,8 @@ func TestEstimateAuthorMinutes(t *testing.T) {
 		loc  int
 		want int
 	}{
-		{0, 10},      // floor
-		{50, 10},     // 10 min == floor
+		{0, 10},  // floor
+		{50, 10}, // 10 min == floor
 		{100, 20},
 		{500, 100},
 		{2000, 240},  // ceiling
@@ -43,8 +43,8 @@ func TestEstimateReviewerMinutes(t *testing.T) {
 		numComments int
 		want        int
 	}{
-		{0, 15},   // baseline
-		{5, 25},   // 15 + 2*5
+		{0, 15}, // baseline
+		{5, 25}, // 15 + 2*5
 		{30, 75},
 		{60, 120}, // ceiling
 		{100, 120},
@@ -62,7 +62,7 @@ func TestSafeRatio(t *testing.T) {
 		want       float64
 	}{
 		{0, 0, 0.0},
-		{100, 0, 0.0},   // div by zero → 0
+		{100, 0, 0.0}, // div by zero → 0
 		{50, 100, 0.5},
 		{300, 100, 3.0},
 	}

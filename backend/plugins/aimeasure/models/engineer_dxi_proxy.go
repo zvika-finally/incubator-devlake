@@ -23,13 +23,13 @@ import "time"
 // for an engineer in a given ISO week. Survey fields are nullable — populated
 // only if a DXI/eNPS survey ingest exists (out of scope for Phase B).
 type EngineerDxiProxy struct {
-	EngineerId         string     `gorm:"primaryKey;type:varchar(255)" json:"engineerId"`
-	PeriodWeek         time.Time  `gorm:"primaryKey;type:date" json:"periodWeek"`
-	SentimentScore     float64    `gorm:"type:decimal(5,2)" json:"sentimentScore"`     // 0–100, behavioral
-	BadDeveloperDayFlag bool      `gorm:"type:bool" json:"badDeveloperDayFlag"`
-	LastSurveyDate     *time.Time `gorm:"type:date" json:"lastSurveyDate,omitempty"`
-	LastSurveyDxi      *float64   `gorm:"type:decimal(5,2)" json:"lastSurveyDxi,omitempty"`
-	ComputedAt         time.Time  `gorm:"not null" json:"computedAt"`
+	EngineerId          string     `gorm:"primaryKey;type:varchar(255)" json:"engineerId"`
+	PeriodWeek          time.Time  `gorm:"primaryKey;type:date" json:"periodWeek"`
+	SentimentScore      float64    `gorm:"type:decimal(5,2)" json:"sentimentScore"` // 0–100, behavioral
+	BadDeveloperDayFlag bool       `gorm:"type:bool" json:"badDeveloperDayFlag"`
+	LastSurveyDate      *time.Time `gorm:"type:date" json:"lastSurveyDate,omitempty"`
+	LastSurveyDxi       *float64   `gorm:"type:decimal(5,2)" json:"lastSurveyDxi,omitempty"`
+	ComputedAt          time.Time  `gorm:"not null" json:"computedAt"`
 }
 
 func (EngineerDxiProxy) TableName() string {

@@ -28,9 +28,9 @@ func TestSentimentScore(t *testing.T) {
 		want            float64 // approx
 	}{
 		{"perfect week", 0.0, 0.8, 0.0, 100},
-		{"all night work", 1.0, 0.8, 0.0, 60},  // -40
-		{"heavy reviewer", 0.0, 3.0, 0.0, 70},  // (3-1.5)/1.5=1.0 → -30
-		{"disengaged", 0.0, 0.8, 0.5, 90},      // -10
+		{"all night work", 1.0, 0.8, 0.0, 60},   // -40
+		{"heavy reviewer", 0.0, 3.0, 0.0, 70},   // (3-1.5)/1.5=1.0 → -30
+		{"disengaged", 0.0, 0.8, 0.5, 90},       // -10
 		{"compound burnout", 1.0, 3.0, 0.6, 20}, // -40 -30 -10
 	}
 	for _, c := range cases {
