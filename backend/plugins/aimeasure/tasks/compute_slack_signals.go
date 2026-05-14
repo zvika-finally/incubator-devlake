@@ -32,7 +32,7 @@ var ComputeSlackSignalsMeta = plugin.SubTaskMeta{
 	Name:             "computeSlackSignals",
 	EntryPoint:       ComputeSlackSignals,
 	EnabledByDefault: true,
-	Description:      "Aggregate per-engineer per-week Slack participation by channel category",
+	Description:      "Aggregate per-engineer per-week Slack participation by channel category (requires slack plugin enabled; if _tool_slack_* tables are absent the subtask logs a warning and writes 0 rows)",
 	DomainTypes:      []string{plugin.DOMAIN_TYPE_TICKET}, // Slack is communication-layer; ticket is the closest existing domain
 }
 
