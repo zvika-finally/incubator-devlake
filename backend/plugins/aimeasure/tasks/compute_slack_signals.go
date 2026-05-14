@@ -116,7 +116,7 @@ func ComputeSlackSignals(taskCtx plugin.SubTaskContext) errors.Error {
 	cursor, err := db.Cursor(
 		dal.Select("m.user AS user, m.ts AS ts, m.thread_ts AS thread_ts, m.channel_id AS channel_id, c.name AS channel_name"),
 		dal.From("_tool_slack_channel_messages m"),
-		dal.Join("LEFT JOIN _tool_slack_channels c ON c.channel_id = m.channel_id AND c.connection_id = m.connection_id"),
+		dal.Join("LEFT JOIN _tool_slack_channels c ON c.id = m.channel_id AND c.connection_id = m.connection_id"),
 		dal.Where("m.user IS NOT NULL AND m.user != '' AND (m.subtype IS NULL OR m.subtype = '' OR m.subtype = 'thread_broadcast')"),
 	)
 	if err != nil {
