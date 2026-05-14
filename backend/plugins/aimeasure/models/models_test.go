@@ -33,3 +33,17 @@ func TestTableNames(t *testing.T) {
 		}
 	}
 }
+
+func TestPhaseBTableNames(t *testing.T) {
+	cases := map[string]string{
+		"engineer_verification_effort":       EngineerVerificationEffort{}.TableName(),
+		"engineer_slack_signals":             EngineerSlackSignals{}.TableName(),
+		"engineer_dxi_proxy":                 EngineerDxiProxy{}.TableName(),
+		"aimeasure_slack_channel_categories": SlackChannelCategory{}.TableName(),
+	}
+	for expected, actual := range cases {
+		if expected != actual {
+			t.Errorf("expected table name %q, got %q", expected, actual)
+		}
+	}
+}
