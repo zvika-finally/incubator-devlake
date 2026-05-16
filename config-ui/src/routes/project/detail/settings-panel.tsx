@@ -59,6 +59,9 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
   const [findevops, setFindevops] = useState({
     enable: false,
   });
+  const [aimeasure, setAimeasure] = useState({
+    enable: false,
+  });
   const [operating, setOperating] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -72,6 +75,7 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
     const businessmetrics = project.metrics.find((ms) => ms.pluginName === 'businessmetrics');
     const capacityplanner = project.metrics.find((ms) => ms.pluginName === 'capacityplanner');
     const findevops = project.metrics.find((ms) => ms.pluginName === 'findevops');
+    const aimeasure = project.metrics.find((ms) => ms.pluginName === 'aimeasure');
 
     setName(project.name);
     setDora({
@@ -95,6 +99,9 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
     });
     setFindevops({
       enable: findevops?.enable ?? false,
+    });
+    setAimeasure({
+      enable: aimeasure?.enable ?? false,
     });
   }, [project]);
 
@@ -141,6 +148,11 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
               pluginName: 'findevops',
               pluginOption: {},
               enable: findevops.enable,
+            },
+            {
+              pluginName: 'aimeasure',
+              pluginOption: {},
+              enable: aimeasure.enable,
             },
           ],
         }),
@@ -270,6 +282,14 @@ export const SettingsPanel = ({ project, onRefresh }: Props) => {
               </Checkbox>
             }
             description="Calculate development costs and categorize for US GAAP ASC 350-40 capitalization compliance."
+          />
+          <Block
+            title={
+              <Checkbox checked={aimeasure.enable} onChange={(e) => setAimeasure({ enable: e.target.checked })}>
+                Enable AI Measure
+              </Checkbox>
+            }
+            description="Classify PRs by AI cohort, track defect/composition signals, and surface verification-effort + dark-matter metrics (Phase B: Slack participation, after-hours, sentiment proxy)."
           />
           <Block>
             <Button type="primary" loading={operating} disabled={!name} onClick={handleUpdate}>
