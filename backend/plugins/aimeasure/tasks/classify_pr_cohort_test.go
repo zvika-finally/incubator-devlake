@@ -19,6 +19,7 @@ package tasks
 
 import (
 	"testing"
+	"time"
 
 	"github.com/apache/incubator-devlake/plugins/aimeasure/models"
 )
@@ -94,6 +95,61 @@ func TestClassify_ThresholdEdgeCases(t *testing.T) {
 	just := ClassifyInput{ConfidenceScore: 29, HighThreshold: 65, LowThreshold: 30}
 	if got := Classify(just); got != models.CohortNone {
 		t.Errorf("score < low threshold should be NONE, got %s", got)
+	}
+}
+
+func TestResolveClassifiedAt_NewRowReturnsNow(t *testing.T) {
+	now := time.Date(2026, 5, 19, 12, 0, 0, 0, time.UTC)
+	fresh := models.PRAICohort{AICohort: models.CohortHigh, ConfidenceScore: 90, ClassifierVersion: "v1"}
+	got := ResolveClassifiedAt(nil, fresh, now)
+	if !got.Equal(now) {
+		t.Errorf("new row should get current time; got %v want %v", got, now)
+	}
+}
+
+func TestResolveClassifiedAt_NoChangePreservesTimestamp(t *testing.T) {
+	earlier := time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)
+	now := time.Date(2026, 5, 19, 12, 0, 0, 0, time.UTC)
+	existing := models.PRAICohort{
+		AICohort: models.CohortHigh, ConfidenceScore: 90,
+		HasExplicitMarker: true, HasCommitTrailer: false,
+		ClassifierVersion: "v1", ClassifiedAt: earlier,
+	}
+	fresh := existing
+	fresh.ClassifiedAt = time.Time{} // caller hasn't set it yet
+	got := ResolveClassifiedAt(&existing, fresh, now)
+	if !got.Equal(earlier) {
+		t.Errorf("identical classification should preserve timestamp; got %v want %v", got, earlier)
+	}
+}
+
+func TestResolveClassifiedAt_DimensionChangeBumpsTimestamp(t *testing.T) {
+	earlier := time.Date(2026, 3, 1, 9, 0, 0, 0, time.UTC)
+	now := time.Date(2026, 5, 19, 12, 0, 0, 0, time.UTC)
+	base := models.PRAICohort{
+		AICohort: models.CohortHigh, ConfidenceScore: 90,
+		HasExplicitMarker: true, HasCommitTrailer: false,
+		ClassifierVersion: "v1", ClassifiedAt: earlier,
+	}
+	cases := []struct {
+		name   string
+		mutate func(*models.PRAICohort)
+	}{
+		{"cohort changed", func(p *models.PRAICohort) { p.AICohort = models.CohortMedium }},
+		{"confidence changed", func(p *models.PRAICohort) { p.ConfidenceScore = 50 }},
+		{"explicit marker changed", func(p *models.PRAICohort) { p.HasExplicitMarker = false }},
+		{"commit trailer changed", func(p *models.PRAICohort) { p.HasCommitTrailer = true }},
+		{"classifier version changed", func(p *models.PRAICohort) { p.ClassifierVersion = "v2" }},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			fresh := base
+			c.mutate(&fresh)
+			got := ResolveClassifiedAt(&base, fresh, now)
+			if !got.Equal(now) {
+				t.Errorf("%s should bump timestamp; got %v want %v", c.name, got, now)
+			}
+		})
 	}
 }
 
