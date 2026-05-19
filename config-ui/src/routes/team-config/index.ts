@@ -16,14 +16,4 @@
  *
  */
 
-export * from './api-keys';
-export * from './blueprint';
-export * from './connection';
-export * from './db-migrate';
-export * from './error';
-export * from './layout';
-export * from './not-found';
-export * from './onboard';
-export * from './pipeline';
-export * from './project';
-export * from './team-config';
+export { TeamConfig } from './team-config';

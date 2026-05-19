@@ -26,6 +26,7 @@ import {
   ApiOutlined,
   GithubOutlined,
   SlackOutlined,
+  UsergroupAddOutlined,
 } from '@ant-design/icons';
 
 import { DOC_URL } from '@/release';
@@ -49,6 +50,11 @@ export const menuItems: MenuItem[] = [
     key: `${PATH_PREFIX}/connections`,
     label: 'Connections',
     icon: <AppstoreOutlined />,
+  },
+  {
+    key: `${PATH_PREFIX}/team-config`,
+    label: 'Team Config',
+    icon: <UsergroupAddOutlined />,
   },
   {
     key: `${PATH_PREFIX}/advanced`,

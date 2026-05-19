@@ -35,6 +35,7 @@ import {
   Pipeline,
   ApiKeys,
   NotFound,
+  TeamConfig,
 } from '@/routes';
 
 import { AIDetectorSettingsPage } from '@/pages/plugins/aidetector';
@@ -115,6 +116,10 @@ export const router = createBrowserRouter([
       {
         path: 'keys',
         element: <ApiKeys />,
+      },
+      {
+        path: 'team-config',
+        element: <TeamConfig />,
       },
       {
         path: 'plugins',
