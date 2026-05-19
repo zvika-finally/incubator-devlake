@@ -21,7 +21,7 @@ import { Card, Upload, Button, Table, Space, notification, Spin } from 'antd';
 import { InboxOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { saveAs } from 'file-saver';
 
-import { getUsersCsv, putUsersCsv, parseCsv } from '../api';
+import { getUsersCsv, putUsersCsv, parseCsv, extractErrorMessage } from '../api';
 
 type UserRow = { Id: string; Name: string; Email: string; TeamIds: string };
 
@@ -37,7 +37,7 @@ export const UsersSection = () => {
       const csv = await getUsersCsv();
       setRows(parseCsv(csv) as UserRow[]);
     } catch (err) {
-      notification.error({ message: 'Failed to load users', description: String((err as Error).message) });
+      notification.error({ message: 'Failed to load users', description: extractErrorMessage(err) });
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export const UsersSection = () => {
       const csv = await getUsersCsv();
       saveAs(new Blob([csv], { type: 'text/csv' }), 'users.csv');
     } catch (err) {
-      notification.error({ message: 'Download failed', description: String((err as Error).message) });
+      notification.error({ message: 'Download failed', description: extractErrorMessage(err) });
     }
   };
 
@@ -61,7 +61,7 @@ export const UsersSection = () => {
       const csv = await getUsersCsv(true);
       saveAs(new Blob([csv], { type: 'text/csv' }), 'users-template.csv');
     } catch (err) {
-      notification.error({ message: 'Template download failed', description: String((err as Error).message) });
+      notification.error({ message: 'Template download failed', description: extractErrorMessage(err) });
     }
   };
 
@@ -74,7 +74,7 @@ export const UsersSection = () => {
       setPending(null);
       await refresh();
     } catch (err) {
-      notification.error({ message: 'Upload failed', description: String((err as Error).message) });
+      notification.error({ message: 'Upload failed', description: extractErrorMessage(err) });
     } finally {
       setUploading(false);
     }

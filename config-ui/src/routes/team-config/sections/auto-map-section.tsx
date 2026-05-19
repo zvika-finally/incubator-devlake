@@ -21,7 +21,7 @@ import { Card, Button, Modal, Alert, Space, notification } from 'antd';
 import { PlayCircleOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 
-import { runAutoMapping, PipelineRef } from '../api';
+import { runAutoMapping, PipelineRef, extractErrorMessage } from '../api';
 
 export const AutoMapSection = () => {
   const [running, setRunning] = useState(false);
@@ -40,7 +40,7 @@ export const AutoMapSection = () => {
           setLatest(ref);
           notification.success({ message: `Pipeline ${ref.id} started`, description: ref.name });
         } catch (err) {
-          notification.error({ message: 'Pipeline trigger failed', description: String((err as Error).message) });
+          notification.error({ message: 'Pipeline trigger failed', description: extractErrorMessage(err) });
         } finally {
           setRunning(false);
         }

@@ -20,6 +20,30 @@ import axios from 'axios';
 
 const ORG = '/api/plugins/org';
 
+/**
+ * Extract a useful error message from an axios or generic error.
+ *
+ * Devlake's API returns `{success: false, message: "..."}` on failure, exposed
+ * at `err.response.data.message`. Plain `err.message` only surfaces the
+ * generic axios "Request failed with status code N" — useless for diagnosis.
+ *
+ * Also handles 428 Precondition Required by redirecting to `/db-migrate`,
+ * matching the interceptor on the shared `request()` axios instance. We
+ * can't reuse that instance directly because it returns `resp.data` and
+ * doesn't expose `responseType: 'text'`.
+ */
+export const extractErrorMessage = (err: unknown): string => {
+  if (axios.isAxiosError(err)) {
+    if (err.response?.status === 428) {
+      window.location.replace('/db-migrate');
+      return 'Schema migration required — redirecting…';
+    }
+    const apiMsg = (err.response?.data as { message?: string } | undefined)?.message;
+    return apiMsg ?? err.message;
+  }
+  return err instanceof Error ? err.message : String(err);
+};
+
 export const getUsersCsv = (fakeData = false): Promise<string> =>
   axios
     .get(`${ORG}/users.csv`, { params: fakeData ? { fake_data: 'true' } : undefined, responseType: 'text' })

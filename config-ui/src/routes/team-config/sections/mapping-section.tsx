@@ -21,7 +21,7 @@ import { Card, Upload, Button, Table, Space, notification, Spin } from 'antd';
 import { InboxOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { saveAs } from 'file-saver';
 
-import { getMappingCsv, putMappingCsv, parseCsv } from '../api';
+import { getMappingCsv, putMappingCsv, parseCsv, extractErrorMessage } from '../api';
 
 type MappingRow = { Id: string; UserId: string };
 
@@ -37,7 +37,7 @@ export const MappingSection = () => {
       const csv = await getMappingCsv();
       setRows(parseCsv(csv) as MappingRow[]);
     } catch (err) {
-      notification.error({ message: 'Failed to load mappings', description: String((err as Error).message) });
+      notification.error({ message: 'Failed to load mappings', description: extractErrorMessage(err) });
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export const MappingSection = () => {
       const csv = await getMappingCsv();
       saveAs(new Blob([csv], { type: 'text/csv' }), 'user_account_mapping.csv');
     } catch (err) {
-      notification.error({ message: 'Download failed', description: String((err as Error).message) });
+      notification.error({ message: 'Download failed', description: extractErrorMessage(err) });
     }
   };
 
@@ -61,7 +61,7 @@ export const MappingSection = () => {
       const csv = await getMappingCsv(true);
       saveAs(new Blob([csv], { type: 'text/csv' }), 'user_account_mapping-template.csv');
     } catch (err) {
-      notification.error({ message: 'Template download failed', description: String((err as Error).message) });
+      notification.error({ message: 'Template download failed', description: extractErrorMessage(err) });
     }
   };
 
@@ -74,7 +74,7 @@ export const MappingSection = () => {
       setPending(null);
       await refresh();
     } catch (err) {
-      notification.error({ message: 'Upload failed', description: String((err as Error).message) });
+      notification.error({ message: 'Upload failed', description: extractErrorMessage(err) });
     } finally {
       setUploading(false);
     }
