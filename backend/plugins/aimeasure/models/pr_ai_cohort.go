@@ -31,7 +31,12 @@ const (
 )
 
 // PRAICohort is the cohort classification for a merged pull request.
-// One row per PR. Rewritten by the classifyPRCohort subtask.
+// One row per PR, upserted by the classifyPRCohort subtask.
+//
+// ClassifiedAt is stable across idempotent re-runs: it only advances when
+// the cohort, confidence, evidence flags, or classifier version actually
+// change. That makes it a meaningful event-time column for downstream
+// filtering, rather than a heartbeat of the last batch run.
 type PRAICohort struct {
 	PRId              string    `gorm:"primaryKey;type:varchar(255)" json:"prId"`
 	AICohort          AICohort  `gorm:"type:varchar(20);not null;index" json:"aiCohort"`

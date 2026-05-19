@@ -79,8 +79,31 @@ type prCohortInput struct {
 	HasExplicitMarker bool   `gorm:"column:has_explicit_marker"`
 }
 
+// ResolveClassifiedAt picks the classified_at value to persist for a row.
+// If there is no prior row, or any classification dimension has changed
+// (cohort, confidence, evidence flags, or classifier version), the
+// timestamp is bumped to `now`. Otherwise the existing timestamp is
+// preserved so idempotent re-runs don't churn the column — which lets
+// downstream consumers filter on classified_at as a real event time
+// rather than a heartbeat from the last batch run.
+func ResolveClassifiedAt(existing *models.PRAICohort, fresh models.PRAICohort, now time.Time) time.Time {
+	if existing == nil {
+		return now
+	}
+	if existing.AICohort != fresh.AICohort ||
+		existing.ConfidenceScore != fresh.ConfidenceScore ||
+		existing.HasExplicitMarker != fresh.HasExplicitMarker ||
+		existing.HasCommitTrailer != fresh.HasCommitTrailer ||
+		existing.ClassifierVersion != fresh.ClassifierVersion {
+		return now
+	}
+	return existing.ClassifiedAt
+}
+
 // ClassifyPRCohort is the subtask entrypoint. Reads ai_usage_signals + commits,
-// writes one pr_ai_cohort row per merged PR. Idempotent: rerunning overwrites.
+// writes one pr_ai_cohort row per merged PR. Re-runs are idempotent and
+// preserve classified_at when the classification hasn't materially changed
+// — see ResolveClassifiedAt.
 func ClassifyPRCohort(taskCtx plugin.SubTaskContext) errors.Error {
 	data := taskCtx.GetData().(*AIMeasureTaskData)
 	db := taskCtx.GetDal()
@@ -127,8 +150,19 @@ func ClassifyPRCohort(taskCtx plugin.SubTaskContext) errors.Error {
 			HasExplicitMarker: in.HasExplicitMarker,
 			HasCommitTrailer:  hasTrailer,
 			ClassifierVersion: ClassifierVersion,
-			ClassifiedAt:      now,
 		}
+
+		var existingPtr *models.PRAICohort
+		var existing models.PRAICohort
+		if err := db.First(&existing, dal.Where("pr_id = ?", in.PRId)); err != nil {
+			if !db.IsErrorNotFound(err) {
+				return errors.Default.Wrap(err, "failed to load existing pr_ai_cohort row")
+			}
+		} else {
+			existingPtr = &existing
+		}
+		row.ClassifiedAt = ResolveClassifiedAt(existingPtr, *row, now)
+
 		if err := db.CreateOrUpdate(row); err != nil {
 			return errors.Default.Wrap(err, "failed to upsert pr_ai_cohort row")
 		}
