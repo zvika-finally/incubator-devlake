@@ -31,7 +31,7 @@ export const AutoMapSection = () => {
     Modal.confirm({
       title: 'Run auto-mapping?',
       content:
-        'This will run Devlake\'s connectUserAccountsExact subtask, which overwrites user_accounts based on a name+email heuristic. Manual entries in the mapping table will be replaced.',
+        "This will run Devlake's connectUserAccountsExact subtask, which overwrites user_accounts based on a name+email heuristic. Manual entries in the mapping table will be replaced.",
       okText: 'Run',
       onOk: async () => {
         setRunning(true);
@@ -61,9 +61,7 @@ export const AutoMapSection = () => {
         <Button type="primary" icon={<PlayCircleOutlined />} loading={running} onClick={trigger}>
           Run mapping algorithm
         </Button>
-        {latest && (
-          <Link to={`/advanced/pipeline/${latest.id}`}>View pipeline {latest.id} →</Link>
-        )}
+        {latest && <Link to={`/advanced/pipeline/${latest.id}`}>View pipeline {latest.id} →</Link>}
       </Space>
     </Card>
   );

@@ -81,12 +81,19 @@ export const UsersSection = () => {
   };
 
   return (
-    <Card title="Users" extra={
-      <Space>
-        <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>Template</Button>
-        <Button icon={<DownloadOutlined />} onClick={downloadCurrent}>Current</Button>
-      </Space>
-    }>
+    <Card
+      title="Users"
+      extra={
+        <Space>
+          <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>
+            Template
+          </Button>
+          <Button icon={<DownloadOutlined />} onClick={downloadCurrent}>
+            Current
+          </Button>
+        </Space>
+      }
+    >
       <Upload.Dragger
         accept=".csv"
         multiple={false}
@@ -97,7 +104,9 @@ export const UsersSection = () => {
         fileList={pending ? [{ uid: '1', name: pending.name, status: 'done' as const }] : []}
         onRemove={() => setPending(null)}
       >
-        <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+        <p className="ant-upload-drag-icon">
+          <InboxOutlined />
+        </p>
         <p className="ant-upload-text">Click or drag a users.csv file here</p>
         <p className="ant-upload-hint">Headers must be Id,Name,Email,TeamIds (case-sensitive).</p>
       </Upload.Dragger>

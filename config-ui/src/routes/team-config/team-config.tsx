@@ -24,13 +24,16 @@ import { AutoMapSection } from './sections/auto-map-section';
 
 export const TeamConfig = () => (
   <Space direction="vertical" size="large" style={{ width: '100%' }}>
-    <Typography.Title level={3} style={{ marginBottom: 0 }}>Team Configuration</Typography.Title>
+    <Typography.Title level={3} style={{ marginBottom: 0 }}>
+      Team Configuration
+    </Typography.Title>
     <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-      Define canonical users, map them to per-source accounts (GitHub, Jira, etc.), and run the
-      auto-mapping heuristic. Matches Devlake's documented Team Configuration flow:&nbsp;
+      Define canonical users, map them to per-source accounts (GitHub, Jira, etc.), and run the auto-mapping heuristic.
+      Matches Devlake's documented Team Configuration flow:&nbsp;
       <a href="https://devlake.apache.org/docs/Configuration/TeamConfiguration" target="_blank" rel="noreferrer">
         devlake.apache.org docs
-      </a>.
+      </a>
+      .
     </Typography.Paragraph>
     <UsersSection />
     <MappingSection />

@@ -81,12 +81,19 @@ export const MappingSection = () => {
   };
 
   return (
-    <Card title="User ↔ Account Mapping" extra={
-      <Space>
-        <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>Template</Button>
-        <Button icon={<DownloadOutlined />} onClick={downloadCurrent}>Current</Button>
-      </Space>
-    }>
+    <Card
+      title="User ↔ Account Mapping"
+      extra={
+        <Space>
+          <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>
+            Template
+          </Button>
+          <Button icon={<DownloadOutlined />} onClick={downloadCurrent}>
+            Current
+          </Button>
+        </Space>
+      }
+    >
       <Upload.Dragger
         accept=".csv"
         multiple={false}
@@ -97,9 +104,13 @@ export const MappingSection = () => {
         fileList={pending ? [{ uid: '1', name: pending.name, status: 'done' as const }] : []}
         onRemove={() => setPending(null)}
       >
-        <p className="ant-upload-drag-icon"><InboxOutlined /></p>
+        <p className="ant-upload-drag-icon">
+          <InboxOutlined />
+        </p>
         <p className="ant-upload-text">Click or drag a user_account_mapping.csv file here</p>
-        <p className="ant-upload-hint">Headers must be Id,UserId (case-sensitive). Id is the source account_id; UserId is the canonical user.</p>
+        <p className="ant-upload-hint">
+          Headers must be Id,UserId (case-sensitive). Id is the source account_id; UserId is the canonical user.
+        </p>
       </Upload.Dragger>
       <div style={{ marginTop: 12, marginBottom: 24 }}>
         <Button type="primary" icon={<UploadOutlined />} disabled={!pending} loading={uploading} onClick={upload}>

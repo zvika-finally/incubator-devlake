@@ -58,9 +58,7 @@ export const runAutoMapping = async (): Promise<PipelineRef> => {
 
 /** Parse a CSV string into an array of row objects keyed by the header. */
 export const parseCsv = (csv: string): Record<string, string>[] => {
-  const lines = csv
-    .split(/\r?\n/)
-    .filter((l) => l.trim().length > 0);
+  const lines = csv.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length < 2) return [];
   const headers = splitCsvLine(lines[0]);
   return lines.slice(1).map((line) => {
