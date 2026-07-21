@@ -29,9 +29,11 @@ type changeCqIssueCodeBlocksComponentToText struct{}
 
 func (script *changeCqIssueCodeBlocksComponentToText) Up(basicRes context.BasicRes) errors.Error {
 	db := basicRes.GetDal()
-	if err := db.DropIndexes("cq_issue_code_blocks", "idx_cq_issue_code_blocks_component"); err != nil {
-		return err
-	}
+	// Best-effort drop: databases whose table was created after `component` became
+	// TEXT never had this index, so an unconditional DROP fails with "index doesn't
+	// exist" (MySQL 1091). Ignoring a missing-index error is safe — a genuinely
+	// un-droppable index makes the ModifyColumnType below fail loudly instead.
+	_ = db.DropIndexes("cq_issue_code_blocks", "idx_cq_issue_code_blocks_component")
 	return db.ModifyColumnType("cq_issue_code_blocks", "component", "text")
 }
 
