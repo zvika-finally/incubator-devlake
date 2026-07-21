@@ -77,11 +77,6 @@ func ExtractApiPullRequestReviews(taskCtx plugin.SubTaskContext) errors.Error {
 				taskCtx.GetLogger().Debug("Skipping review #%d from bot user: %s", body.GithubId, body.User.Login)
 				return nil, nil
 			}
-			// Filter bot reviews by username
-			if shouldSkipByUsername(apiPullRequestReview.User.Login) {
-				taskCtx.GetLogger().Debug("Skipping review #%d from bot user: %s", apiPullRequestReview.GithubId, apiPullRequestReview.User.Login)
-				return nil, nil
-			}
 			pull := &SimplePr{}
 			err := errors.Convert(json.Unmarshal(row.Input, pull))
 			if err != nil {
