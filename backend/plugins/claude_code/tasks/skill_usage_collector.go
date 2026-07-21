@@ -44,6 +44,11 @@ func CollectSkillUsage(taskCtx plugin.SubTaskContext) errors.Error {
 		return nil
 	}
 
+	if connection.IsConsoleApiKey() {
+		taskCtx.GetLogger().Info("Console API key detected, skipping skill usage collection (analytics endpoints require read:analytics scope, unavailable to console admin keys)")
+		return nil
+	}
+
 	apiClient, err := CreateApiClient(taskCtx.TaskContext(), connection)
 	if err != nil {
 		return err
