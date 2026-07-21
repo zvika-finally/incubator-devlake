@@ -326,14 +326,6 @@
       "type": "timeseries"
     },
     {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
-      "id": 102,
-      "panels": [],
-      "title": "AI Tool Usage (Cursor & Claude Code)",
-      "type": "row"
-    },
-    {
       "datasource": "mysql",
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 34 },
       "id": 60,
@@ -343,112 +335,6 @@
       },
       "title": "",
       "type": "text"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "fixedColor": "blue", "mode": "fixed" } }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 37 },
-      "id": 61,
-      "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT SUM(total_suggestions) as suggestions FROM cursor_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Cursor: Suggestions (30d)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "fixedColor": "green", "mode": "fixed" } }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 37 },
-      "id": 62,
-      "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT SUM(total_acceptances) as acceptances FROM cursor_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Cursor: Accepted (30d)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 40 },
-              { "color": "green", "value": 60 }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 37 },
-      "id": 63,
-      "options": {
-        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT AVG(acceptance_rate) as rate FROM cursor_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Cursor: Accept Rate",
-      "type": "gauge"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 42 },
-      "id": 67,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT date as time, total_suggestions as suggestions, total_acceptances as acceptances, daily_active_users as active_users FROM cursor_usage_metrics WHERE $__timeFilter(date) ORDER BY date",
-          "refId": "A",
-          "format": "time_series"
-        }
-      ],
-      "title": "Cursor Usage Over Time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 49 },
-      "id": 69,
-      "options": {
-        "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "acceptances" }]
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT user_email, SUM(tab_acceptances + composer_acceptances) as acceptances, AVG(acceptance_rate) as avg_rate, COUNT(DISTINCT date) as active_days FROM cursor_user_metrics WHERE $__timeFilter(date) GROUP BY user_email ORDER BY acceptances DESC LIMIT 20",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Top Cursor Users",
-      "type": "table"
     },
     {
       "collapsed": false,
