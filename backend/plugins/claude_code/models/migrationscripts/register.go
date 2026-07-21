@@ -25,5 +25,6 @@ func All() []plugin.MigrationScript {
 		new(addClaudeCodeInitialTables),
 		new(addClaudeCodeCustomHeaders),
 		new(replaceClaudeCodeAnalyticsTables),
+		new(addClaudeCodeTokenCost),
 	}
 }

@@ -63,6 +63,16 @@ type ClaudeCodeUserActivity struct {
 
 	WebSearchCount int `json:"webSearchCount"`
 
+	// Claude Code token usage and cost. Populated only on the console/usage_report
+	// path (organizations using a console admin key); the Enterprise analytics/users
+	// endpoint does not return per-model token or cost data, so these stay zero there.
+	InputTokens         int64  `json:"inputTokens"`
+	OutputTokens        int64  `json:"outputTokens"`
+	CacheReadTokens     int64  `json:"cacheReadTokens"`
+	CacheCreationTokens int64  `json:"cacheCreationTokens"`
+	EstimatedCostCents  int64  `json:"estimatedCostCents"`
+	CostCurrency        string `json:"costCurrency" gorm:"type:varchar(10)"`
+
 	common.NoPKModel
 }
 
