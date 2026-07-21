@@ -39,7 +39,6 @@ import { TeambitionConfig } from './teambition';
 import { TestmoConfig } from './testmo';
 import { SlackConfig } from './slack/config';
 import { CursorConfig } from './cursor';
-import { ClaudeCodeConfig } from './claudecode';
 
 export const pluginConfigs: IPluginConfig[] = [
   ArgoCDConfig,
@@ -64,5 +63,4 @@ export const pluginConfigs: IPluginConfig[] = [
   OpsgenieConfig,
   TeambitionConfig,
   CursorConfig,
-  ClaudeCodeConfig,
 ].sort((a, b) => a.sort - b.sort);

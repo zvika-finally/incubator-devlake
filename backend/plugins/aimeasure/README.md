@@ -1,6 +1,6 @@
 # aimeasure plugin
 
-Analytics layer that classifies merged PRs by AI assistance level and computes quality, verification, and cost signals on top of existing collector plugins (`aidetector`, `claudecode`, `cursor`, `slack`, `findevops`).
+Analytics layer that classifies merged PRs by AI assistance level and computes quality, verification, and cost signals on top of existing collector plugins (`aidetector`, `cursor`, `slack`, `findevops`).
 
 Phase A scope (this release):
 
