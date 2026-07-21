@@ -136,11 +136,18 @@ func All() []plugin.MigrationScript {
 		new(addCqIssueImpacts),
 		new(addDueDateToIssues),
 		new(createQaTables),
+		new(addIsInvalidToQaTestCaseExecution),
 		new(increaseCqIssueComponentLength),
 		new(extendFieldSizeForCq),
 		new(addIssueFixVerion),
 		new(addPipelinePriority),
 		new(fixNullPriority),
 		new(convertPrMetricsToMilliseconds),
+		new(modifyCicdDeploymentsToText),
+		new(increaseCqIssuesProjectKeyLength),
+		new(addAuthSessions),
+		new(changeIssueComponentToText),
+		new(changeCqIssueCodeBlocksComponentToText),
+		new(addCqProjectMetricsHistory),
 	}
 }

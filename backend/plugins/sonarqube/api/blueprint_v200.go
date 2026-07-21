@@ -130,8 +130,11 @@ func GetApiProject(
 		Data []models.SonarqubeApiProject `json:"components"`
 	}
 	query := url.Values{}
-	query.Set("q", projectKey)
-	res, err := apiClient.Get("projects/search", query, nil)
+	query.Set("p", "1")
+	query.Set("ps", "100")
+	query.Set("filter", sonarqubeSearchProjectsQueryFilter(projectKey))
+	// Use components/search_projects for consistency and normal-token (Browse) support.
+	res, err := apiClient.Get("components/search_projects", query, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +144,11 @@ func GetApiProject(
 	err = helper.UnmarshalResponse(res, &resData)
 	if err != nil {
 		return nil, err
+	}
+	for i := range resData.Data {
+		if resData.Data[i].ProjectKey == projectKey {
+			return &resData.Data[i], nil
+		}
 	}
 	if len(resData.Data) > 0 {
 		return &resData.Data[0], nil

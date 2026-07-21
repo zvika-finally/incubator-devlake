@@ -28,9 +28,9 @@ MOCKERY_PINNED_VERSION ?= v2.53.5
 all: build
 
 go-dep:
-	go install github.com/vektra/mockery/v2@$(MOCKERY_PINNED_VERSION)
-	go install github.com/swaggo/swag/cmd/swag@v1.16.1
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.4
+	go install github.com/vektra/mockery/v2@v2.53.6
+	go install github.com/swaggo/swag/cmd/swag@v1.16.6
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 
 go-dev-tools:
 	# go install github.com/atombender/go-jsonschema/cmd/gojsonschema@latest
@@ -73,16 +73,6 @@ debug: build-plugin-debug
 	dlv debug server/main.go
 
 mock:
-	@if ! command -v mockery >/dev/null 2>&1; then \
-		echo "mockery is required. Install with: go install github.com/vektra/mockery/v2@$(MOCKERY_PINNED_VERSION)"; \
-		exit 1; \
-	fi
-	@MOCKERY_VERSION=$$(mockery --version 2>/dev/null | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n1); \
-	if [ "$$MOCKERY_VERSION" != "$(MOCKERY_PINNED_VERSION)" ]; then \
-		echo "mockery version $$MOCKERY_VERSION detected, expected $(MOCKERY_PINNED_VERSION)."; \
-		echo "Install with: go install github.com/vektra/mockery/v2@$(MOCKERY_PINNED_VERSION)"; \
-		exit 1; \
-	fi
 	rm -rf mocks
 	mockery --recursive --keeptree --dir=./core --output=./mocks/core --unroll-variadic=false --name='.*'
 	mockery --recursive --keeptree --dir=./helpers --output=./mocks/helpers --unroll-variadic=false --name='.*'

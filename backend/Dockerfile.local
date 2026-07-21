@@ -23,7 +23,7 @@
 #While incubation status is not necessarily a reflection of the completeness or stability of the code,
 #it does indicate that the project has yet to be fully endorsed by the ASF.
 
-FROM golang:1.20.5-bookworm as builder
+FROM golang:1.26-bookworm as builder
 
 ARG GOPROXY=
 ARG HTTP_PROXY=
@@ -47,8 +47,8 @@ RUN mkdir -p /tmp/build && cd /tmp/build && \
     make -j$(nproc) install && \
     ldconfig
 
-RUN go install github.com/vektra/mockery/v2@v2.20.0
-RUN go install github.com/swaggo/swag/cmd/swag@v1.16.1
+RUN go install github.com/vektra/mockery/v2@v2.53.6
+RUN go install github.com/swaggo/swag/cmd/swag@v1.16.6
 
 WORKDIR /app
 COPY . /app

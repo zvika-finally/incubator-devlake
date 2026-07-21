@@ -57,6 +57,7 @@ func All() []plugin.MigrationScript {
 		new(addIndexToGithubJobs),
 		new(addRefreshTokenFields),
 		new(fixNullableTokenExpiry),
+		new(modifyTokenExpiresAtToNullable),
 		new(addPrSizeExcludedFileExtensions),
 	}
 }
