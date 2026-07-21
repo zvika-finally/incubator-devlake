@@ -305,7 +305,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(cc_session_count), 0) as \"Selected User Sessions\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(cc_session_count), 0) as \"Selected User Sessions\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -369,7 +369,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT ROUND(\n  SUM(edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted) * 100.0\n    / NULLIF(\n        SUM(\n          edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted\n          + edit_tool_rejected + multi_edit_tool_rejected + write_tool_rejected + notebook_edit_tool_rejected\n        ),\n        0\n      ),\n  1\n) as \"Selected User Acceptance Rate %\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT ROUND(\n  SUM(edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted) * 100.0\n    / NULLIF(\n        SUM(\n          edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted\n          + edit_tool_rejected + multi_edit_tool_rejected + write_tool_rejected + notebook_edit_tool_rejected\n        ),\n        0\n      ),\n  1\n) as \"Selected User Acceptance Rate %\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -423,7 +423,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(cc_lines_added), 0) as \"Selected User Lines Added\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(cc_lines_added), 0) as \"Selected User Lines Added\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -477,7 +477,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(cc_lines_removed), 0) as \"Selected User Lines Removed\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(cc_lines_removed), 0) as \"Selected User Lines Removed\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -531,7 +531,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(cc_commit_count), 0) as \"Selected User Commits\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(cc_commit_count), 0) as \"Selected User Commits\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -585,7 +585,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(cc_pull_request_count), 0) as \"Selected User PRs\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(cc_pull_request_count), 0) as \"Selected User PRs\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -639,7 +639,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT CASE\n    WHEN (\n      cc_session_count > 0\n      OR cc_commit_count > 0\n      OR cc_pull_request_count > 0\n      OR cc_lines_added > 0\n      OR cc_lines_removed > 0\n      OR chat_conversation_count > 0\n      OR web_search_count > 0\n      OR edit_tool_accepted + edit_tool_rejected + multi_edit_tool_accepted + multi_edit_tool_rejected + write_tool_accepted + write_tool_rejected + notebook_edit_tool_accepted + notebook_edit_tool_rejected > 0\n    ) THEN `date`\n    ELSE NULL\n  END) as \"Selected User Active Days\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COUNT(DISTINCT CASE\n    WHEN (\n      cc_session_count > 0\n      OR cc_commit_count > 0\n      OR cc_pull_request_count > 0\n      OR cc_lines_added > 0\n      OR cc_lines_removed > 0\n      OR chat_conversation_count > 0\n      OR web_search_count > 0\n      OR edit_tool_accepted + edit_tool_rejected + multi_edit_tool_accepted + multi_edit_tool_rejected + write_tool_accepted + write_tool_rejected + notebook_edit_tool_accepted + notebook_edit_tool_rejected > 0\n    ) THEN `date`\n    ELSE NULL\n  END) as \"Selected User Active Days\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -693,7 +693,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COALESCE(SUM(chat_conversation_count), 0) as \"Selected User Chat Conversations\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
+          "rawSql": "SELECT COALESCE(SUM(chat_conversation_count), 0) as \"Selected User Chat Conversations\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )",
           "refId": "A"
         }
       ],
@@ -790,7 +790,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT `date` as time,\n  SUM(cc_session_count) as \"Sessions\",\n  SUM(cc_commit_count) as \"Commits\",\n  SUM(cc_pull_request_count) as \"PRs\",\n  SUM(chat_conversation_count) as \"Chat Conversations\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY 1",
+          "rawSql": "SELECT `date` as time,\n  SUM(cc_session_count) as \"Sessions\",\n  SUM(cc_commit_count) as \"Commits\",\n  SUM(cc_pull_request_count) as \"PRs\",\n  SUM(chat_conversation_count) as \"Chat Conversations\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -874,7 +874,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT `date` as time,\n  SUM(cc_lines_added) as \"Lines Added\",\n  SUM(cc_lines_removed) as \"Lines Removed\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY 1",
+          "rawSql": "SELECT `date` as time,\n  SUM(cc_lines_added) as \"Lines Added\",\n  SUM(cc_lines_removed) as \"Lines Removed\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY 1",
           "refId": "A"
         }
       ],
@@ -928,7 +928,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT tool_name as \"Tool\",\n  SUM(accepted) as \"Accepted\",\n  SUM(rejected) as \"Rejected\",\n  ROUND(SUM(accepted) * 100.0 / NULLIF(SUM(accepted + rejected), 0), 1) as \"Acceptance Rate %\"\nFROM (\n  SELECT `date`, connection_id, scope_id, 'edit_tool' as tool_name, edit_tool_accepted as accepted, edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'multi_edit_tool' as tool_name, multi_edit_tool_accepted as accepted, multi_edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'write_tool' as tool_name, write_tool_accepted as accepted, write_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'notebook_edit_tool' as tool_name, notebook_edit_tool_accepted as accepted, notebook_edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n) tool_actions\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY tool_name\nORDER BY SUM(accepted + rejected) DESC, tool_name",
+          "rawSql": "SELECT tool_name as \"Tool\",\n  SUM(accepted) as \"Accepted\",\n  SUM(rejected) as \"Rejected\",\n  ROUND(SUM(accepted) * 100.0 / NULLIF(SUM(accepted + rejected), 0), 1) as \"Acceptance Rate %\"\nFROM (\n  SELECT `date`, connection_id, scope_id, 'edit_tool' as tool_name, edit_tool_accepted as accepted, edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'multi_edit_tool' as tool_name, multi_edit_tool_accepted as accepted, multi_edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'write_tool' as tool_name, write_tool_accepted as accepted, write_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n  UNION ALL\n  SELECT `date`, connection_id, scope_id, 'notebook_edit_tool' as tool_name, notebook_edit_tool_accepted as accepted, notebook_edit_tool_rejected as rejected, user_id, user_email\n  FROM _tool_claude_code_user_activity\n) tool_actions\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY tool_name\nORDER BY SUM(accepted + rejected) DESC, tool_name",
           "refId": "A"
         }
       ],
@@ -969,7 +969,7 @@
           "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT `date` as \"Day\",\n  SUM(cc_session_count) as \"Sessions\",\n  SUM(chat_conversation_count) as \"Chat Conversations\",\n  SUM(web_search_count) as \"Web Searches\",\n  SUM(cc_lines_added) as \"Lines Added\",\n  SUM(cc_lines_removed) as \"Lines Removed\",\n  SUM(cc_commit_count) as \"Commits\",\n  SUM(cc_pull_request_count) as \"PRs\",\n  ROUND(\n    SUM(edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted) * 100.0\n      / NULLIF(\n          SUM(\n            edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted\n            + edit_tool_rejected + multi_edit_tool_rejected + write_tool_rejected + notebook_edit_tool_rejected\n          ),\n          0\n        ),\n    1\n  ) as \"Tool Acceptance Rate %\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    ixd_get_user_role('${__user.email}') IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY `date` DESC\nLIMIT 60",
+          "rawSql": "SELECT `date` as \"Day\",\n  SUM(cc_session_count) as \"Sessions\",\n  SUM(chat_conversation_count) as \"Chat Conversations\",\n  SUM(web_search_count) as \"Web Searches\",\n  SUM(cc_lines_added) as \"Lines Added\",\n  SUM(cc_lines_removed) as \"Lines Removed\",\n  SUM(cc_commit_count) as \"Commits\",\n  SUM(cc_pull_request_count) as \"PRs\",\n  ROUND(\n    SUM(edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted) * 100.0\n      / NULLIF(\n          SUM(\n            edit_tool_accepted + multi_edit_tool_accepted + write_tool_accepted + notebook_edit_tool_accepted\n            + edit_tool_rejected + multi_edit_tool_rejected + write_tool_rejected + notebook_edit_tool_rejected\n          ),\n          0\n        ),\n    1\n  ) as \"Tool Acceptance Rate %\"\nFROM _tool_claude_code_user_activity\nWHERE $__timeFilter(`date`)\n  AND connection_id = ${connection_id}\n  AND scope_id = '${scope_id}'\n  AND (\n    'admin' IN ('admin', 'manager')\n    OR user_email = '${__user.email}'\n  )\n  AND (\n    '${user:csv}' = '0'\n    OR COALESCE(NULLIF(user_email, ''), user_id) = ${user:sqlstring}\n  )\nGROUP BY `date`\nORDER BY `date` DESC\nLIMIT 60",
           "refId": "A"
         }
       ],
@@ -1272,14 +1272,14 @@
           "value": "0"
         },
         "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
-        "definition": "SELECT DISTINCT user_key as __value, user_key as __text FROM (SELECT COALESCE(NULLIF(user_email, ''), user_id) as user_key, user_email FROM _tool_claude_code_user_activity WHERE connection_id = ${connection_id} AND scope_id = '${scope_id}') accessible_users WHERE ixd_get_user_role('${__user.email}') IN ('admin', 'manager') OR user_email = '${__user.email}' ORDER BY user_key",
+        "definition": "SELECT DISTINCT user_key as __value, user_key as __text FROM (SELECT COALESCE(NULLIF(user_email, ''), user_id) as user_key, user_email FROM _tool_claude_code_user_activity WHERE connection_id = ${connection_id} AND scope_id = '${scope_id}') accessible_users WHERE 'admin' IN ('admin', 'manager') OR user_email = '${__user.email}' ORDER BY user_key",
         "hide": 0,
         "includeAll": true,
         "label": "Selected User",
         "multi": false,
         "name": "user",
         "options": [],
-        "query": "SELECT DISTINCT user_key as __value, user_key as __text FROM (SELECT COALESCE(NULLIF(user_email, ''), user_id) as user_key, user_email FROM _tool_claude_code_user_activity WHERE connection_id = ${connection_id} AND scope_id = '${scope_id}') accessible_users WHERE ixd_get_user_role('${__user.email}') IN ('admin', 'manager') OR user_email = '${__user.email}' ORDER BY user_key",
+        "query": "SELECT DISTINCT user_key as __value, user_key as __text FROM (SELECT COALESCE(NULLIF(user_email, ''), user_id) as user_key, user_email FROM _tool_claude_code_user_activity WHERE connection_id = ${connection_id} AND scope_id = '${scope_id}') accessible_users WHERE 'admin' IN ('admin', 'manager') OR user_email = '${__user.email}' ORDER BY user_key",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

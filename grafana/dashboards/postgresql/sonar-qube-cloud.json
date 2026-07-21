@@ -89,7 +89,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -148,11 +151,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT ci.id) FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'SECURITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
+          "rawSql": "SELECT COUNT(DISTINCT ci.id) AS \"Security Issues\" FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'SECURITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -177,7 +183,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -236,11 +245,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT ci.id) FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'RELIABILITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
+          "rawSql": "SELECT COUNT(DISTINCT ci.id) AS \"Reliability Issues\" FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'RELIABILITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -265,7 +277,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -324,11 +339,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT ci.id) FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'MAINTAINABILITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
+          "rawSql": "SELECT COUNT(DISTINCT ci.id) AS \"Maintainability Issues\" FROM cq_issues AS ci JOIN cq_issue_impacts AS cii ON ci.id = cii.cq_issue_id WHERE ('${project_id:csv}' = '' OR ci.project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[])) AND cii.software_quality = 'MAINTAINABILITY' AND ('${severity:csv}' = '' OR ci.severity::text = ANY(ARRAY[${severity:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -366,7 +384,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -426,7 +447,10 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
@@ -455,7 +479,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -515,7 +542,10 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
@@ -570,7 +600,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -630,11 +663,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT ROUND(CAST((SUM(lines_to_cover) - SUM(uncovered_lines)) AS NUMERIC) / NULLIF(SUM(lines_to_cover), 0) * 100, 1) || '% ' || 'Coverage on ' || ROUND(CAST(CAST(SUM(lines_to_cover) AS NUMERIC) / NULLIF(1000, 0) AS DECIMAL), 0) || 'k Lines to cover' FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT ROUND(CAST((SUM(lines_to_cover) - SUM(uncovered_lines)) AS NUMERIC) / NULLIF(SUM(lines_to_cover), 0) * 100, 1) || '% ' || 'Coverage on ' || ROUND(CAST(CAST(SUM(lines_to_cover) AS NUMERIC) / NULLIF(1000, 0) AS DECIMAL), 0) || 'k Lines to cover' AS \"Coverage\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -659,7 +695,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -720,7 +759,10 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
@@ -749,7 +791,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -810,7 +855,10 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
@@ -865,7 +913,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -925,11 +976,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT SUM(duplicated_blocks) FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT SUM(duplicated_blocks) AS \"Duplicated Blocks\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -954,7 +1008,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1014,11 +1071,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT ROUND(CAST(SUM(duplicated_lines) AS NUMERIC) / NULLIF(SUM(num_of_lines), 0) * 100, 1) || '% ' || 'Duplications on ' || ROUND(CAST(CAST(SUM(ncloc) AS NUMERIC) / NULLIF(1000, 0) AS DECIMAL), 0) || 'k Lines' FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT ROUND(CAST(SUM(duplicated_lines) AS NUMERIC) / NULLIF(SUM(num_of_lines), 0) * 100, 1) || '% ' || 'Duplications on ' || ROUND(CAST(CAST(SUM(ncloc) AS NUMERIC) / NULLIF(1000, 0) AS DECIMAL), 0) || 'k Lines' AS \"Duplications\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1056,7 +1116,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1117,11 +1180,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT SUM(ncloc) FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT SUM(ncloc) AS \"Lines of Code\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1146,7 +1212,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1207,11 +1276,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT SUM(num_of_lines) FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT SUM(num_of_lines) AS \"Lines\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1236,7 +1308,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1297,11 +1372,14 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT file_path) FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
+          "rawSql": "SELECT COUNT(DISTINCT file_path) AS \"Files\" FROM cq_file_metrics WHERE ('${project_id:csv}' = '' OR project_key::text = ANY(ARRAY[${project_id:singlequote}]::text[]))",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1339,7 +1417,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1401,7 +1482,10 @@
       "targets": [
         {
           "dataset": "lake",
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
@@ -1713,7 +1797,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "devlake-postgres-api"
+        },
         "definition": "SELECT name || '--' || id AS text FROM cq_projects",
         "hide": 0,
         "includeAll": true,
@@ -1738,7 +1825,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "devlake-postgres-api"
+        },
         "definition": "SELECT DISTINCT severity FROM cq_issues WHERE id::text LIKE 'sonar%'",
         "hide": 0,
         "includeAll": true,

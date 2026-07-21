@@ -71,7 +71,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -157,7 +160,10 @@
       },
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -209,7 +215,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -295,7 +304,10 @@
       },
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -347,7 +359,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -435,7 +450,10 @@
       },
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -500,7 +518,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -557,14 +578,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT i.id) FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.created_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
+          "rawSql": "SELECT COUNT(DISTINCT i.id) AS \"New Bugs\" FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.created_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
           "refId": "A",
           "select": [
             [
@@ -609,7 +633,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -669,7 +696,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -721,7 +751,10 @@
       "type": "piechart"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -828,7 +861,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -880,7 +916,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -937,14 +976,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT i.id) FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND status = 'DONE' AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.resolution_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
+          "rawSql": "SELECT COUNT(DISTINCT i.id) AS \"Fixed Bugs\" FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND status = 'DONE' AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.resolution_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
           "refId": "A",
           "select": [
             [
@@ -989,7 +1031,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1051,14 +1096,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT AVG(CAST(lead_time_minutes AS NUMERIC) / NULLIF(1440, 0)) FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND status = 'DONE' AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.resolution_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
+          "rawSql": "SELECT AVG(CAST(lead_time_minutes AS NUMERIC) / NULLIF(1440, 0)) AS \"Avg Lead Time (days)\" FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND status = 'DONE' AND i.status <> 'REJECTED' AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[])) AND i.resolution_date BETWEEN TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - INTERVAL '1 DAY' * ((EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) + 7) AND TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0)) - (EXTRACT(ISODOW FROM TO_TIMESTAMP(CAST($__to AS NUMERIC) / NULLIF(1000, 0))) - 1) * INTERVAL '1 day'",
           "refId": "A",
           "select": [
             [
@@ -1103,7 +1151,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1224,7 +1275,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1276,7 +1330,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1364,7 +1421,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1416,7 +1476,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1473,14 +1536,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT i.id) FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND NOT i.status IN ('DONE', 'REJECTED') AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[]))",
+          "rawSql": "SELECT COUNT(DISTINCT i.id) AS \"Outstanding Bugs\" FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND NOT i.status IN ('DONE', 'REJECTED') AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[]))",
           "refId": "A",
           "select": [
             [
@@ -1525,7 +1591,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1582,13 +1651,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT AVG(CAST(((EXTRACT(EPOCH FROM (NOW() - i.created_date))/60)) AS NUMERIC) / NULLIF(1440, 0)) FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND NOT i.status IN ('DONE', 'REJECTED') AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[]))",
+          "rawSql": "SELECT AVG(CAST(((EXTRACT(EPOCH FROM (NOW() - i.created_date))/60)) AS NUMERIC) / NULLIF(1440, 0)) AS \"Avg Age (days)\" FROM issues AS i JOIN board_issues AS bi ON i.id = bi.issue_id JOIN boards AS b ON bi.board_id = b.id WHERE ('${issue_type:csv}' = '' OR i.type::text = ANY(ARRAY[${issue_type:singlequote}]::text[])) AND NOT i.status IN ('DONE', 'REJECTED') AND ('${board_id:csv}' = '' OR b.id::text = ANY(ARRAY[${board_id:singlequote}]::text[]))",
           "refId": "A",
           "select": [
             [
@@ -1616,7 +1688,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1761,7 +1836,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1813,7 +1891,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1901,7 +1982,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1953,7 +2037,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "devlake-postgres-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2098,7 +2185,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "devlake-postgres-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2198,7 +2288,10 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "devlake-postgres-api"
+        },
         "definition": "SELECT name || '-' || id AS text FROM boards",
         "hide": 0,
         "includeAll": true,
@@ -2219,7 +2312,10 @@
           "text": "BUG",
           "value": "BUG"
         },
-        "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "devlake-postgres-api"
+        },
         "definition": "SELECT DISTINCT type FROM issues",
         "hide": 0,
         "includeAll": true,
@@ -2244,7 +2340,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "grafana-postgresql-datasource", "uid": "devlake-postgres-api"},
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "devlake-postgres-api"
+        },
         "definition": "SELECT DISTINCT priority FROM issues",
         "hide": 0,
         "includeAll": true,
