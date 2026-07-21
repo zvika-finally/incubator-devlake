@@ -88,10 +88,31 @@ type userActivityCCTools struct {
 
 // consoleUserActivityRecord is the JSON shape returned by /v1/organizations/usage_report/claude_code.
 type consoleUserActivityRecord struct {
-	Date        string             `json:"date"`
-	Actor       consoleActor       `json:"actor"`
-	CoreMetrics consoleCoreMetrics `json:"core_metrics"`
-	ToolActions consoleToolActions `json:"tool_actions"`
+	Date           string                  `json:"date"`
+	Actor          consoleActor            `json:"actor"`
+	CoreMetrics    consoleCoreMetrics      `json:"core_metrics"`
+	ToolActions    consoleToolActions      `json:"tool_actions"`
+	ModelBreakdown []consoleModelBreakdown `json:"model_breakdown"`
+}
+
+// consoleModelBreakdown holds per-model token usage and cost from the
+// usage_report/claude_code payload (console admin key path only).
+type consoleModelBreakdown struct {
+	Model         string               `json:"model"`
+	Tokens        consoleTokens        `json:"tokens"`
+	EstimatedCost consoleEstimatedCost `json:"estimated_cost"`
+}
+
+type consoleTokens struct {
+	Input         int64 `json:"input"`
+	Output        int64 `json:"output"`
+	CacheRead     int64 `json:"cache_read"`
+	CacheCreation int64 `json:"cache_creation"`
+}
+
+type consoleEstimatedCost struct {
+	Currency string `json:"currency"`
+	Amount   int64  `json:"amount"` // in cents
 }
 
 type consoleActor struct {
@@ -239,6 +260,21 @@ func extractConsoleUserActivity(data *ClaudeCodeTaskData, date time.Time, raw []
 		return nil, nil
 	}
 
+	// Aggregate token usage and cost across the per-model breakdown. The Enterprise
+	// analytics/users path has no model_breakdown, so these stay zero there.
+	var inputTokens, outputTokens, cacheRead, cacheCreation, costCents int64
+	currency := ""
+	for _, model := range record.ModelBreakdown {
+		inputTokens += model.Tokens.Input
+		outputTokens += model.Tokens.Output
+		cacheRead += model.Tokens.CacheRead
+		cacheCreation += model.Tokens.CacheCreation
+		costCents += model.EstimatedCost.Amount
+		if currency == "" && model.EstimatedCost.Currency != "" {
+			currency = model.EstimatedCost.Currency
+		}
+	}
+
 	activity := &models.ClaudeCodeUserActivity{
 		ConnectionId: data.Options.ConnectionId,
 		ScopeId:      data.Options.ScopeId,
@@ -260,6 +296,13 @@ func extractConsoleUserActivity(data *ClaudeCodeTaskData, date time.Time, raw []
 		WriteToolRejected:        record.ToolActions.WriteTool.Rejected,
 		NotebookEditToolAccepted: record.ToolActions.NotebookEditTool.Accepted,
 		NotebookEditToolRejected: record.ToolActions.NotebookEditTool.Rejected,
+
+		InputTokens:         inputTokens,
+		OutputTokens:        outputTokens,
+		CacheReadTokens:     cacheRead,
+		CacheCreationTokens: cacheCreation,
+		EstimatedCostCents:  costCents,
+		CostCurrency:        currency,
 	}
 	return []interface{}{activity}, nil
 }
