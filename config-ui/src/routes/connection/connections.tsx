@@ -61,8 +61,9 @@ export const Connections = () => {
     setPlugin(plugin);
   };
 
-  const handleShowFormDialog = () => {
+  const handleShowFormDialog = (pluginName?: string) => {
     setType('form');
+    if (pluginName) setPlugin(pluginName);
   };
 
   const handleHideDialog = () => {
@@ -75,7 +76,7 @@ export const Connections = () => {
   };
 
   return (
-    <S.Wrapper theme={colorPrimary}>
+    <S.Wrapper>
       <h1>Connections</h1>
       <h5>
         Create and manage data connections from the following data sources or Webhooks to be used in syncing data in
@@ -165,10 +166,10 @@ export const Connections = () => {
           footer={null}
           onCancel={handleHideDialog}
         >
-          <ConnectionList plugin={pluginConfig.plugin} onCreate={handleShowFormDialog} />
+          <ConnectionList plugin={plugin} onCreate={handleShowFormDialog} />
         </Modal>
       )}
-      {type === 'form' && pluginConfig && (
+      {type === 'form' && plugin && pluginConfig && (
         <Modal
           open
           width={820}
@@ -182,10 +183,7 @@ export const Connections = () => {
           footer={null}
           onCancel={handleHideDialog}
         >
-          <ConnectionForm
-            plugin={pluginConfig.plugin}
-            onSuccess={(id) => handleSuccessAfter(pluginConfig.plugin, id)}
-          />
+          <ConnectionForm plugin={plugin} onSuccess={(id) => handleSuccessAfter(plugin, id)} />
         </Modal>
       )}
     </S.Wrapper>

@@ -167,7 +167,7 @@ func TestConvertStringToTime(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			output, err := ConvertStringToTime(tc.input)
-			if !reflect.DeepEqual(tc.output, output) {
+			if !tc.output.Equal(output) {
 				t.Errorf("Expected output to be %v, but got %v", tc.output, output)
 			}
 			assert.Equal(t, fmt.Sprintf("%v", err), fmt.Sprintf("%v", tc.err), "Expected error to be %v, but got %v", tc.err, err)
@@ -322,7 +322,7 @@ func TestConvertStringToTimeInLoc(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			output, err := ConvertStringToTimeInLoc(tc.input, tc.loc)
-			if !reflect.DeepEqual(tc.output, output) {
+			if !tc.output.Equal(output) {
 				t.Errorf("Expected output to be %v, but got %v", tc.output, output)
 			}
 			assert.Equal(t, fmt.Sprintf("%v", err), fmt.Sprintf("%v", tc.err), "Expected error to be %v, but got %v", tc.err, err)

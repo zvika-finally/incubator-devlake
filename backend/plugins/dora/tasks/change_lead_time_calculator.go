@@ -323,3 +323,153 @@ func batchFetchDeployments(projectName string, db dal.Dal) (map[string]*devops.C
 
 	return deploymentMap, nil
 }
+
+// deploymentCommitWithMergeSha is a helper struct to capture both the deployment commit
+// and the associated merge_sha from the commits_diffs join query.
+type deploymentCommitWithMergeSha struct {
+	devops.CicdDeploymentCommit
+	MergeSha string `gorm:"column:merge_sha"`
+}
+
+// batchFetchFirstCommits retrieves the first commit for all pull requests in the given project.
+// Returns a map indexed by PR ID for O(1) lookup performance.
+//
+// The query uses a subquery to find the minimum commit_authored_date for each PR,
+// then joins back to get the full commit record. This is more efficient than
+// fetching all commits and filtering in memory.
+func batchFetchFirstCommits(projectName string, db dal.Dal) (map[string]*code.PullRequestCommit, errors.Error) {
+	var results []*code.PullRequestCommit
+
+	// Use a subquery to find the earliest commit for each PR, then join to get full commit details.
+	// This avoids scanning all commits and is optimized by the database engine.
+	err := db.All(
+		&results,
+		dal.Select("prc.*"),
+		dal.From("pull_request_commits prc"),
+		dal.Join(`INNER JOIN (
+			SELECT pull_request_id, MIN(commit_authored_date) as min_date
+			FROM pull_request_commits
+			GROUP BY pull_request_id
+		) first_commits ON prc.pull_request_id = first_commits.pull_request_id
+		AND prc.commit_authored_date = first_commits.min_date`),
+		dal.Join("INNER JOIN pull_requests pr ON pr.id = prc.pull_request_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.row_id = pr.base_repo_id AND pm.table = 'repos'"),
+		dal.Where("pm.project_name = ?", projectName),
+		dal.Orderby("prc.pull_request_id, prc.commit_authored_date ASC"),
+	)
+
+	if err != nil {
+		return nil, errors.Default.Wrap(err, "failed to batch fetch first commits")
+	}
+
+	// Build the map for O(1) lookup by PR ID
+	commitMap := make(map[string]*code.PullRequestCommit, len(results))
+	for _, commit := range results {
+		// Only keep the first commit if multiple commits have the same timestamp
+		if _, exists := commitMap[commit.PullRequestId]; !exists {
+			commitMap[commit.PullRequestId] = commit
+		}
+	}
+
+	return commitMap, nil
+}
+
+// batchFetchFirstReviews retrieves the first review comment for all pull requests in the given project.
+// Returns a map indexed by PR ID for O(1) lookup performance.
+//
+// The query uses a subquery to find the minimum created_date for each PR (excluding the PR author),
+// then joins back to get the full comment record.
+func batchFetchFirstReviews(projectName string, db dal.Dal) (map[string]*code.PullRequestComment, errors.Error) {
+	var results []*code.PullRequestComment
+
+	// Use a subquery to find the earliest review comment for each PR (excluding author's comments),
+	// then join to get full comment details.
+	err := db.All(
+		&results,
+		dal.Select("prc.*"),
+		dal.From("pull_request_comments prc"),
+		dal.Join(`INNER JOIN (
+			SELECT prc2.pull_request_id, MIN(prc2.created_date) as min_date
+			FROM pull_request_comments prc2
+			INNER JOIN pull_requests pr2 ON pr2.id = prc2.pull_request_id
+			WHERE (pr2.author_id IS NULL OR pr2.author_id = '' OR prc2.account_id != pr2.author_id)
+			GROUP BY prc2.pull_request_id
+		) first_reviews ON prc.pull_request_id = first_reviews.pull_request_id
+		AND prc.created_date = first_reviews.min_date`),
+		dal.Join("INNER JOIN pull_requests pr ON pr.id = prc.pull_request_id"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.row_id = pr.base_repo_id AND pm.table = 'repos'"),
+		dal.Where("pm.project_name = ? AND (pr.author_id IS NULL OR pr.author_id = '' OR prc.account_id != pr.author_id)", projectName),
+		dal.Orderby("prc.pull_request_id, prc.created_date ASC"),
+	)
+
+	if err != nil {
+		return nil, errors.Default.Wrap(err, "failed to batch fetch first reviews")
+	}
+
+	// Build the map for O(1) lookup by PR ID
+	reviewMap := make(map[string]*code.PullRequestComment, len(results))
+	for _, review := range results {
+		// Only keep the first review if multiple reviews have the same timestamp
+		if _, exists := reviewMap[review.PullRequestId]; !exists {
+			reviewMap[review.PullRequestId] = review
+		}
+	}
+
+	return reviewMap, nil
+}
+
+// batchFetchDeployments retrieves deployment commits for all merge commits in the given project.
+// Returns a map indexed by merge commit SHA for O(1) lookup performance.
+//
+// Uses a two-phase strategy to avoid the "first deployment over-mapping" problem:
+//
+// Phase 1 - Direct match: find successful PRODUCTION deployments whose commit_sha
+// directly equals a PR's merge_commit_sha. Safe even for the very first deployment.
+//
+// Phase 2 - Diff-based fallback: use the commits_diffs join strategy, but deliberately
+// skip the first deployment (prev_success_deployment_commit_id == "") to avoid over-mapping.
+func batchFetchDeployments(projectName string, db dal.Dal) (map[string]*devops.CicdDeploymentCommit, errors.Error) {
+	deploymentMap := make(map[string]*devops.CicdDeploymentCommit)
+	var directResults []*devops.CicdDeploymentCommit
+	err := db.All(
+		&directResults,
+		dal.Select("dc.*"),
+		dal.From("cicd_deployment_commits dc"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = dc.cicd_scope_id"),
+		dal.Where("dc.environment = 'PRODUCTION'"), // TODO: remove when multi-environment is supported
+		dal.Where("dc.result = ? AND pm.project_name = ?", devops.RESULT_SUCCESS, projectName),
+		dal.Orderby("dc.started_date ASC, dc.id ASC"),
+	)
+	if err != nil {
+		return nil, errors.Default.Wrap(err, "failed to batch fetch direct deployments")
+	}
+	for _, dc := range directResults {
+		if _, exists := deploymentMap[dc.CommitSha]; !exists {
+			deploymentCopy := *dc
+			deploymentMap[dc.CommitSha] = &deploymentCopy
+		}
+	}
+	var diffResults []*deploymentCommitWithMergeSha
+	err = db.All(
+		&diffResults,
+		dal.Select("dc.*, cd.commit_sha as merge_sha"),
+		dal.From("cicd_deployment_commits dc"),
+		dal.Join("LEFT JOIN cicd_deployment_commits p ON dc.prev_success_deployment_commit_id = p.id"),
+		dal.Join("INNER JOIN commits_diffs cd ON cd.new_commit_sha = dc.commit_sha AND cd.old_commit_sha = COALESCE(p.commit_sha, '')"),
+		dal.Join("LEFT JOIN project_mapping pm ON pm.table = 'cicd_scopes' AND pm.row_id = dc.cicd_scope_id"),
+		dal.Where("dc.prev_success_deployment_commit_id <> ''"),
+		dal.Where("dc.environment = 'PRODUCTION'"), // TODO: remove when multi-environment is supported
+		dal.Where("dc.result = ? AND pm.project_name = ?", devops.RESULT_SUCCESS, projectName),
+		dal.Orderby("cd.commit_sha, dc.started_date ASC, dc.id ASC"),
+	)
+	if err != nil {
+		return nil, errors.Default.Wrap(err, "failed to batch fetch diff-based deployments")
+	}
+	for _, result := range diffResults {
+		if _, exists := deploymentMap[result.MergeSha]; !exists {
+			deploymentCopy := result.CicdDeploymentCommit
+			deploymentMap[result.MergeSha] = &deploymentCopy
+		}
+	}
+	return deploymentMap, nil
+}

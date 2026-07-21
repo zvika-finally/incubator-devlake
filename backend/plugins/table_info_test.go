@@ -25,6 +25,7 @@ import (
 	aidetector "github.com/apache/incubator-devlake/plugins/aidetector/impl"
 	aimeasure "github.com/apache/incubator-devlake/plugins/aimeasure/impl"
 	argocd "github.com/apache/incubator-devlake/plugins/argocd/impl"
+	asana "github.com/apache/incubator-devlake/plugins/asana/impl"
 	azuredevops "github.com/apache/incubator-devlake/plugins/azuredevops_go/impl"
 	bamboo "github.com/apache/incubator-devlake/plugins/bamboo/impl"
 	bitbucket "github.com/apache/incubator-devlake/plugins/bitbucket/impl"
@@ -33,11 +34,13 @@ import (
 	capacityplanner "github.com/apache/incubator-devlake/plugins/capacityplanner/impl"
 	circleci "github.com/apache/incubator-devlake/plugins/circleci/impl"
 	cursor "github.com/apache/incubator-devlake/plugins/cursor/impl"
+	claudeCode "github.com/apache/incubator-devlake/plugins/claude_code/impl"
 	customize "github.com/apache/incubator-devlake/plugins/customize/impl"
 	dbt "github.com/apache/incubator-devlake/plugins/dbt/impl"
 	dora "github.com/apache/incubator-devlake/plugins/dora/impl"
 	feishu "github.com/apache/incubator-devlake/plugins/feishu/impl"
 	findevops "github.com/apache/incubator-devlake/plugins/findevops/impl"
+	copilot "github.com/apache/incubator-devlake/plugins/gh-copilot/impl"
 	gitee "github.com/apache/incubator-devlake/plugins/gitee/impl"
 	gitextractor "github.com/apache/incubator-devlake/plugins/gitextractor/impl"
 	github "github.com/apache/incubator-devlake/plugins/github/impl"
@@ -47,17 +50,21 @@ import (
 	issueTrace "github.com/apache/incubator-devlake/plugins/issue_trace/impl"
 	jenkins "github.com/apache/incubator-devlake/plugins/jenkins/impl"
 	jira "github.com/apache/incubator-devlake/plugins/jira/impl"
+	linear "github.com/apache/incubator-devlake/plugins/linear/impl"
 	linker "github.com/apache/incubator-devlake/plugins/linker/impl"
 	opsgenie "github.com/apache/incubator-devlake/plugins/opsgenie/impl"
 	org "github.com/apache/incubator-devlake/plugins/org/impl"
 	pagerduty "github.com/apache/incubator-devlake/plugins/pagerduty/impl"
 	q_dev "github.com/apache/incubator-devlake/plugins/q_dev/impl"
 	refdiff "github.com/apache/incubator-devlake/plugins/refdiff/impl"
+	rootly "github.com/apache/incubator-devlake/plugins/rootly/impl"
 	slack "github.com/apache/incubator-devlake/plugins/slack/impl"
 	sonarqube "github.com/apache/incubator-devlake/plugins/sonarqube/impl"
 	starrocks "github.com/apache/incubator-devlake/plugins/starrocks/impl"
+	taiga "github.com/apache/incubator-devlake/plugins/taiga/impl"
 	tapd "github.com/apache/incubator-devlake/plugins/tapd/impl"
 	teambition "github.com/apache/incubator-devlake/plugins/teambition/impl"
+	tempo "github.com/apache/incubator-devlake/plugins/tempo/impl"
 	testmo "github.com/apache/incubator-devlake/plugins/testmo/impl"
 	trello "github.com/apache/incubator-devlake/plugins/trello/impl"
 	webhook "github.com/apache/incubator-devlake/plugins/webhook/impl"
@@ -79,6 +86,7 @@ func Test_GetPluginTablesInfo(t *testing.T) {
 	checker.FeedIn("capacityplanner/models", capacityplanner.CapacityPlanner{}.GetTablesInfo)
 	checker.FeedIn("bitbucket_server/models", bitbucket_server.BitbucketServer{}.GetTablesInfo)
 	checker.FeedIn("argocd/models", argocd.ArgoCD{}.GetTablesInfo)
+	checker.FeedIn("asana/models", asana.Asana{}.GetTablesInfo)
 	checker.FeedIn("customize/models", customize.Customize{}.GetTablesInfo)
 	checker.FeedIn("dbt", dbt.Dbt{}.GetTablesInfo)
 	checker.FeedIn("dora/models", dora.Dora{}.GetTablesInfo)
@@ -92,24 +100,30 @@ func Test_GetPluginTablesInfo(t *testing.T) {
 	checker.FeedIn("icla/models", icla.Icla{}.GetTablesInfo)
 	checker.FeedIn("jenkins/models", jenkins.Jenkins{}.GetTablesInfo)
 	checker.FeedIn("jira/models", jira.Jira{}.GetTablesInfo)
+	checker.FeedIn("linear/models", linear.Linear{}.GetTablesInfo)
 	checker.FeedIn("org", org.Org{}.GetTablesInfo)
 	checker.FeedIn("pagerduty/models", pagerduty.PagerDuty{}.GetTablesInfo)
 	checker.FeedIn("refdiff/models", refdiff.RefDiff{}.GetTablesInfo)
+	checker.FeedIn("rootly/models", rootly.Rootly{}.GetTablesInfo)
 	checker.FeedIn("slack/models", slack.Slack{}.GetTablesInfo)
 	checker.FeedIn("sonarqube/models", sonarqube.Sonarqube{}.GetTablesInfo)
 	checker.FeedIn("starrocks", starrocks.StarRocks{}.GetTablesInfo)
+	checker.FeedIn("taiga/models", taiga.Taiga{}.GetTablesInfo)
 	checker.FeedIn("tapd/models", tapd.Tapd{}.GetTablesInfo)
 	checker.FeedIn("teambition/models", teambition.Teambition{}.GetTablesInfo)
+	checker.FeedIn("tempo/models", tempo.Tempo{}.GetTablesInfo)
 	checker.FeedIn("testmo/models", testmo.Testmo{}.GetTablesInfo)
 	checker.FeedIn("trello/models", trello.Trello{}.GetTablesInfo)
 	checker.FeedIn("webhook/models", webhook.Webhook{}.GetTablesInfo)
 	checker.FeedIn("zentao/models", zentao.Zentao{}.GetTablesInfo)
+	checker.FeedIn("claude_code/models", claudeCode.ClaudeCode{}.GetTablesInfo)
 	checker.FeedIn("circleci/models", circleci.Circleci{}.GetTablesInfo)
 	checker.FeedIn("opsgenie/models", opsgenie.Opsgenie{}.GetTablesInfo)
 	checker.FeedIn("linker/models", linker.Linker{}.GetTablesInfo)
 	checker.FeedIn("issue_trace/models", issueTrace.IssueTrace{}.GetTablesInfo)
 	checker.FeedIn("q_dev/models", q_dev.QDev{}.GetTablesInfo)
 	checker.FeedIn("cursor/models", cursor.Cursor{}.GetTablesInfo)
+	checker.FeedIn("gh-copilot/models", copilot.GhCopilot{}.GetTablesInfo)
 	err := checker.Verify()
 	if err != nil {
 		t.Error(err)
