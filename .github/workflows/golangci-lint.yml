@@ -36,16 +36,6 @@ jobs:
         with:
           path: golangci-lint
           key: ${{ runner.os }}-backend-golangci-lint
-      - name: Install mockery
-        run: |
-          # The lake-builder container ships /go/bin/mockery at v2.20.0 and
-          # /go/bin precedes /usr/local/bin on PATH, so we must overwrite the
-          # binary in /go/bin (not just install to /usr/local/bin) for the
-          # Makefile's version check to see v2.53.5.
-          curl -sL https://github.com/vektra/mockery/releases/download/v2.53.5/mockery_2.53.5_Linux_x86_64.tar.gz \
-            | tar -xz -C /go/bin mockery
-          chmod +x /go/bin/mockery
-          mockery --version
       - name: generate mock
         run: |
           go version
