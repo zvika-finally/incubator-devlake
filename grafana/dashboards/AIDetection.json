@@ -417,66 +417,6 @@
     },
     {
       "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" } }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 12, "y": 37 },
-      "id": 64,
-      "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT SUM(total_tool_uses) as tool_uses FROM claude_code_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Claude Code: Tool Uses (30d)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "fixedColor": "purple", "mode": "fixed" } }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 37 },
-      "id": 65,
-      "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT SUM(total_sessions) as sessions FROM claude_code_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Claude Code: Sessions (30d)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
-      "fieldConfig": {
-        "defaults": { "color": { "fixedColor": "yellow", "mode": "fixed" } }
-      },
-      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 37 },
-      "id": 66,
-      "options": {
-        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT SUM(lines_added) as lines FROM claude_code_usage_metrics WHERE $__timeFilter(date)",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Claude Code: Lines Added (30d)",
-      "type": "stat"
-    },
-    {
-      "datasource": "mysql",
       "gridPos": { "h": 7, "w": 12, "x": 0, "y": 42 },
       "id": 67,
       "options": {
@@ -490,23 +430,6 @@
         }
       ],
       "title": "Cursor Usage Over Time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 42 },
-      "id": 68,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT date as time, total_tool_uses as tool_uses, total_sessions as sessions, lines_added FROM claude_code_usage_metrics WHERE $__timeFilter(date) ORDER BY date",
-          "refId": "A",
-          "format": "time_series"
-        }
-      ],
-      "title": "Claude Code Usage Over Time",
       "type": "timeseries"
     },
     {
@@ -525,24 +448,6 @@
         }
       ],
       "title": "Top Cursor Users",
-      "type": "table"
-    },
-    {
-      "datasource": "mysql",
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 49 },
-      "id": 70,
-      "options": {
-        "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "tool_uses" }]
-      },
-      "targets": [
-        {
-          "rawSql": "SELECT user_email, SUM(total_tool_uses) as tool_uses, SUM(lines_written) as lines_written, COUNT(DISTINCT date) as active_days FROM claude_code_user_metrics WHERE $__timeFilter(date) GROUP BY user_email ORDER BY tool_uses DESC LIMIT 20",
-          "refId": "A",
-          "format": "table"
-        }
-      ],
-      "title": "Top Claude Code Users",
       "type": "table"
     },
     {
