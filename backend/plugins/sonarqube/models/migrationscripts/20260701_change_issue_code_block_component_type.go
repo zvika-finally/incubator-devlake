@@ -29,9 +29,14 @@ type changeIssueCodeBlockComponentType struct{}
 
 func (script *changeIssueCodeBlockComponentType) Up(basicRes context.BasicRes) errors.Error {
 	db := basicRes.GetDal()
-	if err := db.DropIndexes("_tool_sonarqube_issue_code_blocks", "idx__tool_sonarqube_issue_code_blocks_component"); err != nil {
-		return err
-	}
+	// Best-effort drop: the index only exists on databases created from an older
+	// schema where `component` was an indexed varchar. Databases whose table was
+	// created after the column became TEXT never had it, so an unconditional DROP
+	// fails with "index doesn't exist" (MySQL 1091). Ignoring a missing-index error
+	// is safe — if the index genuinely still exists and can't be dropped, the
+	// ModifyColumnType below fails loudly (MySQL can't convert an indexed column to
+	// TEXT), so a real problem is never hidden.
+	_ = db.DropIndexes("_tool_sonarqube_issue_code_blocks", "idx__tool_sonarqube_issue_code_blocks_component")
 	return db.ModifyColumnType("_tool_sonarqube_issue_code_blocks", "component", "text")
 }
 
