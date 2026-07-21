@@ -65,8 +65,8 @@ type GithubConn struct {
 func (conn *GithubConn) UpdateToken(newToken, newRefreshToken string, expiry, refreshExpiry *time.Time) {
 	conn.Token = newToken
 	conn.RefreshToken = newRefreshToken
-	conn.TokenExpiresAt = &expiry
-	conn.RefreshTokenExpiresAt = &refreshExpiry
+	conn.TokenExpiresAt = expiry
+	conn.RefreshTokenExpiresAt = refreshExpiry
 
 	// Update the internal tokens slice used by SetupAuthentication
 	conn.tokens = []string{newToken}
