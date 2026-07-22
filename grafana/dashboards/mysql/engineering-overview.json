@@ -125,7 +125,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct i.id)\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in ('Highest','High') and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
+          "rawSql": "select\n  count(distinct i.id)\nAS \"Critical Defects\"\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in ('Highest','High') and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
           "refId": "A",
           "select": [
             [
@@ -621,7 +621,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct u.id)\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n  join user_accounts ua on c.author_id = ua.account_id\n  join users u on ua.user_id = u.id\nwhere\n  date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})\n  and u.id is not null\n  and c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent')\n  and c.author_id not in ('noreply@anthropic.com','you@example.com','0','')",
+          "rawSql": "select\n  count(distinct u.id)\nAS \"Developers\"\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n  join user_accounts ua on c.author_id = ua.account_id\n  join users u on ua.user_id = u.id\nwhere\n  date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})\n  and u.id is not null\n  and c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent')\n  and c.author_id not in ('noreply@anthropic.com','you@example.com','0','')",
           "refId": "A",
           "select": [
             [
@@ -1144,7 +1144,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct pr.id)\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pr.merged_date is not null \n  and date(pr.merged_date) between\n    STR_TO_DATE('$month','%Y-%m-%d')\n  and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project});",
+          "rawSql": "select\n  count(distinct pr.id)\nAS \"PRs Merged\"\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pr.merged_date is not null \n  and date(pr.merged_date) between\n    STR_TO_DATE('$month','%Y-%m-%d')\n  and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project});",
           "refId": "A",
           "select": [
             [
@@ -1663,7 +1663,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select 100 * count(*) / (count(distinct sub.dev_id) * count(distinct sub._day))\nfrom (\n  select\n    u.id as dev_id,\n    date(c.authored_date) as _day\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n    join user_accounts ua on c.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(c.authored_date) between 0 and 4 and\n    u.id is not null and\n    c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent') and\n    c.author_id not in ('noreply@anthropic.com','you@example.com','0','') and\n    date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by u.id, date(c.authored_date)\n) sub",
+          "rawSql": "select 100 * count(*) / (count(distinct sub.dev_id) * count(distinct sub._day))\nAS \"Coding Days %\"\nfrom (\n  select\n    u.id as dev_id,\n    date(c.authored_date) as _day\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n    join user_accounts ua on c.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(c.authored_date) between 0 and 4 and\n    u.id is not null and\n    c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent') and\n    c.author_id not in ('noreply@anthropic.com','you@example.com','0','') and\n    date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by u.id, date(c.authored_date)\n) sub",
           "refId": "A",
           "select": [
             [
@@ -1918,7 +1918,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  AVG(TIMESTAMPDIFF(MINUTE, pr.created_date, pr.merged_date) / 1440)\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pm.project_name in (${project}) and\n  pr.merged_date is not null\n  and date(pr.created_date) between\n    STR_TO_DATE('$month','%Y-%m-%d') \n    and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
+          "rawSql": "select\n  AVG(TIMESTAMPDIFF(MINUTE, pr.created_date, pr.merged_date) / 1440)\nAS \"Days to Merge\"\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pm.project_name in (${project}) and\n  pr.merged_date is not null\n  and date(pr.created_date) between\n    STR_TO_DATE('$month','%Y-%m-%d') \n    and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
           "refId": "A",
           "select": [
             [
