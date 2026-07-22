@@ -58,7 +58,10 @@
       "type": "text"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -112,14 +115,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct i.id)\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in (${priority}) and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
+          "rawSql": "select\n  count(distinct i.id)\nAS \"Critical Defects\"\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in (${priority}) and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
           "refId": "A",
           "select": [
             [
@@ -164,7 +170,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -246,7 +255,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -298,7 +310,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -354,7 +369,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -405,7 +423,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -497,7 +518,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "table",
           "group": [],
           "metricColumn": "none",
@@ -530,7 +554,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -584,14 +611,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct author_name)\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  date(authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})",
+          "rawSql": "select\n  count(distinct author_name)\nAS \"Developers\"\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  date(authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})",
           "refId": "A",
           "select": [
             [
@@ -636,7 +666,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -718,7 +751,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -770,7 +806,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -833,7 +872,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -885,7 +927,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -974,7 +1019,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -1026,7 +1074,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1083,14 +1134,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct pr.id)\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pr.merged_date is not null \n  and date(pr.merged_date) between\n    STR_TO_DATE('$month','%Y-%m-%d')\n  and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project});",
+          "rawSql": "select\n  count(distinct pr.id)\nAS \"PRs Merged\"\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pr.merged_date is not null \n  and date(pr.merged_date) between\n    STR_TO_DATE('$month','%Y-%m-%d')\n  and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project});",
           "refId": "A",
           "select": [
             [
@@ -1135,7 +1189,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1224,7 +1281,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1276,7 +1336,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1337,7 +1400,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1389,7 +1455,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1476,7 +1545,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1528,7 +1600,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1578,14 +1653,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "with _commits_groupby_name_and_date as (\n  select\n    author_name,\n    date(authored_date) as _day,\n    count(distinct c.sha)\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(authored_date) between 0 and 4 and\n    date(authored_date) between\n      STR_TO_DATE('$month','%Y-%m-%d') and\n      STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by\n  author_name, date(authored_date)\n)\n\nselect 100 * count(*) / (count(distinct author_name) * count(distinct _day))\nfrom _commits_groupby_name_and_date;",
+          "rawSql": "with _commits_groupby_name_and_date as (\n  select\n    author_name,\n    date(authored_date) as _day,\n    count(distinct c.sha)\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(authored_date) between 0 and 4 and\n    date(authored_date) between\n      STR_TO_DATE('$month','%Y-%m-%d') and\n      STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by\n  author_name, date(authored_date)\n)\n\nselect 100 * count(*) / (count(distinct author_name) * count(distinct _day))\nAS \"Coding Days %\"\nfrom _commits_groupby_name_and_date;",
           "refId": "A",
           "select": [
             [
@@ -1630,7 +1708,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1710,7 +1791,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -1762,7 +1846,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1821,14 +1908,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  AVG(TIMESTAMPDIFF(MINUTE, pr.created_date, pr.merged_date) / 1440)\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pm.project_name in (${project}) and\n  pr.merged_date is not null\n  and date(pr.created_date) between\n    STR_TO_DATE('$month','%Y-%m-%d') \n    and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
+          "rawSql": "select\n  AVG(TIMESTAMPDIFF(MINUTE, pr.created_date, pr.merged_date) / 1440)\nAS \"Days to Merge\"\nfrom\n  pull_requests pr\n  join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  pm.project_name in (${project}) and\n  pr.merged_date is not null\n  and date(pr.created_date) between\n    STR_TO_DATE('$month','%Y-%m-%d') \n    and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
           "refId": "A",
           "select": [
             [
@@ -1873,7 +1963,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1962,7 +2055,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2014,7 +2110,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2068,7 +2167,10 @@
       },
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2120,7 +2222,10 @@
       "type": "piechart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2201,7 +2306,10 @@
       },
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "table",
           "group": [],
           "metricColumn": "none",
@@ -2287,7 +2395,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct name from projects",
         "hide": 0,
         "includeAll": true,
@@ -2308,7 +2419,10 @@
           "text": "",
           "value": ""
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select\n  distinct(concat(date_format(DATE_ADD(date(created_date), INTERVAL -DAY(date(created_date))+1 DAY), '%Y-%m') , ':', date_format(DATE_ADD(date(created_date), INTERVAL -DAY(date(created_date))+1 DAY), '%Y-%m-%d'))) as month\nfrom\n  issues i\norder by month desc",
         "hide": 0,
         "includeAll": false,
@@ -2333,7 +2447,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct priority from issues",
         "description": "Customize what prioriti(es) are considered \"critical\"",
         "hide": 0,
@@ -2355,7 +2472,10 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct type from issues",
         "hide": 0,
         "includeAll": true,
