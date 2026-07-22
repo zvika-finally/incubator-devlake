@@ -132,127 +132,62 @@ if [ -d "$LEGACY_PIECHART" ]; then
 fi
 # --------------------------------------------------------------------------
 
-# Create empty datasource.yml (datasources created via API)
-cat > "$DATASOURCE_FILE" << HEADER
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to You under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
+# Provision the datasource via a CONFIG FILE (not the HTTP API).
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-HEADER
-
-# Admin credentials used by the datasource provisioning API calls below.
-# Defaults to Grafana's built-in admin password; override via GF_SECURITY_ADMIN_PASSWORD.
-# Exported so Grafana itself and the curl calls use the same value.
-export GF_SECURITY_ADMIN_PASSWORD="${GF_SECURITY_ADMIN_PASSWORD:-admin}"
-
-# Start Grafana in background
-/run.sh "$@" &
-GRAFANA_PID=$!
-
-# Wait for Grafana API
-echo "Waiting for Grafana API..."
-for i in $(seq 1 60); do
-  if curl -f -s http://localhost:3000/api/health >/dev/null 2>&1; then
-    echo "Grafana API ready"
-    sleep 5  # Extra wait for migrations
-    break
-  fi
-  sleep 2
-done
-
-# Grafana 13+ auto-creates empty datasource instances for built-in plugins and
-# legacy volumes may contain read-only provisioned datasources with different UIDs.
-# Delete ALL existing datasources (by ID, which bypasses read-only flags) so we can
-# create a single correctly-configured datasource with the UID our dashboards expect.
-echo "Deleting all existing datasources (clean slate)..."
-for _id in $(curl -s "http://admin:${GF_SECURITY_ADMIN_PASSWORD}@localhost:3000/api/datasources" 2>/dev/null \
-  | grep -o '"id":[0-9]*' | sed 's/"id"://g'); do
-  curl -s -X DELETE "http://admin:${GF_SECURITY_ADMIN_PASSWORD}@localhost:3000/api/datasources/${_id}" 2>&1 || true
-done
-sleep 2
-
-# Create datasource via API (both MySQL and PostgreSQL)
-PAYLOAD_FILE="/tmp/datasource-api.json"
-
+# Basic auth is disabled in this deployment (Okta-only: GF_AUTH_BASIC_ENABLED=false),
+# so creating the datasource through admin:password against /api/datasources returns
+# 401 and the datasource is never created -- leaving every dashboard and template
+# variable with no datasource and therefore no data. File-based provisioning runs at
+# startup and needs no API auth. `deleteDatasources` clears any stale/duplicate entry
+# of the same name left in a persistent volume so our fixed UID stays authoritative.
 if [ "$MODE" = "mysql" ]; then
-  cat > "$PAYLOAD_FILE" <<APIJSON
-{
-  "uid": "devlake-mysql-api",
-  "name": "mysql",
-  "type": "mysql",
-  "url": "${MYSQL_URL}",
-  "database": "${MYSQL_DATABASE}",
-  "user": "${MYSQL_USER}",
-  "secureJsonData": {
-    "password": "${MYSQL_PASSWORD}"
-  },
-  "access": "proxy",
-  "isDefault": true,
-  "editable": true
-}
-APIJSON
-
-
+  cat > "$DATASOURCE_FILE" <<DSYAML
+apiVersion: 1
+deleteDatasources:
+  - name: mysql
+    orgId: 1
+datasources:
+  - uid: devlake-mysql-api
+    name: mysql
+    type: mysql
+    access: proxy
+    url: "${MYSQL_URL}"
+    database: "${MYSQL_DATABASE}"
+    user: "${MYSQL_USER}"
+    isDefault: true
+    editable: true
+    secureJsonData:
+      password: "${MYSQL_PASSWORD}"
+DSYAML
 else
   SSL_MODE="${DATABASE_SSL_MODE:-disable}"
-  cat > "$PAYLOAD_FILE" <<APIJSON
-{
-  "uid": "devlake-postgres-api",
-  "name": "postgresql",
-  "type": "grafana-postgresql-datasource",
-  "url": "${POSTGRES_URL}",
-  "database": "${POSTGRES_DATABASE}",
-  "user": "${POSTGRES_USER}",
-  "secureJsonData": {
-    "password": "${POSTGRES_PASSWORD}"
-  },
-  "jsonData": {
-    "sslmode": "${SSL_MODE}",
-    "postgresVersion": 1400,
-    "database": "${POSTGRES_DATABASE}"
-  },
-  "access": "proxy",
-  "isDefault": true,
-  "editable": true
-}
-APIJSON
-
-
+  cat > "$DATASOURCE_FILE" <<DSYAML
+apiVersion: 1
+deleteDatasources:
+  - name: postgresql
+    orgId: 1
+datasources:
+  - uid: devlake-postgres-api
+    name: postgresql
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: "${POSTGRES_URL}"
+    database: "${POSTGRES_DATABASE}"
+    user: "${POSTGRES_USER}"
+    isDefault: true
+    editable: true
+    jsonData:
+      sslmode: "${SSL_MODE}"
+      postgresVersion: 1400
+      database: "${POSTGRES_DATABASE}"
+    secureJsonData:
+      password: "${POSTGRES_PASSWORD}"
+DSYAML
 fi
 
-echo "Creating datasource via API..."
-for i in $(seq 1 10); do
-  RESPONSE=$(curl -s -X POST "http://admin:${GF_SECURITY_ADMIN_PASSWORD}@localhost:3000/api/datasources" \
-    -H "Content-Type: application/json" \
-    -d @"$PAYLOAD_FILE" 2>&1)
+echo "Datasource provisioned to ${DATASOURCE_FILE} (uid devlake-${MODE}-api)"
 
-  if echo "$RESPONSE" | grep -q '"id"'; then
-    echo "Datasource created successfully"
-    break
-  elif echo "$RESPONSE" | grep -q "already exists"; then
-    # A datasource with this name is already present (e.g. provisioned by an
-    # older image into a persistent volume). It cannot be recreated via the API
-    # but is functional, so treat this as success instead of retrying.
-    echo "Datasource already exists; keeping existing one"
-    break
-  elif echo "$RESPONSE" | grep -q "database is locked"; then
-    echo "DB locked, retry $i/10..."
-    sleep 3
-  else
-    echo "API error: $RESPONSE"
-    sleep 2
-  fi
-done
-
-# Wait for Grafana
-wait $GRAFANA_PID
+# Start Grafana in the foreground. The datasource is file-provisioned above (no API
+# auth required). exec gives Grafana PID 1 so it receives SIGTERM and shuts down
+# cleanly -- which also releases the unified-search index lock on the shared volume.
+exec /run.sh "$@"
