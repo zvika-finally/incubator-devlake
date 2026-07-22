@@ -84,7 +84,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -203,14 +206,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in (${team1}) then id else null end) as \"Team1: Total PR Opened\",\n  count(distinct case when team_id in (${team2}) then id else null end) as \"Team2: Total PR Opened\"\nFROM _prs\nGROUP BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    -- exclude the CTO: sits in all 3 teams and authors ~60% of PRs, double-counts & swamps team-vs-team\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') then id else null end) as \"Team1: Total PR Opened\",\n  count(distinct case when team_id in ('${team2}') then id else null end) as \"Team2: Total PR Opened\"\nFROM _prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -255,7 +261,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -374,13 +383,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in (${team1}) then id else null end)/(select count(distinct user_id) from team_users where team_id in (${team1})) as \"Team1: PR Opened per Member\",\n  count(distinct case when team_id in (${team2}) then id else null end)/(select count(distinct user_id) from team_users where team_id in (${team2})) as \"Team2: PR Opened per Member\",\n  count(distinct id)/(select count(*) from users) as \"Org: PR Opened per Member\"\nFROM _prs\nGROUP BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.created_date,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') then id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id\n        JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id\n        JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team1}') AND u2.id<>'U-zvika'\n        AND pm2.project_name in (${project}) AND $__timeFilter(pr2.created_date)),0)\n    as \"Team1: PR Opened per Active Member\",\n  count(distinct case when team_id in ('${team2}') then id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id\n        JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id\n        JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team2}') AND u2.id<>'U-zvika'\n        AND pm2.project_name in (${project}) AND $__timeFilter(pr2.created_date)),0)\n    as \"Team2: PR Opened per Active Member\"\nFROM _prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -408,7 +420,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -527,13 +542,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case \n    when team_id in (${team1}) and merged_date is not null then id \n    when team_id in (${team1}) and merged_date is null then null end) as \"Team1: Total PR Merged\",\n  count(distinct case \n    when team_id in (${team2}) and merged_date is not null then id \n    when team_id in (${team2}) and merged_date is null then null end) as \"Team2: Total PR Merged\"\nFROM _prs\nGROUP BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') and merged_date is not null then id end) as \"Team1: Total PR Merged\",\n  count(distinct case when team_id in ('${team2}') and merged_date is not null then id end) as \"Team2: Total PR Merged\"\nFROM _prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -561,7 +579,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -680,13 +701,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case \n    when team_id in (${team1}) and merged_date is not null then id \n    when team_id in (${team1}) and merged_date is null then null end)/(select count(distinct user_id) from team_users where team_id in (${team1})) as \"Team1: PR Merged per Member\",\n  count(distinct case \n    when team_id in (${team2}) and merged_date is not null then id\n    when team_id in (${team2}) and merged_date is null then null end)/(select count(distinct user_id) from team_users where team_id in (${team2})) as \"Team2: PR Merged per Member\",\n  count(distinct case when merged_date is not null then id end)/(select count(*) from users) as \"Org: PR Merged per Member\"\nFROM _prs\nGROUP BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.created_date,\n    pr.merged_date,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') and merged_date is not null then id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team1}') AND u2.id<>'U-zvika' AND pm2.project_name in (${project})\n        AND $__timeFilter(pr2.created_date) AND pr2.merged_date is not null),0)\n    as \"Team1: PR Merged per Active Member\",\n  count(distinct case when team_id in ('${team2}') and merged_date is not null then id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team2}') AND u2.id<>'U-zvika' AND pm2.project_name in (${project})\n        AND $__timeFilter(pr2.created_date) AND pr2.merged_date is not null),0)\n    as \"Team2: PR Merged per Active Member\"\nFROM _prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -740,7 +764,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -859,14 +886,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _issues as(\n  SELECT\n    i.id,\n    i.url,\n    i.created_date,\n    i.status,\n    i.assignee_id,\n    i.story_point,\n    i.priority,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM issues i\n\t  join board_issues bi on i.id = bi.issue_id\n\t  join boards b on bi.board_id = b.id\n\t  join project_mapping pm on b.id = pm.row_id\n  \tjoin user_accounts ua on i.assignee_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(i.created_date)\n    and pm.project_name in (${project})\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  -- count(i.id) as 'Issues Opened',\n  count(distinct case when status = 'DONE' and team_id in (${team1}) then id else null end) as 'Team1: Issues Completed',\n  count(distinct case when status = 'DONE' and team_id in (${team2}) then id else null end) as 'Team2: Issues Completed'\nFROM _issues\nGROUP BY 1",
+          "rawSql": "with _issues as(\n  SELECT\n    i.id,\n    i.created_date,\n    i.status,\n    t.id as team_id\n  FROM issues i\n    join board_issues bi on i.id = bi.issue_id\n    join boards b on bi.board_id = b.id\n    join project_mapping pm on b.id = pm.row_id\n    join user_accounts ua on i.assignee_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(i.created_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when status = 'DONE' and team_id in ('${team1}') then id end) as 'Team1: Issues Completed',\n  count(distinct case when status = 'DONE' and team_id in ('${team2}') then id end) as 'Team2: Issues Completed'\nFROM _issues\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -911,7 +941,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1030,7 +1063,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -1108,7 +1144,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1227,7 +1266,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -1279,7 +1321,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1398,7 +1443,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -1476,7 +1524,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1595,14 +1646,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _merged_prs as(\n  SELECT\n    distinct pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    prc.id as comment_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n    left join pull_request_comments prc on pr.id = prc.pull_request_id\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.merged_date is not null\n  ORDER BY 1\n)\n\nselect\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in (${team1}) then comment_id else null end)/(select count(distinct user_id) from team_users where team_id in (${team1})) as \"Team1: PR Review Depth\",\n  count(distinct case when team_id in (${team2}) then comment_id else null end)/(select count(distinct user_id) from team_users where team_id in (${team2})) as \"Team2: PR Review Depth\",\n  count(distinct comment_id)/(select count(*) FROM users) as \"Org: PR Review Depth\"\nFROM _merged_prs\nGROUP BY 1",
+          "rawSql": "with _merged_prs as(\n  SELECT\n    distinct pr.id,\n    pr.created_date,\n    prc.id as comment_id,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    left join pull_request_comments prc on pr.id = prc.pull_request_id\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.merged_date is not null\n    and u.id <> 'U-zvika'\n)\n\nselect\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') then comment_id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team1}') AND u2.id<>'U-zvika' AND pm2.project_name in (${project})\n        AND $__timeFilter(pr2.created_date) AND pr2.merged_date is not null),0) as \"Team1: PR Review Depth\",\n  count(distinct case when team_id in ('${team2}') then comment_id end)\n    / NULLIF((SELECT count(distinct u2.id) FROM pull_requests pr2\n        JOIN user_accounts ua2 ON pr2.author_id=ua2.account_id JOIN users u2 ON ua2.user_id=u2.id\n        JOIN team_users tu2 ON u2.id=tu2.user_id JOIN project_mapping pm2 ON pr2.base_repo_id=pm2.row_id AND pm2.`table`='repos'\n      WHERE tu2.team_id in ('${team2}') AND u2.id<>'U-zvika' AND pm2.project_name in (${project})\n        AND $__timeFilter(pr2.created_date) AND pr2.merged_date is not null),0) as \"Team2: PR Review Depth\"\nFROM _merged_prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -1647,7 +1701,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1766,14 +1823,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    distinct pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    pr.merge_commit_sha,\n    c.additions + c.deletions as loc,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n   left join commits c on pr.merge_commit_sha = c.sha\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.status = 'MERGED'\n  ORDER BY 1\n)\n\nselect\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  sum(case when team_id in (${team1}) then loc else null end)/(select count(distinct user_id) from team_users where team_id in (${team1})) as \"Team1: PR Size\",\n  sum(case when team_id in (${team2}) then loc else null end)/(select count(distinct user_id) from team_users where team_id in (${team2})) as \"Team2: PR Size\",\n  sum(loc)/(select count(*) FROM users) as \"Org: PR Merged Size\"\nFROM _prs\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.created_date,\n    t.id as team_id,\n    coalesce((SELECT sum(cf.additions+cf.deletions) FROM commit_files cf\n       WHERE cf.commit_sha = pr.merge_commit_sha\n         AND CONVERT(cf.file_path USING utf8) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'),0) as loc\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.status = 'MERGED'\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  avg(case when team_id in ('${team1}') then loc end) as \"Team1: Avg PR Size (clean LOC)\",\n  avg(case when team_id in ('${team2}') then loc end) as \"Team2: Avg PR Size (clean LOC)\"\nFROM _prs\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -1844,7 +1904,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1963,14 +2026,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _bugs as(\n  SELECT\n    distinct i.id,\n    i.url,\n    i.created_date,\n    i.status,\n    i.assignee_id,\n    i.story_point,\n    i.priority,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM issues i\n\t  join board_issues bi on i.id = bi.issue_id\n\t  join boards b on bi.board_id = b.id\n\t  join project_mapping pm on b.id = pm.row_id\n  \tjoin user_accounts ua on i.assignee_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(i.created_date)\n    and pm.project_name in (${project})\n    and i.type = 'BUG'\n  ORDER BY 1\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(case when team_id in (${team1}) then id else null end) as 'Team1: P0/P1 Bugs',\n  count(case when team_id in (${team2}) then id else null end) as 'Team2: P0/P1 Bugs'\nFROM _bugs\nWHERE\n  -- please choose the priorities in the filter above\n  priority in (${priority})\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "with _bugs as(\n  SELECT\n    distinct i.id,\n    i.created_date,\n    i.priority,\n    t.id as team_id\n  FROM issues i\n    join board_issues bi on i.id = bi.issue_id\n    join boards b on bi.board_id = b.id\n    join project_mapping pm on b.id = pm.row_id\n    join user_accounts ua on i.assignee_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(i.created_date)\n    and pm.project_name in (${project})\n    and i.type = 'BUG'\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') then id end) as 'Team1: Critical Bugs (Highest/High)',\n  count(distinct case when team_id in ('${team2}') then id end) as 'Team2: Critical Bugs (Highest/High)'\nFROM _bugs\nWHERE priority in ('Highest','High')\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -2015,7 +2081,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2134,7 +2203,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "time_series",
           "group": [],
@@ -2212,7 +2284,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2328,14 +2403,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.merged_date as pr_merged_date,\n    -- convert milliseconds to hours (ms / 3600000)\n\t\tcoalesce(prm.pr_cycle_time/3600000,0) as cycle_time,\n\t\tpr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n\t\tleft join project_pr_metrics prm on pr.id = prm.id\n    left join user_accounts ua on pr.author_id = ua.account_id\n    left join users u on ua.user_id = u.id\n    left join team_users tu on u.id = tu.user_id\n    left join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.merged_date)\n    and pm.project_name in (${project})\n  GROUP BY 1,2,3,4,5,6,7,8\n)\n\nSELECT \n  DATE_ADD(date(pr_merged_date), INTERVAL -$interval(date(pr_merged_date))+1 DAY) as time,\n  avg(case when team_id in (${team1}) then cycle_time end) as 'Team1: Avg Cycle Time(h)',\n  avg(case when team_id in (${team2}) then cycle_time end) as 'Team2: Avg Cycle Time(h)'\nFROM _prs\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.merged_date as pr_merged_date,\n    coalesce(prm.pr_cycle_time/3600000,0) as cycle_time,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    left join project_pr_metrics prm on pr.id = prm.id\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.merged_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n  GROUP BY 1,2,3,4\n)\n\nSELECT\n  DATE_ADD(date(pr_merged_date), INTERVAL -$interval(date(pr_merged_date))+1 DAY) as time,\n  avg(case when team_id in ('${team1}') then cycle_time end) as 'Team1: Avg Cycle Time(h)',\n  avg(case when team_id in ('${team2}') then cycle_time end) as 'Team2: Avg Cycle Time(h)'\nFROM _prs\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -2380,7 +2458,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2495,7 +2576,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2547,7 +2631,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2662,7 +2749,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2714,7 +2804,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2829,7 +2922,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -2881,7 +2977,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2996,14 +3095,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.merged_date as pr_merged_date,\n    -- convert milliseconds to hours (ms / 3600000)\n\t\tcoalesce(prm.pr_deploy_time/3600000,0) as deploy_time,\n\t\tpr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n\t\tleft join project_pr_metrics prm on pr.id = prm.id\n    left join user_accounts ua on pr.author_id = ua.account_id\n    left join users u on ua.user_id = u.id\n    left join team_users tu on u.id = tu.user_id\n    left join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.merged_date)\n    and pm.project_name in (${project})\n  GROUP BY 1,2,3,4,5,6,7,8\n)\n\nSELECT \n  DATE_ADD(date(pr_merged_date), INTERVAL -$interval(date(pr_merged_date))+1 DAY) as time,\n  avg(case when team_id in (${team1}) then deploy_time end) as 'Team1: Avg Deploy Time(h)',\n  avg(case when team_id in (${team2}) then deploy_time end) as 'Team2: Avg Deploy Time(h)'\nFROM _prs\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "with _prs as(\n  SELECT\n    pr.id,\n    pr.merged_date as pr_merged_date,\n    prm.pr_deploy_time/3600000 as deploy_time,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    left join project_pr_metrics prm on pr.id = prm.id\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.merged_date)\n    and pm.project_name in (${project})\n    and u.id <> 'U-zvika'\n  GROUP BY 1,2,3,4\n)\n\nSELECT\n  DATE_ADD(date(pr_merged_date), INTERVAL -$interval(date(pr_merged_date))+1 DAY) as time,\n  avg(case when team_id in ('${team1}') then deploy_time end) as 'Team1: Avg Deploy Time(h)',\n  avg(case when team_id in ('${team2}') then deploy_time end) as 'Team2: Avg Deploy Time(h)'\nFROM _prs\nGROUP BY 1\nORDER BY 1",
           "refId": "A",
           "select": [
             [
@@ -3074,7 +3176,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -3189,14 +3294,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "with _merged_prs as(\n  SELECT\n    distinct pr.id,\n    pr.url,\n    pr.created_date,\n    pr.merged_date,\n    pr.author_id,\n    u.id as user_id,\n    u.name as user_name,\n    t.id as team_id,\n    t.name as team\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.merged_date is not null\n  ORDER BY 1\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in (${team1}) and id not in (SELECT pull_request_id FROM pull_request_comments) then id else null end) as \"Team1: PRs Merged w/o Review\",\n  count(distinct case when team_id in (${team2}) and id not in (SELECT pull_request_id FROM pull_request_comments) then id else null end) as \"Team2: PRs Merged w/o Review\"\nFROM _merged_prs\nGROUP BY 1",
+          "rawSql": "with _merged_prs as(\n  SELECT\n    distinct pr.id,\n    pr.created_date,\n    t.id as team_id\n  FROM pull_requests pr\n    join project_mapping pm on pr.base_repo_id = pm.row_id and pm.`table` = 'repos'\n    join user_accounts ua on pr.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n    join team_users tu on u.id = tu.user_id\n    join teams t on tu.team_id = t.id\n  WHERE\n    $__timeFilter(pr.created_date)\n    and pm.project_name in (${project})\n    and pr.merged_date is not null\n    and u.id <> 'U-zvika'\n)\n\nSELECT\n  DATE_ADD(date(created_date), INTERVAL -$interval(date(created_date))+1 DAY) as time,\n  count(distinct case when team_id in ('${team1}') and id not in (SELECT pull_request_id FROM pull_request_comments) then id end) as \"Team1: PRs Merged w/o Review\",\n  count(distinct case when team_id in ('${team2}') and id not in (SELECT pull_request_id FROM pull_request_comments) then id end) as \"Team2: PRs Merged w/o Review\"\nFROM _merged_prs\nGROUP BY 1",
           "refId": "A",
           "select": [
             [
@@ -3288,7 +3396,10 @@
           "text": "All",
           "value": "$__all"
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct name from projects",
         "hide": 0,
         "includeAll": true,
@@ -3311,7 +3422,10 @@
           "text": "None",
           "value": ""
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select concat(name, '--', id) as text from teams",
         "hide": 0,
         "includeAll": false,
@@ -3334,7 +3448,10 @@
           "text": "None",
           "value": ""
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select concat(name, '--', id) as text from teams",
         "hide": 0,
         "includeAll": false,
@@ -3360,7 +3477,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct priority from issues where priority != ''",
         "hide": 0,
         "includeAll": true,
@@ -3407,7 +3527,7 @@
     ]
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-90d",
     "to": "now"
   },
   "timepicker": {},

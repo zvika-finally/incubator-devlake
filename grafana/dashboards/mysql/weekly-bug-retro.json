@@ -1846,7 +1846,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select \n  i.issue_key as 'Issue Number',\n  i.title as 'Title',\n  priority as 'Priority',\n  severity as 'Severity',\n  (TIMESTAMPDIFF(MINUTE, i.created_date,NOW()))/1440 as 'Queue Time in Days',\n  i.url as 'Url'\nfrom \n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\nwhere\n  i.type in (${issue_type})\n  and i.status NOT IN ('DONE', 'REJECTED')\n  and b.id in (${board_id})\n  and priority in (${priority})\norder by 'Queue Time' desc",
+          "rawSql": "select \n  i.issue_key as 'Issue Number',\n  i.title as 'Title',\n  priority as 'Priority',\n  severity as 'Severity',\n  (TIMESTAMPDIFF(MINUTE, i.created_date,NOW()))/1440 as 'Queue Time in Days',\n  i.url as 'Url'\nfrom \n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\nwhere\n  i.type in (${issue_type})\n  and i.status NOT IN ('DONE', 'REJECTED')\n  and b.id in (${board_id})\n  and priority in (${priority})\norder by (TIMESTAMPDIFF(MINUTE, i.created_date, NOW()))/1440 desc",
           "refId": "A",
           "select": [
             [
@@ -2195,7 +2195,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select \n  i.issue_key as 'Issue Number',\n  i.title as 'Title',\n  priority as 'Priority',\n  severity as 'Severity',\n  (TIMESTAMPDIFF(MINUTE, i.created_date,NOW()))/1440 as 'Queue Time in Days',\n  i.url as 'Url'\nfrom \n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\nwhere\n  i.type in (${issue_type})\n  and i.status NOT IN ('DONE', 'REJECTED')\n  and i.assignee_name = ''\n  and b.id in (${board_id})\norder by 'Queue Time' desc",
+          "rawSql": "select \n  i.issue_key as 'Issue Number',\n  i.title as 'Title',\n  priority as 'Priority',\n  severity as 'Severity',\n  (TIMESTAMPDIFF(MINUTE, i.created_date,NOW()))/1440 as 'Queue Time in Days',\n  i.url as 'Url'\nfrom \n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\nwhere\n  i.type in (${issue_type})\n  and i.status NOT IN ('DONE', 'REJECTED')\n  and i.assignee_name = ''\n  and b.id in (${board_id})\norder by (TIMESTAMPDIFF(MINUTE, i.created_date, NOW()))/1440 desc",
           "refId": "A",
           "select": [
             [

@@ -18,7 +18,7 @@
       },
       "id": 1,
       "options": {
-        "content": "# FinDevOps - Development Cost & Capitalization\n\nTrack development costs and categorize for **US GAAP ASC 350-40** software capitalization compliance.\n\n## Cost Allocation Formula\n```\nTotal Cost = Hours Worked \u00d7 Hourly Rate\nCapitalizable = Development Stage work (features, enhancements)\nExpensed = Preliminary + Post-Implementation (maintenance, bugs)\n```\n\n## ASC 350-40 Development Stages\n| Stage | Capitalizable | Activities |\n|-------|--------------|------------|\n| **Preliminary** | \u274c No | Planning, feasibility, design |\n| **Development** | \u2705 Yes | Coding, testing, implementation |\n| **Post-Implementation** | \u274c No | Maintenance, training, support |\n\n## Cost Per Deployment\n```\nCost Per Deployment = Total Cost (window) / Deployment Count (window)\nTime Windows: 7 days (weekly), 30 days (monthly), 90 days (quarterly)\n```\n\n**Goal:** Lower cost per deployment = more efficient delivery pipeline",
+        "content": "# FinDevOps - Development Cost & Capitalization\n\nTrack development costs and categorize for **US GAAP ASC 350-40** software capitalization compliance.\n\n## Cost Allocation Formula\n```\nTotal Cost = Hours Worked × Hourly Rate\nCapitalizable = Development Stage work (features, enhancements)\nExpensed = Preliminary + Post-Implementation (maintenance, bugs)\n```\n\n## ASC 350-40 Development Stages\n| Stage | Capitalizable | Activities |\n|-------|--------------|------------|\n| **Preliminary** | ❌ No | Planning, feasibility, design |\n| **Development** | ✅ Yes | Coding, testing, implementation |\n| **Post-Implementation** | ❌ No | Maintenance, training, support |\n\n## Cost Per Deployment\n```\nCost Per Deployment = Total Cost (window) / Deployment Count (window)\nTime Windows: 7 days (weekly), 30 days (monthly), 90 days (quarterly)\n```\n\n**Goal:** Lower cost per deployment = more efficient delivery pipeline",
         "mode": "markdown"
       },
       "title": "Cost Accounting Methodology",
@@ -448,7 +448,7 @@
       },
       "id": 101,
       "options": {
-        "content": "## Budget Variance Tracking\nCompares estimated vs actual time spent on issues (from Jira time tracking).\n\n**Formula:** `Variance % = ((Estimated - Actual) / Estimated) \u00d7 100`\n\n| Variance | Interpretation |\n|----------|----------------|\n| Positive | Under budget (faster than estimated) |\n| Zero | On budget |\n| Negative | Over budget (took longer than estimated) |\n\n**Goal:** Track estimation accuracy to improve future planning.",
+        "content": "## Budget Variance Tracking\nCompares estimated vs actual time spent on issues (from Jira time tracking).\n\n**Formula:** `Variance % = ((Estimated - Actual) / Estimated) × 100`\n\n| Variance | Interpretation |\n|----------|----------------|\n| Positive | Under budget (faster than estimated) |\n| Zero | On budget |\n| Negative | Over budget (took longer than estimated) |\n\n**Goal:** Track estimation accuracy to improve future planning.",
         "mode": "markdown"
       },
       "title": "",
@@ -877,9 +877,13 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "finally-DevEx"
+          ],
+          "value": [
+            "finally-DevEx"
+          ]
         },
         "datasource": "mysql",
         "definition": "select distinct project_name from project_mapping where `table` = 'boards' order by project_name",
@@ -941,7 +945,7 @@
     ]
   },
   "time": {
-    "from": "now-90d",
+    "from": "now-5y",
     "to": "now"
   },
   "title": "FinDevOps - Cost & Capitalization",

@@ -125,7 +125,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct i.id)\nAS \"Critical Defects\"\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in (${priority}) and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
+          "rawSql": "select\n  count(distinct i.id)\nAS \"Critical Defects\"\nfrom\n  issues i\n\tjoin board_issues bi on i.id = bi.issue_id\n\tjoin boards b on bi.board_id = b.id\n\tjoin project_mapping pm on b.id = pm.row_id\nwhere\n  pm.project_name in (${project}) and\n  i.priority in ('Highest','High') and\n  i.type = 'BUG' and\n  date(i.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH;",
           "refId": "A",
           "select": [
             [
@@ -265,7 +265,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "with _issues as(\n  select\n    DATE_ADD(date(i.created_date), INTERVAL -DAY(date(i.created_date))+1 DAY) as time,\n    count(distinct i.id) as defect_count\n  from\n    issues i\n    join board_issues bi on i.id = bi.issue_id\n\t  join boards b on bi.board_id = b.id\n\t  join project_mapping pm on b.id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    i.priority in (${priority})\n    and i.type = 'BUG'\n    and $__timeFilter(i.created_date)\n    and i.created_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n  group by time\n)\n\nselect\n  date_format(time,'%M %Y') as month,\n  defect_count\nfrom _issues\norder by time asc\n",
+          "rawSql": "select\n  date_format(time,'%M %Y') as month,\n  defect_count\nfrom (\n  select\n    DATE_ADD(date(i.created_date), INTERVAL -DAY(date(i.created_date))+1 DAY) as time,\n    count(distinct i.id) as defect_count\n  from\n    issues i\n    join board_issues bi on i.id = bi.issue_id\n    join boards b on bi.board_id = b.id\n    join project_mapping pm on b.id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    i.priority in ('Highest','High')\n    and i.type = 'BUG'\n    and $__timeFilter(i.created_date)\n    and i.created_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n  group by time\n) _issues\norder by time asc",
           "refId": "A",
           "select": [
             [
@@ -621,7 +621,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  count(distinct author_name)\nAS \"Developers\"\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos' \nwhere\n  date(authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})",
+          "rawSql": "select\n  count(distinct u.id)\nAS \"Developers\"\nfrom\n  commits c\n  join repo_commits rc on c.sha = rc.commit_sha\n  join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n  join user_accounts ua on c.author_id = ua.account_id\n  join users u on ua.user_id = u.id\nwhere\n  date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  and pm.project_name in (${project})\n  and u.id is not null\n  and c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent')\n  and c.author_id not in ('noreply@anthropic.com','you@example.com','0','')",
           "refId": "A",
           "select": [
             [
@@ -761,7 +761,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "with _developers as(\n  select\n    DATE_ADD(date(c.authored_date), INTERVAL -DAY(date(c.authored_date))+1 DAY) as time,\n    count(distinct author_name) as developer_count\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos' \n  where\n    $__timeFilter(c.authored_date)\n    and c.authored_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n    and pm.project_name in (${project})\n  group by time\n)\n\nselect\n  date_format(time,'%M %Y') as month,\n  developer_count\nfrom _developers\norder by time asc",
+          "rawSql": "select\n  date_format(time,'%M %Y') as month,\n  developer_count\nfrom (\n  select\n    DATE_ADD(date(c.authored_date), INTERVAL -DAY(date(c.authored_date))+1 DAY) as time,\n    count(distinct u.id) as developer_count\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n    join user_accounts ua on c.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n  where\n    $__timeFilter(c.authored_date)\n    and c.authored_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n    and pm.project_name in (${project})\n    and u.id is not null\n    and c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent')\n    and c.author_id not in ('noreply@anthropic.com','you@example.com','0','')\n  group by time\n) _developers\norder by time asc",
           "refId": "A",
           "select": [
             [
@@ -1410,7 +1410,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select \n  100*count(distinct case when pr.id in (select pull_request_id from pull_request_issues) then pr.id else null end)/count(distinct pr.id) as unlinked_pr_rate\nfrom pull_requests pr\njoin project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere \n  pm.project_name in (${project})\n  and date(pr.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
+          "rawSql": "select \n  100*count(distinct case when pr.id not in (select pull_request_id from pull_request_issues where pull_request_id is not null) then pr.id else null end)/count(distinct pr.id) as unlinked_pr_rate\nfrom pull_requests pr\njoin project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere \n  pm.project_name in (${project})\n  and date(pr.created_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH",
           "refId": "A",
           "select": [
             [
@@ -1555,7 +1555,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "select\n  DATE_ADD(date(created_date), INTERVAL -DAY(date(created_date))+1 DAY) as time,\n  100*count(distinct case when pr.id in (select pull_request_id from pull_request_issues) then pr.id else null end)/count(distinct pr.id) as unlinked_pr_rate\nfrom pull_requests pr\njoin project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere pm.project_name in (${project})\nand $__timeFilter(created_date)\nand created_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\ngroup by time\n\n",
+          "rawSql": "select\n  DATE_ADD(date(created_date), INTERVAL -DAY(date(created_date))+1 DAY) as time,\n  100*count(distinct case when pr.id not in (select pull_request_id from pull_request_issues where pull_request_id is not null) then pr.id else null end)/count(distinct pr.id) as unlinked_pr_rate\nfrom pull_requests pr\njoin project_mapping pm on pr.base_repo_id = pm.row_id and pm.table = 'repos' \nwhere pm.project_name in (${project})\nand $__timeFilter(created_date)\nand created_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\ngroup by time",
           "refId": "A",
           "select": [
             [
@@ -1663,7 +1663,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "with _commits_groupby_name_and_date as (\n  select\n    author_name,\n    date(authored_date) as _day,\n    count(distinct c.sha)\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(authored_date) between 0 and 4 and\n    date(authored_date) between\n      STR_TO_DATE('$month','%Y-%m-%d') and\n      STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by\n  author_name, date(authored_date)\n)\n\nselect 100 * count(*) / (count(distinct author_name) * count(distinct _day))\nAS \"Coding Days %\"\nfrom _commits_groupby_name_and_date;",
+          "rawSql": "select 100 * count(*) / (count(distinct sub.dev_id) * count(distinct sub._day))\nAS \"Coding Days %\"\nfrom (\n  select\n    u.id as dev_id,\n    date(c.authored_date) as _day\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n    join user_accounts ua on c.author_id = ua.account_id\n    join users u on ua.user_id = u.id\n  where\n    pm.project_name in (${project}) and\n    WEEKDAY(c.authored_date) between 0 and 4 and\n    u.id is not null and\n    c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent') and\n    c.author_id not in ('noreply@anthropic.com','you@example.com','0','') and\n    date(c.authored_date) between STR_TO_DATE('$month','%Y-%m-%d') and STR_TO_DATE('$month','%Y-%m-%d') + INTERVAL 1 MONTH\n  group by u.id, date(c.authored_date)\n) sub",
           "refId": "A",
           "select": [
             [
@@ -1801,7 +1801,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "with _commits_groupby_name_and_date as (\n  select\n    author_name,\n    date(authored_date) as _day,\n    count(distinct c.sha)\n  from\n    commits c\n    join repo_commits rc on c.sha = rc.commit_sha\n    join project_mapping pm on rc.repo_id = pm.row_id\n  where\n    pm.project_name in (${project}) and\n    (WEEKDAY(authored_date) between 0 and 4)\n    and $__timeFilter(authored_date)\n    and authored_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n  group by 1,2\n)\n\nselect\n  DATE_ADD(_day, INTERVAL -DAY(_day)+1 DAY) as time,\n  100*count(*)/(count(distinct author_name) * count(distinct _day)) as working_days_percentatages_per_month\nfrom _commits_groupby_name_and_date\ngroup by time",
+          "rawSql": "select\n  time,\n  working_days_percentatages_per_month\nfrom (\n  select\n    DATE_ADD(sub._day, INTERVAL -DAY(sub._day)+1 DAY) as time,\n    100*count(*)/(count(distinct sub.dev_id) * count(distinct sub._day)) as working_days_percentatages_per_month\n  from (\n    select\n      u.id as dev_id,\n      date(c.authored_date) as _day\n    from\n      commits c\n      join repo_commits rc on c.sha = rc.commit_sha\n      join project_mapping pm on rc.repo_id = pm.row_id and pm.table = 'repos'\n      join user_accounts ua on c.author_id = ua.account_id\n      join users u on ua.user_id = u.id\n    where\n      pm.project_name in (${project})\n      and WEEKDAY(c.authored_date) between 0 and 4\n      and u.id is not null\n      and c.author_name not in ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent')\n      and c.author_id not in ('noreply@anthropic.com','you@example.com','0','')\n      and $__timeFilter(c.authored_date)\n      and c.authored_date >= DATE_ADD(DATE_ADD($__timeFrom(), INTERVAL -DAY($__timeFrom())+1 DAY), INTERVAL +1 MONTH)\n    group by u.id, date(c.authored_date)\n  ) sub\n  group by time\n) _final",
           "refId": "A",
           "select": [
             [
@@ -2493,7 +2493,7 @@
     ]
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-90d",
     "to": "now"
   },
   "timeRangeUpdatedDuringEditOrView": false,

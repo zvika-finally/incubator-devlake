@@ -66,7 +66,7 @@
           "color": "rgba(255,0,255,0.7)"
         },
         "filterValues": {
-          "le": 1e-9
+          "le": 1e-09
         },
         "legend": {
           "show": true
@@ -96,7 +96,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  period_week AS time,\n  engineer_id,\n  review_to_author_ratio AS value\nFROM engineer_verification_effort\nWHERE period_week >= $__timeFrom() AND period_week < $__timeTo()\nORDER BY time",
+          "rawSql": "SELECT\n  period_week AS time,\n  u.name AS engineer,\n  ROUND(SUM(e.reviewer_minutes) * 1.0 / NULLIF(SUM(e.author_minutes), 0), 4) AS value\nFROM engineer_verification_effort e\nJOIN user_accounts ua ON ua.account_id = e.engineer_id\nJOIN users u ON u.id = ua.user_id\nWHERE ua.user_id IN (SELECT user_id FROM team_users)\n  AND e.period_week >= $__timeFrom() AND e.period_week < $__timeTo()\nGROUP BY period_week, u.name\nORDER BY time",
           "refId": "A",
           "select": [
             [
@@ -181,7 +181,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  engineer_id,\n  SUM(reviewer_minutes) AS total_reviewer_minutes,\n  SUM(author_minutes)   AS total_author_minutes,\n  ROUND(SUM(reviewer_minutes) * 1.0 / NULLIF(SUM(author_minutes), 0), 2) AS combined_ratio\nFROM engineer_verification_effort\nWHERE period_week >= $__timeFrom() AND period_week < $__timeTo()\nGROUP BY engineer_id\nHAVING SUM(reviewer_minutes) > 0\nORDER BY total_reviewer_minutes DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  u.name AS engineer,\n  SUM(e.reviewer_minutes) AS total_reviewer_minutes,\n  SUM(e.author_minutes)   AS total_author_minutes,\n  ROUND(SUM(e.reviewer_minutes) * 1.0 / NULLIF(SUM(e.author_minutes), 0), 2) AS combined_ratio\nFROM engineer_verification_effort e\nJOIN user_accounts ua ON ua.account_id = e.engineer_id\nJOIN users u ON u.id = ua.user_id\nWHERE ua.user_id IN (SELECT user_id FROM team_users)\n  AND e.period_week >= $__timeFrom() AND e.period_week < $__timeTo()\nGROUP BY u.name\nHAVING SUM(e.reviewer_minutes) > 0\nORDER BY total_reviewer_minutes DESC\nLIMIT 20",
           "refId": "A",
           "select": [
             [
@@ -284,7 +284,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  period_week AS time,\n  engineer_id,\n  reviewer_minutes AS value\nFROM engineer_verification_effort\nWHERE period_week >= $__timeFrom() AND period_week < $__timeTo()\n  AND reviewer_minutes > 0\nORDER BY time",
+          "rawSql": "SELECT\n  period_week AS time,\n  u.name AS engineer,\n  SUM(e.reviewer_minutes) AS value\nFROM engineer_verification_effort e\nJOIN user_accounts ua ON ua.account_id = e.engineer_id\nJOIN users u ON u.id = ua.user_id\nWHERE ua.user_id IN (SELECT user_id FROM team_users)\n  AND e.period_week >= $__timeFrom() AND e.period_week < $__timeTo()\n  AND e.reviewer_minutes > 0\nGROUP BY period_week, u.name\nHAVING SUM(e.reviewer_minutes) > 0\nORDER BY time",
           "refId": "A",
           "select": [
             [
@@ -387,7 +387,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  period_week AS time,\n  AVG(review_comments_per_loc) AS all_cohorts,\n  AVG(review_comments_per_loc_high) AS high_cohort\nFROM engineer_verification_effort\nWHERE period_week >= $__timeFrom() AND period_week < $__timeTo()\nGROUP BY period_week\nORDER BY time",
+          "rawSql": "SELECT\n  period_week AS time,\n  AVG(e.review_comments_per_loc) AS all_cohorts,\n  AVG(e.review_comments_per_loc_high) AS high_cohort\nFROM engineer_verification_effort e\nJOIN user_accounts ua ON ua.account_id = e.engineer_id\nWHERE ua.user_id IN (SELECT user_id FROM team_users)\n  AND e.period_week >= $__timeFrom() AND e.period_week < $__timeTo()\nGROUP BY period_week\nORDER BY time",
           "refId": "A",
           "select": [
             [
