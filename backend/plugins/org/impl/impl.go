@@ -102,24 +102,50 @@ func (p Org) RootPkgPath() string {
 	return "github.com/apache/incubator-devlake/plugins/org"
 }
 
-func (p Org) ApiResources() map[string]map[string]plugin.ApiResourceHandler {
+// ApiResources registers the plugin's HTTP endpoints.
+//
+// Handlers are resolved through closures at request time rather than bound as
+// method values here. ApiResources() can be invoked during router setup before
+// Init() has populated p.handlers: when a DB migration is pending and the server
+// is awaiting confirmation, InitPlugins() (which calls Init) is deferred until the
+// migration is executed. Binding p.handlers.GetX directly at that point would
+// capture a nil *Handlers, and every org endpoint would panic with a nil-pointer
+// dereference on the first request even after Init() later populates p.handlers.
+// The closures defer the lookup until the request fires, by which time Init() has
+// run. The receiver is a pointer so the closures observe the populated field.
+func (p *Org) ApiResources() map[string]map[string]plugin.ApiResourceHandler {
 	return map[string]map[string]plugin.ApiResourceHandler{
 		"teams.csv": {
-			"GET": p.handlers.GetTeam,
-			"PUT": p.handlers.CreateTeam,
+			"GET": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.GetTeam(i)
+			},
+			"PUT": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.CreateTeam(i)
+			},
 		},
 		"users.csv": {
-			"GET": p.handlers.GetUser,
-			"PUT": p.handlers.CreateUser,
+			"GET": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.GetUser(i)
+			},
+			"PUT": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.CreateUser(i)
+			},
 		},
-
 		"user_account_mapping.csv": {
-			"GET": p.handlers.GetUserAccountMapping,
-			"PUT": p.handlers.CreateUserAccountMapping,
+			"GET": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.GetUserAccountMapping(i)
+			},
+			"PUT": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.CreateUserAccountMapping(i)
+			},
 		},
 		"project_mapping.csv": {
-			"GET": p.handlers.GetProjectMapping,
-			"PUT": p.handlers.CreateProjectMapping,
+			"GET": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.GetProjectMapping(i)
+			},
+			"PUT": func(i *plugin.ApiResourceInput) (*plugin.ApiResourceOutput, errors.Error) {
+				return p.handlers.CreateProjectMapping(i)
+			},
 		},
 	}
 }
