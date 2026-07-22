@@ -17,7 +17,7 @@
       },
       "id": 1,
       "options": {
-        "content": "# Capacity Planning & Forecasting (Kanban)\n\n## Monte Carlo Simulation\nRuns **1000 iterations** with throughput variance (default 25%) to produce probabilistic completion forecasts.\n\n```\nfor each iteration:\n  remaining = total_issues - completed_issues\n  weeks = 0\n  while remaining > 0:\n    weekly_throughput = gaussian_random(avg_throughput, stddev \u00d7 variance)\n    remaining -= max(1, weekly_throughput)\n    weeks += 1\n  store(completion_weeks)\n\nPercentile = data[min(len \u00d7 p/100, len-1)]  // Nearest-rank method\n```\n\n**Kanban Metrics:** Uses issue count and weekly throughput instead of story points and sprint velocity.\n\n## Brooks's Law Model\n**Communication overhead:** `channels = n \u00d7 (n-1) / 2`\n\n| Team Change | Impact |\n|------------|--------|\n| Hiring (+N) | New hires at 50% productivity during 8-week ramp-up |\n| Reduction (-N) | Linear capacity reduction |\n| Overhead | `1 - (channel_delta / (current_channels + 1)) \u00d7 0.1` |\n\n## ROI Calculation\n```\nDirect Benefit = hours_saved/week \u00d7 team_size \u00d7 52 \u00d7 hourly_cost\nProductivity Benefit = team_hours \u00d7 (gain%/100) \u00d7 hourly_cost  \nQuality Benefit = team_hours \u00d7 20% \u00d7 (improvement%/100) \u00d7 hourly_cost\nPayback Months = (annual_cost / annual_benefit) \u00d7 12\n3-Year ROI = ((benefit\u00d73 - cost\u00d73) / cost\u00d73) \u00d7 100\n```",
+        "content": "# Capacity Planning & Forecasting (Kanban)\n\n## Monte Carlo Simulation\nRuns **1000 iterations** with throughput variance (default 25%) to produce probabilistic completion forecasts.\n\n```\nfor each iteration:\n  remaining = total_issues - completed_issues\n  weeks = 0\n  while remaining > 0:\n    weekly_throughput = gaussian_random(avg_throughput, stddev × variance)\n    remaining -= max(1, weekly_throughput)\n    weeks += 1\n  store(completion_weeks)\n\nPercentile = data[min(len × p/100, len-1)]  // Nearest-rank method\n```\n\n**Kanban Metrics:** Uses issue count and weekly throughput instead of story points and sprint velocity.\n\n## Brooks's Law Model\n**Communication overhead:** `channels = n × (n-1) / 2`\n\n| Team Change | Impact |\n|------------|--------|\n| Hiring (+N) | New hires at 50% productivity during 8-week ramp-up |\n| Reduction (-N) | Linear capacity reduction |\n| Overhead | `1 - (channel_delta / (current_channels + 1)) × 0.1` |\n\n## ROI Calculation\n```\nDirect Benefit = hours_saved/week × team_size × 52 × hourly_cost\nProductivity Benefit = team_hours × (gain%/100) × hourly_cost  \nQuality Benefit = team_hours × 20% × (improvement%/100) × hourly_cost\nPayback Months = (annual_cost / annual_benefit) × 12\n3-Year ROI = ((benefit×3 - cost×3) / cost×3) × 100\n```",
         "mode": "markdown"
       },
       "title": "Algorithms & Formulas",
@@ -34,7 +34,7 @@
       "id": 2,
       "targets": [
         {
-          "rawSql": "SELECT AVG(issues_completed) as avg_throughput FROM team_velocities WHERE project_name in (${project:sqlstring}) AND $__timeFilter(sprint_end_date)",
+          "rawSql": "SELECT ROUND(AVG(issues_completed),2) AS avg_throughput FROM (\n  SELECT issues_completed, ROW_NUMBER() OVER (PARTITION BY sprint_name ORDER BY calculated_at DESC) rn\n  FROM team_velocities\n  WHERE project_name IN (${project:sqlstring}) AND $__timeFilter(sprint_end_date) AND sprint_end_date < CURDATE()\n) d WHERE d.rn = 1",
           "refId": "A",
           "format": "table"
         }
@@ -53,7 +53,7 @@
       "id": 3,
       "targets": [
         {
-          "rawSql": "SELECT AVG(avg_cycle_time_hours) as avg_cycle FROM team_velocities WHERE project_name in (${project:sqlstring}) AND $__timeFilter(sprint_end_date)",
+          "rawSql": "SELECT ROUND(AVG(avg_cycle_time_hours),2) AS avg_cycle FROM (\n  SELECT avg_cycle_time_hours, ROW_NUMBER() OVER (PARTITION BY sprint_name ORDER BY calculated_at DESC) rn\n  FROM team_velocities\n  WHERE project_name IN (${project:sqlstring}) AND $__timeFilter(sprint_end_date) AND sprint_end_date < CURDATE()\n) d WHERE d.rn = 1",
           "refId": "A",
           "format": "table"
         }
@@ -72,7 +72,7 @@
       "id": 4,
       "targets": [
         {
-          "rawSql": "SELECT COUNT(*) as forecasts FROM monte_carlo_forecasts mc WHERE $__timeFilter(mc.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring}))",
+          "rawSql": "SELECT COUNT(*) AS forecasts FROM (\n  SELECT mc.initiative_id, ROW_NUMBER() OVER (PARTITION BY mc.initiative_id ORDER BY mc.calculated_at DESC) rn\n  FROM monte_carlo_forecasts mc\n  WHERE $__timeFilter(mc.calculated_at)\n    AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring}))\n) z WHERE z.rn = 1",
           "refId": "A",
           "format": "table"
         }
@@ -119,7 +119,7 @@
       "id": 5,
       "targets": [
         {
-          "rawSql": "SELECT sprint_name as period_name, issues_completed as throughput FROM team_velocities WHERE project_name in (${project:sqlstring}) AND $__timeFilter(sprint_end_date) ORDER BY sprint_end_date DESC LIMIT 10",
+          "rawSql": "SELECT period_name, throughput FROM (\n  SELECT sprint_name AS period_name, issues_completed AS throughput, sprint_end_date,\n         ROW_NUMBER() OVER (PARTITION BY sprint_name ORDER BY calculated_at DESC) rn\n  FROM team_velocities\n  WHERE project_name IN (${project:sqlstring}) AND $__timeFilter(sprint_end_date) AND sprint_end_date < CURDATE()\n) d WHERE d.rn = 1 ORDER BY sprint_end_date DESC LIMIT 10",
           "refId": "A",
           "format": "table"
         }
@@ -144,7 +144,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT f.confidence_level, COUNT(*) as count FROM initiative_forecasts f WHERE $__timeFilter(f.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring})) GROUP BY f.confidence_level",
+          "rawSql": "SELECT confidence_level, COUNT(*) AS count FROM (\n  SELECT f.confidence_level, ROW_NUMBER() OVER (PARTITION BY f.initiative_id ORDER BY f.calculated_at DESC) rn\n  FROM initiative_forecasts f\n  WHERE $__timeFilter(f.calculated_at)\n    AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring}))\n) f WHERE f.rn = 1 GROUP BY confidence_level",
           "refId": "A",
           "format": "table"
         }
@@ -182,7 +182,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT mc.initiative_id, mc.simulation_count, mc.velocity_variance as throughput_variance, mc.p50_sprints as p50_weeks, mc.p75_sprints as p75_weeks, mc.p90_sprints as p90_weeks, mc.p95_sprints as p95_weeks, DATE(mc.p50_date) as p50_date, DATE(mc.p90_date) as p90_date, mc.earliest_days, mc.latest_days, DATE(mc.calculated_at) as calculated FROM monte_carlo_forecasts mc WHERE $__timeFilter(mc.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring})) ORDER BY mc.calculated_at DESC LIMIT 20",
+          "rawSql": "SELECT initiative_id, simulation_count, throughput_variance, p50_weeks, p75_weeks, p90_weeks, p95_weeks, p50_date, p90_date, earliest_days, latest_days, calculated FROM (\n  SELECT mc.initiative_id, mc.simulation_count, mc.velocity_variance AS throughput_variance, mc.p50_sprints AS p50_weeks, mc.p75_sprints AS p75_weeks, mc.p90_sprints AS p90_weeks, mc.p95_sprints AS p95_weeks, DATE(mc.p50_date) AS p50_date, DATE(mc.p90_date) AS p90_date, mc.earliest_days, mc.latest_days, DATE(mc.calculated_at) AS calculated,\n         ROW_NUMBER() OVER (PARTITION BY mc.initiative_id ORDER BY mc.calculated_at DESC) rn\n  FROM monte_carlo_forecasts mc\n  WHERE $__timeFilter(mc.calculated_at)\n    AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = mc.initiative_id AND pm.project_name in (${project:sqlstring}))\n) mc WHERE mc.rn = 1 ORDER BY p90_weeks DESC, initiative_id",
           "refId": "A",
           "format": "table"
         }
@@ -200,7 +200,7 @@
       },
       "id": 12,
       "options": {
-        "content": "## Brooks's Law Capacity Modeling\n**Key insight:** Adding people to a late project makes it later. Communication overhead grows quadratically: `n\u00d7(n-1)/2`",
+        "content": "## Brooks's Law Capacity Modeling\n**Key insight:** Adding people to a late project makes it later. Communication overhead grows quadratically: `n×(n-1)/2`",
         "mode": "markdown"
       },
       "title": "Brooks's Law Explanation",
@@ -220,7 +220,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT project_name, scenario_name, current_team_size, team_size_delta, ramp_up_weeks, current_channels, new_channels, overhead_factor, productivity_factor, projected_deploy_delta, projected_lead_delta, DATE(calculated_at) as calculated FROM capacity_models WHERE project_name in (${project:sqlstring}) AND $__timeFilter(calculated_at) ORDER BY calculated_at DESC LIMIT 20",
+          "rawSql": "SELECT project_name, scenario_name, current_team_size, team_size_delta, ramp_up_weeks, current_channels, new_channels, overhead_factor, productivity_factor, projected_deploy_delta, projected_lead_delta, calculated FROM (\n  SELECT cm.project_name, cm.scenario_name, cm.current_team_size, cm.team_size_delta, cm.ramp_up_weeks, cm.current_channels, cm.new_channels, cm.overhead_factor, cm.productivity_factor, cm.projected_deploy_delta, cm.projected_lead_delta, DATE(cm.calculated_at) AS calculated,\n         ROW_NUMBER() OVER (PARTITION BY cm.scenario_name ORDER BY cm.calculated_at DESC) rn\n  FROM capacity_models cm\n  WHERE cm.project_name in (${project:sqlstring}) AND $__timeFilter(cm.calculated_at)\n) cm WHERE cm.rn = 1 ORDER BY team_size_delta",
           "refId": "A",
           "format": "table"
         }
@@ -365,7 +365,7 @@
       "id": 7,
       "targets": [
         {
-          "rawSql": "SELECT f.initiative_name, f.total_story_points as total_issues, f.completed_story_points as completed_issues, f.remaining_story_points as remaining_issues, f.percent_complete, f.estimated_sprints as estimated_weeks, DATE(f.estimated_completion_date) as estimated_completion, f.confidence_level FROM initiative_forecasts f WHERE $__timeFilter(f.calculated_at) AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring})) ORDER BY f.estimated_completion_date",
+          "rawSql": "SELECT initiative_name, total_issues, completed_issues, remaining_issues, percent_complete, estimated_weeks, estimated_completion, confidence_level FROM (\n  SELECT f.initiative_name, f.total_story_points AS total_issues, f.completed_story_points AS completed_issues, f.remaining_story_points AS remaining_issues, f.percent_complete, f.estimated_sprints AS estimated_weeks, DATE(f.estimated_completion_date) AS estimated_completion, f.confidence_level, f.estimated_completion_date,\n         ROW_NUMBER() OVER (PARTITION BY f.initiative_id ORDER BY f.calculated_at DESC) rn\n  FROM initiative_forecasts f\n  WHERE $__timeFilter(f.calculated_at)\n    AND EXISTS (SELECT 1 FROM business_initiatives bi JOIN issues i ON i.epic_key = bi.jira_epic_key JOIN board_issues bri ON bri.issue_id = i.id JOIN project_mapping pm ON pm.`table` = 'boards' AND pm.row_id = bri.board_id WHERE bi.id = f.initiative_id AND pm.project_name in (${project:sqlstring}))\n) f WHERE f.rn = 1 ORDER BY remaining_issues DESC, estimated_completion_date",
           "refId": "A",
           "format": "table"
         }
@@ -396,7 +396,7 @@
       },
       "id": 101,
       "options": {
-        "content": "## Flow Efficiency\nMeasures what percentage of total cycle time an issue spends in active work vs waiting.\n\n**Formula:** `Flow Efficiency = (Active Days / Total Days) \u00d7 100`\n\n| Category | Efficiency | Interpretation |\n|----------|------------|----------------|\n| Excellent | \u226540% | World-class (rare) |\n| Good | 25-39% | Above average |\n| Average | 15-24% | Typical for most teams |\n| Poor | <15% | Significant improvement opportunity |\n\n**Industry insight:** Most teams operate at 15-25% flow efficiency. Higher efficiency means less waiting time.",
+        "content": "## Flow Efficiency\nMeasures what percentage of total cycle time an issue spends in active work vs waiting.\n\n**Formula:** `Flow Efficiency = (Active Days / Total Days) × 100`\n\n| Category | Efficiency | Interpretation |\n|----------|------------|----------------|\n| Excellent | ≥40% | World-class (rare) |\n| Good | 25-39% | Above average |\n| Average | 15-24% | Typical for most teams |\n| Poor | <15% | Significant improvement opportunity |\n\n**Industry insight:** Most teams operate at 15-25% flow efficiency. Higher efficiency means less waiting time.",
         "mode": "markdown"
       },
       "title": "",
@@ -452,7 +452,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT avg_flow_efficiency FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT ROUND(AVG(flow_efficiency),1) AS avg_flow_efficiency\nFROM issue_flow_metrics\nWHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\nHAVING COUNT(*) >= 20",
           "refId": "A",
           "format": "table"
         }
@@ -480,7 +480,7 @@
       "id": 103,
       "targets": [
         {
-          "rawSql": "SELECT avg_total_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT ROUND(AVG(total_days),1) AS avg_total_days\nFROM issue_flow_metrics\nWHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\nHAVING COUNT(*) >= 20",
           "refId": "A",
           "format": "table"
         }
@@ -508,7 +508,7 @@
       "id": 104,
       "targets": [
         {
-          "rawSql": "SELECT avg_active_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT ROUND(AVG(active_days),1) AS avg_active_days\nFROM issue_flow_metrics\nWHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\nHAVING COUNT(*) >= 20",
           "refId": "A",
           "format": "table"
         }
@@ -536,7 +536,7 @@
       "id": 105,
       "targets": [
         {
-          "rawSql": "SELECT avg_waiting_days FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1",
+          "rawSql": "SELECT ROUND(AVG(waiting_days),1) AS avg_waiting_days\nFROM issue_flow_metrics\nWHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\nHAVING COUNT(*) >= 20",
           "refId": "A",
           "format": "table"
         }
@@ -561,7 +561,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT category, value FROM (SELECT 'Excellent' as category, excellent_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1) t1 UNION ALL SELECT category, value FROM (SELECT 'Good' as category, good_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1) t2 UNION ALL SELECT category, value FROM (SELECT 'Average' as category, average_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1) t3 UNION ALL SELECT category, value FROM (SELECT 'Poor' as category, poor_count as value FROM project_flow_summaries WHERE project_name in (${project:sqlstring}) AND $__timeFilter(period_end) ORDER BY period_end DESC LIMIT 1) t4",
+          "rawSql": "SELECT category, value FROM (\n  SELECT 'Excellent (>=40%)' AS category, SUM(flow_efficiency>=40) AS value, 1 AS ord, COUNT(*) AS n FROM issue_flow_metrics WHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\n  UNION ALL SELECT 'Good (25-40%)', SUM(flow_efficiency>=25 AND flow_efficiency<40), 2, COUNT(*) FROM issue_flow_metrics WHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\n  UNION ALL SELECT 'Average (15-25%)', SUM(flow_efficiency>=15 AND flow_efficiency<25), 3, COUNT(*) FROM issue_flow_metrics WHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\n  UNION ALL SELECT 'Poor (<15%)', SUM(flow_efficiency<15), 4, COUNT(*) FROM issue_flow_metrics WHERE project_name IN (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at)\n) t WHERE t.n >= 20 ORDER BY ord",
           "refId": "A",
           "format": "table"
         }
@@ -580,7 +580,7 @@
       "id": 107,
       "targets": [
         {
-          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(flow_efficiency), 2) AS avg_flow_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 5 ORDER BY time",
+          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(flow_efficiency), 2) AS avg_flow_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 3 ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }
@@ -605,7 +605,7 @@
       },
       "targets": [
         {
-          "rawSql": "SELECT issue_type, COUNT(*) as count, AVG(flow_efficiency) as avg_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND $__timeFilter(completed_at) GROUP BY issue_type",
+          "rawSql": "SELECT issue_type, COUNT(*) as count, ROUND(AVG(flow_efficiency),1) as avg_efficiency FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY issue_type HAVING COUNT(*) >= 5",
           "refId": "A",
           "format": "table"
         }
@@ -624,7 +624,7 @@
       "id": 109,
       "targets": [
         {
-          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(active_days), 2) AS avg_active_days, ROUND(AVG(waiting_days), 2) AS avg_waiting_days FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 5 ORDER BY time",
+          "rawSql": "SELECT STR_TO_DATE(DATE_FORMAT(completed_at, '%Y-%m-01'), '%Y-%m-%d') AS time, ROUND(AVG(active_days), 2) AS avg_active_days, ROUND(AVG(waiting_days), 2) AS avg_waiting_days FROM issue_flow_metrics WHERE project_name in (${project:sqlstring}) AND completed_at IS NOT NULL AND $__timeFilter(completed_at) GROUP BY DATE_FORMAT(completed_at, '%Y-%m-01') HAVING COUNT(*) >= 3 ORDER BY time",
           "refId": "A",
           "format": "time_series"
         }

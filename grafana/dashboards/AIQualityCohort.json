@@ -107,7 +107,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY) AS time,\n  c.ai_cohort,\n  AVG(CASE WHEN d.total_defect_count > 0 THEN 1.0 ELSE 0.0 END) * 100 AS defect_rate_pct\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nLEFT JOIN pr_defect_signals d ON d.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY), c.ai_cohort\nORDER BY time",
+          "rawSql": "SELECT\n  DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY) AS time,\n  c.ai_cohort,\n  AVG(CASE WHEN (d.has_revert14d = 1 OR d.has_hotfix14d = 1) THEN 1.0 ELSE 0.0 END) * 100 AS revert_hotfix_rate_pct\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nJOIN pr_defect_signals d ON d.pr_id = pr.id AND d.window_close_date <= NOW()\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\n  AND pr.author_id <> '' AND pr.author_id IS NOT NULL\n  AND pr.author_name NOT REGEXP '\\\\[bot\\\\]|dependabot|argocd|github-actions|cursoragent'\nGROUP BY DATE_ADD(DATE(pr.merged_date), INTERVAL -WEEKDAY(pr.merged_date) DAY), c.ai_cohort\nORDER BY time",
           "refId": "A",
           "select": [
             [
@@ -384,7 +384,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  pr.author_id AS engineer,\n  COUNT(*) AS total_prs,\n  SUM(CASE WHEN d.total_defect_count > 0 THEN 1 ELSE 0 END) AS prs_with_defect,\n  ROUND(SUM(CASE WHEN d.total_defect_count > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS defect_rate_pct\nFROM pull_requests pr\nJOIN pr_defect_signals d ON d.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\nGROUP BY pr.author_id\nHAVING COUNT(*) >= 5\nORDER BY defect_rate_pct DESC\nLIMIT 20",
+          "rawSql": "SELECT\n  u.name AS engineer,\n  COUNT(*) AS total_prs,\n  SUM(CASE WHEN (d.has_revert14d = 1 OR d.has_hotfix14d = 1) THEN 1 ELSE 0 END) AS prs_with_defect,\n  ROUND(SUM(CASE WHEN (d.has_revert14d = 1 OR d.has_hotfix14d = 1) THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) AS defect_rate_pct\nFROM pull_requests pr\nJOIN user_accounts ua ON ua.account_id = pr.author_id\nJOIN users u ON u.id = ua.user_id\nJOIN pr_defect_signals d ON d.pr_id = pr.id AND d.window_close_date <= NOW()\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\n  AND u.name NOT IN ('dependabot[bot]','claude','claude[bot]','github-actions[bot]','cursoragent','argocd-image-updater')\nGROUP BY u.id, u.name\nHAVING COUNT(*) >= 5\nORDER BY defect_rate_pct DESC, total_prs DESC\nLIMIT 20",
           "refId": "A",
           "select": [
             [
@@ -463,7 +463,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  pr.id, pr.title, pr.author_id, pr.merged_date,\n  c.ai_cohort, comp.batch_bucket, d.total_defect_count\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nJOIN pr_change_composition comp ON comp.pr_id = pr.id\nLEFT JOIN pr_defect_signals d ON d.pr_id = pr.id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\n  AND (c.ai_cohort = 'HIGH' AND (d.total_defect_count > 0 OR comp.batch_bucket = 'XL'))\nORDER BY pr.merged_date DESC\nLIMIT 25",
+          "rawSql": "SELECT\n  pr.title,\n  u.name AS engineer,\n  pr.merged_date,\n  c.ai_cohort,\n  comp.batch_bucket,\n  (COALESCE(d.has_revert14d,0) + COALESCE(d.has_hotfix14d,0)) AS defect_signals,\n  pr.url\nFROM pull_requests pr\nJOIN pr_ai_cohort c ON c.pr_id = pr.id\nJOIN pr_change_composition comp ON comp.pr_id = pr.id\nLEFT JOIN pr_defect_signals d ON d.pr_id = pr.id AND d.window_close_date <= NOW()\nLEFT JOIN user_accounts ua ON ua.account_id = pr.author_id\nLEFT JOIN users u ON u.id = ua.user_id\nWHERE pr.merged_date >= $__timeFrom() AND pr.merged_date < $__timeTo()\n  AND c.ai_cohort = 'HIGH'\n  AND ((d.has_revert14d = 1 OR d.has_hotfix14d = 1) OR comp.batch_bucket = 'XL')\nORDER BY pr.merged_date DESC\nLIMIT 25",
           "refId": "A",
           "select": [
             [
