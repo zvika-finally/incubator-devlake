@@ -131,13 +131,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT author_name,\n        count(distinct commit_sha) AS commit_nums\nFROM commits\nJOIN repo_commits\nWHERE commits.sha =repo_commits.commit_sha\n        AND repo_commits.repo_id IN (${repo_id})\n        AND $__timeFilter(commits.authored_date)\nGROUP BY  author_name,author_id\nORDER BY  commit_nums desc\nLIMIT 10; ",
+          "rawSql": "SELECT u.name AS author_name,\n       count(distinct commit_sha) AS commit_nums\nFROM commits\nJOIN repo_commits ON commits.sha = repo_commits.commit_sha\nJOIN user_accounts ua ON ua.account_id = commits.author_id\nJOIN users u ON u.id = ua.user_id\nWHERE repo_commits.repo_id IN (${repo_id})\n  AND $__timeFilter(commits.authored_date)\n  AND commits.author_name NOT IN ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','Claude','github-actions[bot]','cursoragent')\n  AND commits.author_id NOT IN ('you@example.com','noreply@anthropic.com')\n  AND commits.author_id IS NOT NULL AND commits.author_id <> '' AND commits.author_id <> '0'\nGROUP BY u.id, u.name\nORDER BY commit_nums DESC\nLIMIT 10;",
           "refId": "A",
           "select": [
             [
@@ -246,14 +249,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "format": "table",
           "group": [],
           "hide": false,
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT author_name,\n         sum(additions-deletions) AS cnt\nFROM commits\nJOIN repo_commits\nWHERE commits.sha =repo_commits.commit_sha\n        AND repo_commits.repo_id IN (${repo_id})\n        AND $__timeFilter(commits.authored_date)\nGROUP BY  author_name,author_id\nORDER BY  cnt DESC \nLIMIT 10;",
+          "rawSql": "SELECT u.name AS author_name,\n       SUM(cf.additions - cf.deletions) AS cnt\nFROM commit_files cf\nJOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nJOIN commits ON commits.sha = cf.commit_sha\nJOIN user_accounts ua ON ua.account_id = commits.author_id\nJOIN users u ON u.id = ua.user_id\nWHERE rc.repo_id IN (${repo_id})\n  AND $__timeFilter(commits.authored_date)\n  AND CONVERT(cf.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\n  AND commits.author_name NOT IN ('argocd-image-updater','dependabot[bot]','claude','claude[bot]','Claude','github-actions[bot]','cursoragent')\n  AND commits.author_id NOT IN ('you@example.com','noreply@anthropic.com')\n  AND commits.author_id IS NOT NULL AND commits.author_id <> '' AND commits.author_id <> '0'\nGROUP BY u.id, u.name\nORDER BY cnt DESC\nLIMIT 10;",
           "refId": "A",
           "select": [
             [
@@ -388,7 +394,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -521,14 +530,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    CASE cast(dayofweek(authored_date) AS char)\n    WHEN '2' THEN '1.Monday'\n    WHEN '3' THEN '2.Tuesday'\n    WHEN '4' THEN '3.Wednesday'\n    WHEN '5' THEN '4.Thursday'\n    WHEN '6' THEN '5.Friday'\n    WHEN '7' THEN '6.Saturday'\n    WHEN '1' THEN '7.Sunday'\n    END AS weekday , sum(additions-deletions) AS changed_nums, sum(additions) AS total_additions, sum(deletions) AS total_deletions\nFROM commits\nJOIN repo_commits\nWHERE commits.sha =repo_commits.commit_sha\n        AND repo_commits.repo_id IN (${repo_id})\n        AND $__timeFilter(commits.authored_date)\nGROUP BY  weekday\nORDER BY  weekday",
+          "rawSql": "SELECT\n    CASE cast(dayofweek(c.authored_date) AS char)\n    WHEN '2' THEN '1.Monday'\n    WHEN '3' THEN '2.Tuesday'\n    WHEN '4' THEN '3.Wednesday'\n    WHEN '5' THEN '4.Thursday'\n    WHEN '6' THEN '5.Friday'\n    WHEN '7' THEN '6.Saturday'\n    WHEN '1' THEN '7.Sunday'\n    END AS weekday,\n    SUM(cf.additions - cf.deletions) AS changed_nums,\n    SUM(cf.additions) AS total_additions,\n    SUM(cf.deletions) AS total_deletions\nFROM commit_files cf\nJOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nJOIN commits c ON c.sha = cf.commit_sha\nWHERE rc.repo_id IN (${repo_id})\n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(cf.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\nGROUP BY weekday\nORDER BY weekday;",
           "refId": "A",
           "select": [
             [
@@ -681,13 +693,16 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "SELECT \n    file_path,\n    count(distinct c.author_name) AS cnt\nFROM commits c\n    JOIN commit_files cf on cf.commit_sha = c.sha\n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nWHERE \n    repo_id IN (${repo_id})\n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(file_path USING utf8mb4) REGEXP '${selected_path:raw}'\nGROUP BY file_path\nORDER BY cnt DESC \nlimit 10;",
+          "rawSql": "SELECT \n    CONVERT(cf.file_path USING utf8mb4) AS file_path,\n    count(distinct ua.user_id) AS cnt\nFROM commits c\n    JOIN commit_files cf on cf.commit_sha = c.sha\n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\n    JOIN user_accounts ua ON ua.account_id = c.author_id\nWHERE \n    rc.repo_id IN (${repo_id})\n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(cf.file_path USING utf8mb4) REGEXP '${selected_path:raw}'\n    AND CONVERT(cf.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\nGROUP BY file_path\nORDER BY cnt DESC\nLIMIT 10;",
           "refId": "A",
           "select": [
             [
@@ -782,14 +797,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT file_path,\n       COUNT(DISTINCT author_name) AS author_count,\n       MAX(rst) AS lines_of_code,\n       MAX(rst) / COUNT(DISTINCT author_name) AS rate\nFROM commits\nJOIN (\n  SELECT file_path,\n         commit_files.commit_sha,\n         SUM(additions - deletions) AS rst\n  FROM commit_files\n  JOIN repo_commits rc ON commit_files.commit_sha = rc.commit_sha\n  WHERE \n    repo_id IN (${repo_id})\n    AND CONVERT(file_path USING utf8mb4) REGEXP '${selected_path:raw}'\n  GROUP BY file_path, commit_files.commit_sha\n) a ON a.commit_sha = commits.sha\nGROUP BY file_path\nHAVING author_count > 0\nORDER BY rate DESC\n",
+          "rawSql": "SELECT a.file_path,\n       COUNT(DISTINCT ua.user_id) AS author_count,\n       MAX(a.rst) AS lines_of_code,\n       MAX(a.rst) / COUNT(DISTINCT ua.user_id) AS rate\nFROM commits\nJOIN user_accounts ua ON ua.account_id = commits.author_id\nJOIN (\n  SELECT CONVERT(commit_files.file_path USING utf8mb4) AS file_path,\n         commit_files.commit_sha,\n         SUM(additions - deletions) AS rst\n  FROM commit_files\n  JOIN repo_commits rc ON commit_files.commit_sha = rc.commit_sha\n  WHERE \n    rc.repo_id IN (${repo_id})\n    AND CONVERT(commit_files.file_path USING utf8mb4) REGEXP '${selected_path:raw}'\n    AND CONVERT(commit_files.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\n  GROUP BY file_path, commit_files.commit_sha\n) a ON a.commit_sha = commits.sha\nGROUP BY a.file_path\nHAVING author_count > 0\nORDER BY rate DESC\nLIMIT 20;",
           "refId": "A",
           "select": [
             [
@@ -834,7 +852,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "Please disable the SkipCommitFiles in the .env setting to view this metric. However, this will significantly increase the time to collect data.",
       "fieldConfig": {
         "defaults": {
@@ -913,14 +934,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT \n    file_path,\n    count(distinct sha) AS modified_num\nFROM commits c\n    JOIN commit_files cf on cf.commit_sha = c.sha\n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nWHERE \n    repo_id IN (${repo_id})\n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(file_path USING utf8mb4) REGEXP '${selected_path:raw}'\nGROUP BY file_path\nORDER BY modified_num desc\nLIMIT 10;",
+          "rawSql": "SELECT \n    CONVERT(cf.file_path USING utf8mb4) AS file_path,\n    count(distinct c.sha) AS modified_num\nFROM commits c\n    JOIN commit_files cf on cf.commit_sha = c.sha\n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nWHERE \n    rc.repo_id IN (${repo_id})\n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(cf.file_path USING utf8mb4) REGEXP '${selected_path:raw}'\n    AND CONVERT(cf.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\nGROUP BY file_path\nORDER BY modified_num DESC\nLIMIT 10;",
           "refId": "A",
           "select": [
             [
@@ -1047,14 +1071,17 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT \n    file_path,\n    count(distinct sha) AS cnt\nFROM commits c \n    JOIN commit_files cf on cf.commit_sha = c.sha \n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nWHERE \n    repo_id IN (${repo_id}) \n    AND $__timeFilter(c.authored_date)\nGROUP BY file_path\nORDER BY cnt desc\nLIMIT 10;",
+          "rawSql": "SELECT \n    CONVERT(cf.file_path USING utf8mb4) AS file_path,\n    count(distinct c.sha) AS cnt\nFROM commits c \n    JOIN commit_files cf on cf.commit_sha = c.sha \n    JOIN repo_commits rc ON cf.commit_sha = rc.commit_sha\nWHERE \n    rc.repo_id IN (${repo_id}) \n    AND $__timeFilter(c.authored_date)\n    AND CONVERT(cf.file_path USING utf8mb4) NOT REGEXP '(^|/)(node_modules|dist|build|vendor|generated|__generated__|__snapshots__|fixtures|dbt_packages)/|\\\\.(lock|min\\\\.js|min\\\\.css)$|(package-lock|pnpm-lock|yarn)\\\\.(json|lock|yaml)|uv\\\\.lock|_gql_/graphql\\\\.ts|generated\\\\.(ts|go)|\\\\.schema\\\\.graphql|\\\\.(csv|snap)$'\nGROUP BY file_path\nORDER BY cnt DESC\nLIMIT 10;",
           "refId": "A",
           "select": [
             [
@@ -1125,7 +1152,10 @@
       "type": "row"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "Please disable the SkipCommitFiles in the .env setting to view this metric. However, this will significantly increase the time to collect data.",
       "fieldConfig": {
         "defaults": {
@@ -1204,7 +1234,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1256,7 +1289,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "Please disable the SkipCommitFiles in the .env setting to view this metric. However, this will significantly increase the time to collect data.",
       "fieldConfig": {
         "defaults": {
@@ -1309,7 +1345,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1378,7 +1417,10 @@
             "$__all"
           ]
         },
-        "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select concat(name, '--', id) as text from repos",
         "hide": 0,
         "includeAll": true,
@@ -1417,7 +1459,7 @@
     ]
   },
   "time": {
-    "from": "now-5y",
+    "from": "now-90d",
     "to": "now"
   },
   "timeRangeUpdatedDuringEditOrView": false,

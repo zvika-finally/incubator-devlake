@@ -70,7 +70,10 @@
       "type": "text"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -250,7 +253,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -302,7 +308,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -368,7 +377,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -420,7 +432,10 @@
       "type": "table"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -496,7 +511,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -548,7 +566,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -626,7 +647,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -678,7 +702,10 @@
       "type": "barchart"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -755,7 +782,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -832,7 +862,10 @@
       "type": "text"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -918,7 +951,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -970,7 +1006,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1056,7 +1095,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1108,7 +1150,10 @@
       "type": "stat"
     },
     {
-      "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+      "datasource": {
+        "type": "mysql",
+        "uid": "devlake-mysql-api"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1194,7 +1239,10 @@
       "pluginVersion": "13.0.2",
       "targets": [
         {
-          "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+          "datasource": {
+            "type": "mysql",
+            "uid": "devlake-mysql-api"
+          },
           "editorMode": "code",
           "format": "table",
           "group": [],
@@ -1262,7 +1310,10 @@
             "$__all"
           ]
         },
-         "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select distinct name from projects",
         "hide": 0,
         "includeAll": true,
@@ -1283,7 +1334,10 @@
           "text": "2023",
           "value": "2023"
         },
-         "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "select dora_report from dora_benchmarks",
         "hide": 0,
         "includeAll": false,
@@ -1304,7 +1358,10 @@
           "text": "Failed Deployment Recovery Time",
           "value": "Failed Deployment Recovery Time"
         },
-         "datasource": {"type": "mysql", "uid": "devlake-mysql-api"},
+        "datasource": {
+          "type": "mysql",
+          "uid": "devlake-mysql-api"
+        },
         "definition": "SELECT \n  CASE \n    WHEN dora_report = '2023' THEN \"Failed Deployment Recovery Time\"\n    WHEN dora_report = '2021' THEN \"Median Time to Restore Service\"\n    ELSE NULL \n  END AS title_value\nFROM dora_benchmarks\nWHERE dora_report = '${dora_report:raw}'",
         "hide": 2,
         "includeAll": false,
@@ -1322,7 +1379,7 @@
     ]
   },
   "time": {
-    "from": "now-6M",
+    "from": "now-90d",
     "to": "now"
   },
   "timeRangeUpdatedDuringEditOrView": false,
