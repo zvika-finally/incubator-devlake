@@ -16,6 +16,20 @@
 
 set -e
 
+# Clear any stale unified-search (bleve) index before starting Grafana.
+#
+# Grafana keeps its unified-search index under $GF_PATHS_DATA (/var/lib/grafana),
+# which in our deployment is a shared EFS volume. bleve takes an exclusive lock on
+# the index directory; when a task is stopped ungracefully the lock is orphaned on
+# the volume, and the next task fails to start with:
+#   "index is locked by another process ... err=timeout"
+# which fails the health check and deadlocks the ECS rollout (old task keeps the
+# lock, new task can never come up). The index is rebuilt from the database on
+# boot, so it is safe to remove any leftover copy first. This makes startup
+# self-healing regardless of how the previous task exited.
+GF_DATA_DIR="${GF_PATHS_DATA:-/var/lib/grafana}"
+rm -rf "${GF_DATA_DIR}/unified-search" 2>/dev/null || true
+
 DATASOURCE_FILE="/etc/grafana/provisioning/datasources/datasource.yml"
 
 # Detect database type
